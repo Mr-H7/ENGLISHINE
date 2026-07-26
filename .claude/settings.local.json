@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -l \"F:/LIXIAMO DOSHIR/stitch.zip\")",
+      "Bash(unzip -p \"F:/LIXIAMO DOSHIR/stitch.zip\" \"stitch/imperial_gilded_onyx/DESIGN.md\")",
+      "Bash(unzip -p \"F:/LIXIAMO DOSHIR/stitch.zip\" \"stitch/lixiamo_doshir_tech_lux_landing_page/code.html\")",
+      "Bash(wc -l /c/Mr-ahmed/*.html /c/Mr-ahmed/*.css /c/Mr-ahmed/*.js)"
+    ]
+  }
+}
