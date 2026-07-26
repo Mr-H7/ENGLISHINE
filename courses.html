@@ -1,0 +1,341 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courses â€” Englishine</title>
+  <meta name="description" content="Premium English training courses: IELTS Preparation, Business English, General English, Speaking & Communication, and Exam Preparation." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .course-hero-card {
+      background: var(--onyx-card);
+      border-radius: var(--r-lg);
+      padding: 3.5rem;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    .course-hero-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: var(--r-lg);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(14,76,146,0.22) 0%, rgba(14,76,146,0.05) 40%, transparent 65%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none;
+    }
+    .course-hero-card .glow-corner {
+      position: absolute; top: 0; right: 0;
+      width: 280px; height: 280px;
+      background: radial-gradient(circle at top right, rgba(14,76,146,0.07), transparent 65%);
+      pointer-events: none;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid var(--onyx-line2);
+      font-size: 0.88rem;
+    }
+    .detail-row:last-of-type { border-bottom: none; }
+    .detail-row span:first-child { color: var(--text-muted); }
+    .detail-row span:last-child  { font-weight: 600; color: var(--text-head); }
+    @media (max-width: 768px) {
+      .course-hero-card { grid-template-columns: 1fr; gap: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="scroll-progress"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" aria-label="Primary navigation">
+  <a href="index.html" class="nav-logo" aria-label="Englishine home"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="courses.html">Courses</a></li><li><a href="videos.html">Videos</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="scholarships.html">Scholarships</a></li><li><a href="certifications.html">Certifications</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li></ul>
+  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Free Placement Test</a><button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button></div>
+</nav>
+<div class="mobile-menu"><button class="mobile-menu-close" aria-label="Close menu">×</button><a href="index.html">Home</a><a href="courses.html">Courses</a><a href="videos.html">Videos</a><a href="pricing.html">Pricing</a><a href="scholarships.html">Scholarships</a><a href="certifications.html">Certifications</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="container relative z-1 text-center">
+    <div class="overline fade-up" style="justify-content:center; margin-bottom:1.25rem;">Training Programs</div>
+    <h1 class="h1 fade-up delay-1" style="margin-bottom:1.25rem;">
+      Premium English<br/><span class="text-green italic">Courses</span>
+    </h1>
+    <p class="section-desc fade-up delay-2" style="margin:0 auto;">
+      Expertly designed programmes that build real, lasting English mastery â€” structured for maximum results at every level.
+    </p>
+    <!-- Quick nav -->
+    <div class="flex justify-center flex-wrap gap-3 fade-up delay-3" style="margin-top:2.5rem;">
+      <a href="#ielts"    class="badge" style="cursor:pointer; font-size:0.7rem; padding:0.4rem 1rem;">ðŸ“š IELTS Prep</a>
+      <a href="#general"  class="badge" style="cursor:pointer; font-size:0.7rem; padding:0.4rem 1rem;">ðŸŒ General English</a>
+      <a href="#business" class="badge" style="cursor:pointer; font-size:0.7rem; padding:0.4rem 1rem;">ðŸ’¼ Business English</a>
+      <a href="#speaking" class="badge" style="cursor:pointer; font-size:0.7rem; padding:0.4rem 1rem;">ðŸŽ¤ Speaking</a>
+      <a href="#exam"     class="badge" style="cursor:pointer; font-size:0.7rem; padding:0.4rem 1rem;">ðŸ† Exam Prep</a>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• IELTS â•â• -->
+<section class="section" id="ielts">
+  <div class="container">
+    <div class="course-hero-card fade-up">
+      <div class="glow-corner"></div>
+      <!-- Left -->
+      <div style="position:relative; z-index:1;">
+        <div class="flex items-center gap-3" style="margin-bottom:1.5rem;">
+          <div class="course-icon" style="margin-bottom:0;">ðŸ“š</div>
+          <span class="badge">Most Popular</span>
+        </div>
+        <div class="overline" style="margin-bottom:0.85rem;">Specialist Programme</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">IELTS<br/><span class="text-green italic">Preparation</span></h2>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:1.1rem;">
+          The most comprehensive IELTS preparation programme available â€” targeting all four skills: Listening, Reading, Writing, and Speaking. Built on the latest Cambridge and IDP exam formats with proven IELTS goal, 8, and 9 strategies.
+        </p>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:2rem;">
+          Every student receives a personalised study plan, full mock tests with detailed feedback, task-specific writing correction, and speaking band score simulation.
+        </p>
+        <div class="flex flex-wrap gap-3" style="margin-bottom:2rem;">
+          <span class="badge">ðŸ“– Reading Strategies</span>
+          <span class="badge">âœï¸ Writing Tasks 1 &amp; 2</span>
+          <span class="badge">ðŸŽ§ Listening Skills</span>
+          <span class="badge">ðŸŽ¤ Speaking Simulation</span>
+          <span class="badge">ðŸ“‹ Mock Tests</span>
+        </div>
+        <a href="contact.html" class="btn btn-primary btn-lg">Enrol in IELTS Course â†’</a>
+      </div>
+      <!-- Right â€” details card -->
+      <div style="position:relative; z-index:1;">
+        <div class="card" style="padding:2rem; background:rgba(7,25,30,0.7); backdrop-filter:blur(16px);">
+          <div style="font-size:2.5rem; margin-bottom:1.35rem;">ðŸ“š</div>
+          <div class="detail-row"><span>Target Score</span><span style="color:var(--green);">IELTS goal â†’ 9</span></div>
+          <div class="detail-row"><span>Duration</span><span>4 â€“ 12 Weeks</span></div>
+          <div class="detail-row"><span>Format</span><span>1-on-1 / Group</span></div>
+          <div class="detail-row"><span>Level</span><span>Intermediate â†’ Advanced</span></div>
+          <div class="detail-row"><span>Delivery</span><span>Online / In-Person</span></div>
+          <div style="margin-top:1.5rem; padding:1.25rem; background:rgba(14,76,146,0.06); border:1px solid rgba(14,76,146,0.18); border-radius:var(--r-sm); text-align:center;">
+            <div style="font-family:var(--font-label); font-size:0.65rem; font-weight:800; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:0.3rem;">Average Student Result</div>
+            <div style="font-family:var(--font-head); font-size:2.2rem; font-weight:700; color:var(--green); letter-spacing:-0.02em; line-height:1;">IELTS Focus</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• GENERAL ENGLISH â•â• -->
+<section class="section glow-section" style="background:var(--onyx-mid);" id="general">
+  <div class="container">
+    <div class="course-hero-card fade-up" style="background:var(--onyx-card2);">
+      <div class="glow-corner"></div>
+      <!-- Left â€” details -->
+      <div style="position:relative; z-index:1; order:1;">
+        <div class="card" style="padding:2rem; background:rgba(7,25,30,0.7); backdrop-filter:blur(16px);">
+          <div style="font-size:2.5rem; margin-bottom:1.35rem;">ðŸŒ</div>
+          <div class="detail-row"><span>Level Range</span><span style="color:var(--green);">A1 â†’ B2</span></div>
+          <div class="detail-row"><span>Duration</span><span>Ongoing / Flexible</span></div>
+          <div class="detail-row"><span>Format</span><span>1-on-1 / Small Group</span></div>
+          <div class="detail-row"><span>Delivery</span><span>Online / In-Person</span></div>
+          <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:var(--onyx-high); border-radius:var(--r-sm);">
+            <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.7;">Suitable for all ages. Regular assessments ensure the programme stays perfectly aligned with your improvement.</p>
+          </div>
+        </div>
+      </div>
+      <!-- Right -->
+      <div style="position:relative; z-index:1; order:2;">
+        <div class="course-icon" style="margin-bottom:1.5rem;">ðŸŒ</div>
+        <div class="overline" style="margin-bottom:0.85rem;">Foundation Programme</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">General<br/><span class="text-green italic">English</span></h2>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:1.1rem;">
+          A complete, structured general English programme that builds strong foundations across all four language skills â€” designed for learners from beginner to upper-intermediate who want confident, natural communication.
+        </p>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:2rem;">
+          Grammar, vocabulary, pronunciation, reading comprehension, and everyday conversation â€” addressed systematically in an engaging environment where progress is visible from the very first lesson.
+        </p>
+        <div class="flex flex-wrap gap-3" style="margin-bottom:2rem;">
+          <span class="badge">ðŸ“ Grammar Mastery</span>
+          <span class="badge">ðŸ’¬ Conversation</span>
+          <span class="badge">ðŸ“– Reading</span>
+          <span class="badge">ðŸ”¤ Vocabulary</span>
+        </div>
+        <a href="contact.html" class="btn btn-primary btn-lg">Enrol in General English â†’</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• BUSINESS ENGLISH â•â• -->
+<section class="section" id="business">
+  <div class="container">
+    <div class="course-hero-card fade-up">
+      <div class="glow-corner"></div>
+      <div style="position:relative; z-index:1;">
+        <div class="course-icon" style="margin-bottom:1.5rem;">ðŸ’¼</div>
+        <div class="overline" style="margin-bottom:0.85rem;">Professional Development</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">Business<br/><span class="text-green italic">English</span></h2>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:1.1rem;">
+          Master the language of the professional world. This programme covers formal business communication, professional email writing, report and proposal writing, meeting facilitation, presentations, and negotiation English.
+        </p>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:2rem;">
+          Aligned with the Business English Certificate (BEC) standards â€” ideal for corporate professionals, managers, entrepreneurs, and anyone seeking to advance their career through premium professional English.
+        </p>
+        <div class="flex flex-wrap gap-3" style="margin-bottom:2rem;">
+          <span class="badge">ðŸ“§ Email Writing</span>
+          <span class="badge">ðŸ“Š Presentations</span>
+          <span class="badge">ðŸ¤ Negotiations</span>
+          <span class="badge">ðŸ“ Reports</span>
+          <span class="badge">ðŸ’¼ BEC Aligned</span>
+        </div>
+        <a href="contact.html" class="btn btn-primary btn-lg">Enrol in Business English â†’</a>
+      </div>
+      <div style="position:relative; z-index:1;">
+        <div class="card" style="padding:2rem; background:rgba(7,25,30,0.7); backdrop-filter:blur(16px);">
+          <div style="font-size:2.5rem; margin-bottom:1.35rem;">ðŸ’¼</div>
+          <div class="detail-row"><span>Level</span><span style="color:var(--green);">Intermediate â†’ Advanced</span></div>
+          <div class="detail-row"><span>Duration</span><span>6 â€“ 16 Weeks</span></div>
+          <div class="detail-row"><span>Format</span><span>1-on-1 / Corporate Group</span></div>
+          <div class="detail-row"><span>Certificate</span><span>BEC Prep Included</span></div>
+          <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:var(--onyx-high); border-radius:var(--r-sm);">
+            <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.7;">Corporate group packages available for companies seeking professional English training for their teams.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• SPEAKING â•â• -->
+<section class="section glow-section" style="background:var(--onyx-mid);" id="speaking">
+  <div class="container">
+    <div class="course-hero-card fade-up" style="background:var(--onyx-card2);">
+      <div class="glow-corner"></div>
+      <div style="position:relative; z-index:1; order:1;">
+        <div class="card" style="padding:2rem; background:rgba(7,25,30,0.7); backdrop-filter:blur(16px);">
+          <div style="font-size:2.5rem; margin-bottom:1.35rem;">ðŸŽ¤</div>
+          <div class="detail-row"><span>Level</span><span style="color:var(--green);">All Levels</span></div>
+          <div class="detail-row"><span>Sessions</span><span>Flexible / Weekly</span></div>
+          <div class="detail-row"><span>Focus</span><span>Spoken Fluency</span></div>
+          <div class="detail-row"><span>Delivery</span><span>Online / In-Person</span></div>
+          <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:var(--onyx-high); border-radius:var(--r-sm);">
+            <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.7;">Recording and playback sessions included â€” hear your own progress and track measurable improvement in real time.</p>
+          </div>
+        </div>
+      </div>
+      <div style="position:relative; z-index:1; order:2;">
+        <div class="course-icon" style="margin-bottom:1.5rem;">ðŸŽ¤</div>
+        <div class="overline" style="margin-bottom:0.85rem;">Confidence &amp; Fluency</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">Speaking &amp;<br/><span class="text-green italic">Communication</span></h2>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:1.1rem;">
+          Dedicated speaking and communication coaching designed to eliminate hesitation, reduce accent interference, and build the authentic fluency needed for social, academic, and professional conversations.
+        </p>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:2rem;">
+          Through role plays, structured discussions, recorded sessions, and intensive pronunciation work, you'll develop the natural confidence to speak English in any situation â€” without thinking twice.
+        </p>
+        <div class="flex flex-wrap gap-3" style="margin-bottom:2rem;">
+          <span class="badge">ðŸ—£ï¸ Fluency Building</span>
+          <span class="badge">ðŸŽ¯ Pronunciation</span>
+          <span class="badge">ðŸŽ­ Role Play</span>
+          <span class="badge">ðŸ§˜ Confidence</span>
+        </div>
+        <a href="contact.html" class="btn btn-primary btn-lg">Enrol in Speaking â†’</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• EXAM PREP â•â• -->
+<section class="section" id="exam">
+  <div class="container">
+    <div class="course-hero-card fade-up">
+      <div class="glow-corner"></div>
+      <div style="position:relative; z-index:1;">
+        <div class="course-icon" style="margin-bottom:1.5rem;">ðŸ†</div>
+        <div class="overline" style="margin-bottom:0.85rem;">Exam Excellence</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">Exam<br/><span class="text-green italic">Preparation</span></h2>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:1.1rem;">
+          Targeted, high-intensity preparation for English language examinations. Whether it's IELTS, TOEFL, Cambridge PET, FCE, CAE, or school entrance exams â€” this programme gives you every tactical and linguistic advantage.
+        </p>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85; margin-bottom:2rem;">
+          Mock examinations, time management strategies, mark scheme analysis, and examiner-style feedback ensure you walk into any exam hall fully prepared, calm, and confident.
+        </p>
+        <div class="flex flex-wrap gap-3" style="margin-bottom:2rem;">
+          <span class="badge">ðŸ“‹ Mock Exams</span>
+          <span class="badge">â±ï¸ Time Management</span>
+          <span class="badge">âœ… IELTS / TOEFL</span>
+          <span class="badge">ðŸ« Cambridge</span>
+          <span class="badge">ðŸ“ˆ Score Analysis</span>
+        </div>
+        <a href="contact.html" class="btn btn-primary btn-lg">Enrol in Exam Prep â†’</a>
+      </div>
+      <div style="position:relative; z-index:1;">
+        <div class="card" style="padding:2rem; background:rgba(7,25,30,0.7); backdrop-filter:blur(16px);">
+          <div style="font-size:2.5rem; margin-bottom:1.35rem;">ðŸ†</div>
+          <div class="detail-row"><span>Exams Covered</span><span style="color:var(--green);">IELTS Â· TOEFL Â· Cambridge</span></div>
+          <div class="detail-row"><span>Duration</span><span>Intensive / As Needed</span></div>
+          <div class="detail-row"><span>Mock Tests</span><span>Included</span></div>
+          <div class="detail-row"><span>Success Rate</span><span style="color:var(--green); font-weight:700;">structured</span></div>
+          <div style="margin-top:1.5rem; padding:1rem 1.25rem; background:var(--onyx-high); border-radius:var(--r-sm);">
+            <p style="font-size:0.84rem; color:var(--text-muted); line-height:1.7;">Emergency intensive crash courses available for students with upcoming exam dates within 2â€“4 weeks.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:clamp(5rem,10vw,9rem) 0; background:var(--onyx-mid); position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background:radial-gradient(ellipse 800px 350px at 50% 50%, rgba(14,76,146,0.065), transparent 70%); pointer-events:none;"></div>
+  <div class="container text-center relative z-1 fade-up">
+    <h2 class="h2" style="margin-bottom:1rem;">Not Sure Which Course<br/>Is <span class="text-green italic">Right for You?</span></h2>
+    <p class="section-desc" style="margin:0 auto 2.75rem;">Book a free 30-minute consultation. Ahmed Hassan will assess your level and recommend the perfect programme for your goals.</p>
+    <div class="flex justify-center gap-4 flex-wrap">
+      <a href="contact.html" class="btn btn-primary btn-lg">Book Free Consultation</a>
+      <a href="pricing.html" class="btn btn-secondary btn-lg">View Pricing</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo" style="margin-bottom:1rem; display:inline-flex;"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+        <p>Professional English training and IELTS preparation by a certified British Council educator.</p>
+        <div class="social-links" style="margin-top:1.5rem;"><a href="#" class="social-link">ðŸ’¬</a><a href="#" class="social-link">f</a><a href="#" class="social-link">ðŸ“·</a><a href="#" class="social-link">in</a><a href="#" class="social-link">â–¶</a></div>
+      </div>
+      <div class="footer-col"><h4>Navigation</h4><a href="index.html">Home</a><a href="about.html">About</a><a href="courses.html">Courses</a><a href="certifications.html">Certifications</a></div>
+      <div class="footer-col"><h4>Programs</h4><a href="#ielts">IELTS Preparation</a><a href="#business">Business English</a><a href="#general">General English</a><a href="#speaking">Speaking Training</a><a href="#exam">Exam Preparation</a></div>
+      <div class="footer-col"><h4>Connect</h4><a href="contact.html">Contact</a><a href="pricing.html">Pricing</a><a href="testimonials.html">Testimonials</a><a href="contact.html">Book a Session</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>Â© 2025 Englishine â€” All Rights Reserved.</span>
+      <span>IELTS Specialist Â· Certified English Educator</span>
+    </div>
+  </div>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>
+
+

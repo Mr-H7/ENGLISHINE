@@ -1,0 +1,611 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testimonials â€” Englishine</title>
+  <meta name="description" content="Real student success stories and testimonials from Englishine's English and IELTS training programmes." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* â”€â”€ Masonry layout â”€â”€ */
+    .testimonials-masonry {
+      columns: 3;
+      column-gap: 1.75rem;
+    }
+    .testimonials-masonry .tcard {
+      break-inside: avoid;
+      margin-bottom: 1.75rem;
+      display: inline-block;
+      width: 100%;
+    }
+    @media (max-width: 960px) { .testimonials-masonry { columns: 2; } }
+    @media (max-width: 560px) { .testimonials-masonry { columns: 1; } }
+
+    /* â”€â”€ Testimonial card v2 â”€â”€ */
+    .tcard {
+      position: relative;
+      background: var(--onyx-card);
+      border-radius: var(--r-md);
+      padding: 2rem;
+      overflow: hidden;
+      transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+    }
+    .tcard::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-md);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(14,76,146,0.18), rgba(14,76,146,0.04) 40%, transparent 70%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      transition: opacity 0.35s;
+    }
+    .tcard::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-md);
+      background: radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(14,76,146,0.05), transparent 40%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+    .tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .tcard:hover::after { opacity: 1; }
+    .tcard.featured-tcard {
+      background: linear-gradient(160deg, rgba(14,76,146,0.1) 0%, var(--onyx-card) 65%);
+    }
+    .tcard.featured-tcard::before {
+      background: linear-gradient(135deg, rgba(14,76,146,0.35), rgba(14,76,146,0.08) 50%, transparent 80%);
+    }
+
+    /* â”€â”€ Score badge â”€â”€ */
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(14,76,146,0.1);
+      border: 1px solid rgba(14,76,146,0.22);
+      color: var(--green);
+      font-family: var(--font-label);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.22rem 0.65rem;
+      border-radius: 99px;
+      margin-bottom: 0.85rem;
+    }
+
+    /* â”€â”€ Quote mark â”€â”€ */
+    .quote-mark {
+      font-family: var(--font-head);
+      font-size: 5rem;
+      line-height: 0.6;
+      color: rgba(14,76,146,0.1);
+      float: left;
+      margin-right: 0.3rem;
+      margin-top: 0.5rem;
+    }
+
+    /* â”€â”€ Rating summary â”€â”€ */
+    .rating-panel {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 2.5rem;
+      align-items: center;
+      padding: 2.5rem;
+      position: relative;
+      background: var(--onyx-card);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .rating-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-lg);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(14,76,146,0.25), rgba(14,76,146,0.05) 50%, transparent 80%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .rating-score-block {
+      text-align: center;
+      padding-right: 2.5rem;
+      border-right: 1px solid var(--onyx-border2);
+    }
+    .rating-score-num {
+      font-family: var(--font-head);
+      font-size: 4.5rem;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .rating-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-bottom: 0.55rem;
+    }
+    .rating-bar-label {
+      font-family: var(--font-label);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-faint);
+      width: 12px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .rating-bar-track {
+      flex: 1;
+      height: 5px;
+      background: var(--onyx-high);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .rating-bar-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--green), rgba(14,76,146,0.5));
+      border-radius: 99px;
+      transition: width 1.4s var(--ease-out);
+    }
+    .rating-bar-count {
+      font-family: var(--font-label);
+      font-size: 0.68rem;
+      color: var(--text-faint);
+      width: 32px;
+      flex-shrink: 0;
+    }
+    .rating-meta-block {
+      padding-left: 2.5rem;
+      border-left: 1px solid var(--onyx-border2);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      flex-shrink: 0;
+    }
+    @media (max-width: 768px) {
+      .rating-panel { grid-template-columns: 1fr; gap: 1.5rem; }
+      .rating-score-block { padding-right: 0; border-right: none; border-bottom: 1px solid var(--onyx-border2); padding-bottom: 1.5rem; }
+      .rating-meta-block { padding-left: 0; border-left: none; border-top: 1px solid var(--onyx-border2); padding-top: 1.5rem; flex-direction: row; }
+    }
+
+    /* â”€â”€ Featured testimonial â”€â”€ */
+    .featured-quote-wrap {
+      position: relative;
+      background: linear-gradient(160deg, rgba(14,76,146,0.09) 0%, var(--onyx-card) 60%);
+      border-radius: var(--r-lg);
+      padding: 3.5rem;
+      overflow: hidden;
+    }
+    .featured-quote-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-lg);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(14,76,146,0.35), rgba(14,76,146,0.06) 60%, transparent 85%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .featured-bg-quote {
+      position: absolute;
+      top: 1rem; right: 2.5rem;
+      font-family: var(--font-head);
+      font-size: 11rem;
+      line-height: 1;
+      color: rgba(14,76,146,0.06);
+      pointer-events: none;
+      user-select: none;
+    }
+    .score-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(14,76,146,0.07);
+      border: 1px solid rgba(14,76,146,0.2);
+      border-radius: var(--r-md);
+      padding: 1.75rem 2.25rem;
+      flex-shrink: 0;
+    }
+
+    /* â”€â”€ CTA section â”€â”€ */
+    .cta-section {
+      padding: clamp(5rem,9vw,8rem) 0;
+      background: var(--onyx-mid);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 800px 350px at 50% 50%, rgba(14,76,146,0.06), transparent 70%);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor-dot" id="cursor-dot"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+<div id="scroll-progress"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" aria-label="Primary navigation">
+  <a href="index.html" class="nav-logo" aria-label="Englishine home"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="courses.html">Courses</a></li><li><a href="videos.html">Videos</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="scholarships.html">Scholarships</a></li><li><a href="certifications.html">Certifications</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li></ul>
+  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Free Placement Test</a><button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button></div>
+</nav>
+<div class="mobile-menu"><button class="mobile-menu-close" aria-label="Close menu">×</button><a href="index.html">Home</a><a href="courses.html">Courses</a><a href="videos.html">Videos</a><a href="pricing.html">Pricing</a><a href="scholarships.html">Scholarships</a><a href="certifications.html">Certifications</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-bg"></div>
+  <div class="container relative z-1 text-center">
+    <div class="overline fade-up" style="justify-content:center; margin-bottom:1.25rem;">Student Voices</div>
+    <h1 class="h1 fade-up delay-1" style="margin-bottom:1.25rem;">Real Results,<br/><span class="text-green italic">Real Stories</span></h1>
+    <p class="section-desc fade-up delay-2" style="margin:0 auto 2.5rem;">Over learners students have transformed their English with Ahmed Hassan's guidance. These are their authentic experiences and outcomes.</p>
+    <div class="fade-up delay-3" style="display:flex; align-items:center; justify-content:center; gap:1.5rem; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <div class="stars"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <span style="font-family:var(--font-label); font-size:0.78rem; font-weight:700; color:var(--text-main);">4.9 / 5.0</span>
+        <span style="font-family:var(--font-label); font-size:0.72rem; color:var(--text-faint);">from many reviews</span>
+      </div>
+      <div style="width:1px; height:20px; background:var(--onyx-border2);"></div>
+      <div style="font-family:var(--font-label); font-size:0.72rem; color:var(--text-faint);">Structured IELTS Support</div>
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• RATING SUMMARY â•â• -->
+<section class="section-sm">
+  <div class="container">
+    <div class="rating-panel fade-up">
+      <!-- Score -->
+      <div class="rating-score-block">
+        <div class="rating-score-num">4.9</div>
+        <div class="stars" style="justify-content:center; margin:0.6rem 0;">
+          <span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span>
+        </div>
+        <div style="font-family:var(--font-label); font-size:0.68rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em;">Overall Rating</div>
+      </div>
+
+      <!-- Bars -->
+      <div class="rating-bar-wrap" style="padding:0 0.5rem;">
+        <div class="rating-bar-row">
+          <span class="rating-bar-label">5</span>
+          <div class="rating-bar-track"><div class="rating-bar-fill" data-width="92%"></div></div>
+          <span class="rating-bar-count">1,840</span>
+        </div>
+        <div class="rating-bar-row">
+          <span class="rating-bar-label">4</span>
+          <div class="rating-bar-track"><div class="rating-bar-fill" data-width="6%"></div></div>
+          <span class="rating-bar-count">120</span>
+        </div>
+        <div class="rating-bar-row">
+          <span class="rating-bar-label">3</span>
+          <div class="rating-bar-track"><div class="rating-bar-fill" data-width="2%"></div></div>
+          <span class="rating-bar-count">40</span>
+        </div>
+        <div class="rating-bar-row">
+          <span class="rating-bar-label">2</span>
+          <div class="rating-bar-track"><div class="rating-bar-fill" data-width="0%"></div></div>
+          <span class="rating-bar-count">0</span>
+        </div>
+        <div class="rating-bar-row" style="margin-bottom:0;">
+          <span class="rating-bar-label">1</span>
+          <div class="rating-bar-track"><div class="rating-bar-fill" data-width="0%"></div></div>
+          <span class="rating-bar-count">0</span>
+        </div>
+      </div>
+
+      <!-- Meta -->
+      <div class="rating-meta-block">
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-head); font-size:2rem; font-weight:700; color:var(--text-main); letter-spacing:-0.03em;">many</div>
+          <div style="font-family:var(--font-label); font-size:0.68rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.25rem;">Students</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-head); font-size:2rem; font-weight:700; color:var(--green); letter-spacing:-0.03em;">structured</div>
+          <div style="font-family:var(--font-label); font-size:0.68rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.25rem;">IELTS Preparation</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--font-head); font-size:2rem; font-weight:700; color:var(--text-main); letter-spacing:-0.03em;">12+</div>
+          <div style="font-family:var(--font-label); font-size:0.68rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em; margin-top:0.25rem;">Years Teaching</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• FEATURED TESTIMONIAL â•â• -->
+<section class="section-sm">
+  <div class="container">
+    <div class="section-header center fade-up" style="margin-bottom:3rem;">
+      <div class="overline" style="justify-content:center; margin-bottom:1rem;">Top Story</div>
+      <h2 class="h2">Featured <span class="text-green text-underline">Success</span></h2>
+    </div>
+
+    <div class="featured-quote-wrap slide-right">
+      <div class="featured-bg-quote">"</div>
+      <div style="display:grid; grid-template-columns:1fr auto; gap:3rem; align-items:start; position:relative; z-index:1;">
+        <div>
+          <div class="score-badge">ðŸ† IELTS a stronger IELTS result Achieved</div>
+          <blockquote style="font-family:var(--font-head); font-size:1.3rem; font-weight:500; color:var(--text-main); line-height:1.7; font-style:italic; margin-bottom:2rem;">
+            "I had attempted the IELTS twice before finding Ahmed Hassan and never got above IELTS goal. Within 10 weeks of his structured programme, I achieved a stronger IELTS result. His mastery of the exam format, his ability to diagnose exactly where I was losing marks, and his patient expert coaching made the difference I had been searching for."
+          </blockquote>
+          <div class="testimonial-author">
+            <div class="author-avatar" style="width:52px; height:52px; font-size:1.1rem; background:linear-gradient(135deg,var(--green),rgba(14,76,146,0.4)); color:var(--onyx);">YA</div>
+            <div>
+              <div class="author-name" style="font-size:1rem;">Yousef Al-Ahmad</div>
+              <div class="author-tag">IELTS Academic â€” a stronger IELTS result Â· University of Edinburgh Entry</div>
+            </div>
+          </div>
+        </div>
+        <div class="score-pill">
+          <div style="font-family:var(--font-label); font-size:0.62rem; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.35rem;">IELTS Score</div>
+          <div style="font-family:var(--font-head); font-size:3.5rem; font-weight:700; color:var(--green); line-height:1; letter-spacing:-0.03em;">8.5</div>
+          <div style="font-family:var(--font-label); font-size:0.62rem; color:var(--text-faint); margin-top:0.3rem;">From IELTS goal</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• MASONRY TESTIMONIALS â•â• -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="section-header center fade-up" style="margin-bottom:3.5rem;">
+      <div class="overline" style="justify-content:center; margin-bottom:1rem;">All Reviews</div>
+      <h2 class="h2">What Students <span class="text-green text-underline">Say</span></h2>
+      <p class="section-desc" style="margin-top:0.75rem;">Authentic testimonials from real students â€” unedited and unfiltered.</p>
+    </div>
+
+    <div class="testimonials-masonry">
+
+      <div class="tcard fade-up">
+        <div class="score-badge">ðŸ“Š IELTS learner</div>
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"Ahmed Hassan's approach to IELTS Writing Task 2 completely transformed my essays. He identified my exact weakness â€” coherence and cohesion â€” and gave me a system that took me from IELTS goal to 7.5 in writing alone. Incredible teacher."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar">SR</div>
+          <div><div class="author-name">Sara Rashid</div><div class="author-tag">IELTS Academic Â· IELTS goal</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-1">
+        <div class="score-badge">ðŸ’¼ Business English</div>
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"After just 6 weeks of Business English with Ahmed Hassan, I led my first international client presentation entirely in English. My manager asked me what had changed. Ahmed Hassan's practical, professional approach is unlike anything I've tried before. Absolutely worth it."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#0077cc,var(--onyx-high));">KA</div>
+          <div><div class="author-name">Khalid Anwar</div><div class="author-tag">Business English Graduate</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-2">
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"I was a complete beginner â€” barely able to say 'hello' in English. Ahmed Hassan's patience and structured General English programme built my confidence step by step. Six months later, I'm having full conversations. He never made me feel embarrassed for making mistakes."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#cc5500,var(--onyx-high));">NJ</div>
+          <div><div class="author-name">Nadia Jaber</div><div class="author-tag">General English Â· Beginner to B1</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up">
+        <div class="score-badge">ðŸ† IELTS an excellent IELTS result.0</div>
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"an excellent IELTS result. I still cannot believe it. Ahmed Hassan told me it was achievable if I followed his plan exactly. I trusted him, did everything he prescribed, and the result was perfect. He is without question the finest IELTS teacher I have ever encountered."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,var(--green),rgba(14,76,146,0.4)); color:var(--onyx);">DA</div>
+          <div><div class="author-name">Dina Al-Farsi</div><div class="author-tag">IELTS Academic Â· an excellent IELTS result.0</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-1">
+        <div class="score-badge">ðŸŽ¤ Speaking Training</div>
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"I dreaded speaking English publicly. Three months with Ahmed Hassan's Speaking &amp; Communication course completely changed that. He gave me tools, not just practice â€” and the difference shows in every meeting and interview I've done since."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#8B44AC,var(--onyx-high));">LM</div>
+          <div><div class="author-name">Lina Mahmoud</div><div class="author-tag">Speaking &amp; Communication</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-2">
+        <div class="score-badge">ðŸ“Š IELTS learner</div>
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"Ahmed Hassan's IELTS speaking preparation is the best I've encountered. He simulated the real exam environment, gave me precise band descriptors feedback, and helped me develop answers that impressed the examiner. IELTS goal in speaking â€” I couldn't be happier."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#009966,var(--onyx-high));">FO</div>
+          <div><div class="author-name">Fatima Omar</div><div class="author-tag">IELTS Academic Â· IELTS goal</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up">
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"My company enrolled our entire team in Ahmed Hassan's corporate Business English programme. The results were measurable â€” better emails, sharper presentations, more confident client interactions. Highly recommended for any business investing in their team's English."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#cc3300,var(--onyx-high));">TH</div>
+          <div><div class="author-name">Tariq Hassan</div><div class="author-tag">Corporate Group Â· Business English</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-1">
+        <div class="score-badge">ðŸ“Š IELTS learner</div>
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"I needed IELTS goal for my nursing registration and was stuck at 6.5 for two years. Ahmed Hassan's 8-week intensive programme got me there. His listening and reading strategies were game-changing, and his writing corrections were incredibly detailed. Life-changing result."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#AA0099,var(--onyx-high));">RN</div>
+          <div><div class="author-name">Rania Nasser</div><div class="author-tag">IELTS Healthcare Â· IELTS goal</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-2">
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"My son was struggling with English at school. After just two months with Ahmed Hassan, his grade went from D to A. Ahmed Hassan has an exceptional ability to explain complex grammar in simple, relatable terms. He's the teacher every student deserves."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#0055AA,var(--onyx-high));">AM</div>
+          <div><div class="author-name">Ahmad M. (Parent)</div><div class="author-tag">Secondary School English</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up">
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"Studying online with Ahmed Hassan felt completely natural. He uses excellent digital tools, makes sessions engaging, and provides written feedback within 24 hours. The online format did not compromise quality at all â€” if anything it was more convenient."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#006633,var(--onyx-high));">MK</div>
+          <div><div class="author-name">Mohammed Khalil</div><div class="author-tag">Online General English</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-1">
+        <div class="score-badge">ðŸ’¼ Academic English</div>
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"Ahmed Hassan helped me prepare for my PhD application interviews at UK universities. He structured my academic English, coached my speaking, and reviewed my personal statement multiple times. I received three offers. His contribution was enormous."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#774400,var(--onyx-high));">LH</div>
+          <div><div class="author-name">Layla Hassan</div><div class="author-tag">Academic English Â· PhD Applicant</div></div>
+        </div>
+      </div>
+
+      <div class="tcard fade-up delay-2">
+        <div class="stars" style="margin-bottom:1rem;"><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span><span class="star">â˜…</span></div>
+        <p class="testimonial-text">"I joined Ahmed Hassan's group IELTS class and it was the best decision I made for my studies. The group dynamic, the peer practice, and Ahmed Hassan's expert guidance created a brilliant learning atmosphere. Three of us in the group achieved IELTS goal or above."</p>
+        <div class="testimonial-author" style="margin-top:1.5rem;">
+          <div class="author-avatar" style="background:linear-gradient(135deg,#990033,var(--onyx-high));">SA</div>
+          <div><div class="author-name">Sami Al-Hamad</div><div class="author-tag">Group IELTS Class Â· IELTS goal</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• TRUST STRIP â•â• -->
+<section class="section-sm" style="background:var(--onyx-mid);">
+  <div class="container">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center;">
+      <div class="slide-right">
+        <div class="overline" style="margin-bottom:1rem;">Why Students Choose Ahmed Hassan</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">The <span class="text-green">Difference</span><br/>You'll Feel</h2>
+        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85;">Every student who works with Ahmed Hassan receives a genuinely personalised experience â€” not a template. The results speak for themselves: structured of IELTS students achieve IELTS goal or above.</p>
+      </div>
+      <div class="slide-left" style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+        <div class="card" style="padding:1.75rem; text-align:center;">
+          <div style="font-size:1.75rem; margin-bottom:0.75rem;">ðŸŽ¯</div>
+          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Diagnostic-First</div>
+          <div style="font-size:0.82rem; color:var(--text-muted);">Every programme starts with a deep assessment of your specific gaps</div>
+        </div>
+        <div class="card" style="padding:1.75rem; text-align:center;">
+          <div style="font-size:1.75rem; margin-bottom:0.75rem;">ðŸ“ˆ</div>
+          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Measurable Progress</div>
+          <div style="font-size:0.82rem; color:var(--text-muted);">Weekly tracking and detailed reports so you see improvement clearly</div>
+        </div>
+        <div class="card" style="padding:1.75rem; text-align:center;">
+          <div style="font-size:1.75rem; margin-bottom:0.75rem;">ðŸ›¡ï¸</div>
+          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Guaranteed Results</div>
+          <div style="font-size:0.82rem; color:var(--text-muted);">First session satisfaction guarantee â€” you pay nothing if not satisfied</div>
+        </div>
+        <div class="card" style="padding:1.75rem; text-align:center;">
+          <div style="font-size:1.75rem; margin-bottom:0.75rem;">ðŸŒ</div>
+          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Global Students</div>
+          <div style="font-size:0.82rem; color:var(--text-muted);">Students from 40+ countries, online and in-person sessions available</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• CTA â•â• -->
+<section class="cta-section">
+  <div class="cta-section-glow"></div>
+  <div class="container text-center relative z-1 fade-up">
+    <div class="overline" style="justify-content:center; margin-bottom:1.5rem;">Begin Your Journey</div>
+    <h2 class="h2" style="margin-bottom:1rem;">Ready to Write Your <span class="text-green">Success Story?</span></h2>
+    <p class="section-desc" style="margin:0 auto 3rem;">Join learners building their English with structured guidance from Ahmed Hassan.</p>
+    <div class="flex justify-center gap-4 flex-wrap">
+      <a href="contact.html" class="btn btn-primary btn-lg magnetic">Book Your First Session</a>
+      <a href="pricing.html" class="btn btn-secondary btn-lg magnetic">View Pricing Plans</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo" style="margin-bottom:1rem; display:inline-flex;"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+        <p>Professional English training and IELTS preparation by a certified British Council educator.</p>
+        <div class="social-links mt-6"><a href="#" class="social-link">ðŸ’¬</a><a href="#" class="social-link">f</a><a href="#" class="social-link">ðŸ“·</a><a href="#" class="social-link">in</a><a href="#" class="social-link">â–¶</a></div>
+      </div>
+      <div class="footer-col"><h4>Navigation</h4><a href="index.html">Home</a><a href="about.html">About</a><a href="courses.html">Courses</a><a href="certifications.html">Certifications</a></div>
+      <div class="footer-col"><h4>Programs</h4><a href="courses.html">IELTS Preparation</a><a href="courses.html">Business English</a><a href="courses.html">General English</a><a href="courses.html">Speaking Training</a></div>
+      <div class="footer-col"><h4>Connect</h4><a href="contact.html">Contact</a><a href="pricing.html">Pricing</a><a href="testimonials.html">Testimonials</a><a href="contact.html">Book a Session</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>Â© 2025 Englishine â€” All Rights Reserved.</span>
+      <span style="color:var(--text-faint);">IELTS Specialist Â· Certified English Educator</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+<script>
+  // Spotlight on tcard elements
+  document.querySelectorAll('.tcard').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mouse-x', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--mouse-y', ((e.clientY - r.top)  / r.height * 100) + '%');
+    });
+  });
+
+  // Animate rating bars on scroll
+  const bars = document.querySelectorAll('.rating-bar-fill[data-width]');
+  const barObs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.width = entry.target.dataset.width;
+        barObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  bars.forEach(b => barObs.observe(b));
+</script>
+</body>
+</html>
+
+

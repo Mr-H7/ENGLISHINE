@@ -1,0 +1,391 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certifications â€” Englishine</title>
+  <meta name="description" content="View all professional certifications and academic qualifications of Englishine â€” IELTS Specialist and Certified English Educator." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .cert-grid-full {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 900px) { .cert-grid-full { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 540px)  { .cert-grid-full { grid-template-columns: 1fr; } }
+
+    .cert-card-v2 {
+      background: var(--onyx-card);
+      border-radius: var(--r-md);
+      padding: 2.25rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.85rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+      cursor: default;
+    }
+    .cert-card-v2::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: var(--r-md);
+      padding: 1px;
+      background: linear-gradient(145deg, rgba(14,76,146,0.2) 0%, rgba(14,76,146,0.04) 45%, transparent 65%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0.5;
+      transition: opacity 0.35s;
+    }
+    .cert-card-v2::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(14,76,146,0.05), transparent 40%);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .cert-card-v2:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+    .cert-card-v2:hover::before { opacity: 1; }
+    .cert-card-v2:hover::after  { opacity: 1; }
+    .cert-card-v2.featured {
+      background: linear-gradient(160deg, rgba(14,76,146,0.08) 0%, var(--onyx-card) 60%);
+    }
+    .cert-card-v2.featured::before { opacity: 1; }
+
+    .cert-num-tag {
+      position: absolute;
+      top: 1rem; right: 1.25rem;
+      font-family: var(--font-label);
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+    }
+    .cert-icon-v2 {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(14,76,146,0.12), rgba(14,76,146,0.03));
+      border: 1px solid rgba(14,76,146,0.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      transition: all 0.4s var(--ease-out);
+      position: relative; z-index: 1;
+      flex-shrink: 0;
+    }
+    .cert-card-v2:hover .cert-icon-v2 {
+      background: linear-gradient(135deg, rgba(14,76,146,0.18), rgba(14,76,146,0.07));
+      border-color: rgba(14,76,146,0.42);
+      box-shadow: 0 0 28px rgba(14,76,146,0.18);
+      transform: scale(1.08);
+    }
+    .cert-title-v2 {
+      font-family: var(--font-head);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-head);
+      line-height: 1.35;
+      position: relative; z-index: 1;
+    }
+    .cert-desc-v2 {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      position: relative; z-index: 1;
+    }
+    .cert-org-v2 {
+      font-family: var(--font-label);
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--green);
+      position: relative; z-index: 1;
+    }
+    .cert-year-v2 {
+      font-family: var(--font-label);
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-faint);
+      letter-spacing: 0.08em;
+      position: relative; z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div id="scroll-progress"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" aria-label="Primary navigation">
+  <a href="index.html" class="nav-logo" aria-label="Englishine home"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="courses.html">Courses</a></li><li><a href="videos.html">Videos</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="scholarships.html">Scholarships</a></li><li><a href="certifications.html">Certifications</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li></ul>
+  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Free Placement Test</a><button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button></div>
+</nav>
+<div class="mobile-menu"><button class="mobile-menu-close" aria-label="Close menu">×</button><a href="index.html">Home</a><a href="courses.html">Courses</a><a href="videos.html">Videos</a><a href="pricing.html">Pricing</a><a href="scholarships.html">Scholarships</a><a href="certifications.html">Certifications</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="container relative z-1 text-center">
+    <div class="overline fade-up" style="justify-content:center; margin-bottom:1.25rem;">Verified Credentials</div>
+    <h1 class="h1 fade-up delay-1" style="margin-bottom:1.25rem;">
+      Qualifications &amp;<br/><span class="text-green italic">Certifications</span>
+    </h1>
+    <p class="section-desc fade-up delay-2" style="margin:0 auto;">
+      Every certification reflects a commitment to teaching excellence, continuous professional development, and internationally recognised expertise.
+    </p>
+  </div>
+</section>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• STATS STRIP â•â• -->
+<div style="background:var(--onyx-mid);">
+  <div class="stats-strip">
+    <div class="stat-item fade-up">
+      <span class="stat-value" data-target="12" data-suffix="">â€”</span>
+      <span class="stat-label">Total Certifications</span>
+    </div>
+    <div class="stat-item fade-up delay-1">
+      <span class="stat-value" data-target="8" data-suffix="+">â€”</span>
+      <span class="stat-label">Years Qualified</span>
+    </div>
+    <div class="stat-item fade-up delay-2">
+      <span class="stat-value" data-target="4" data-suffix="">â€”</span>
+      <span class="stat-label">International Bodies</span>
+    </div>
+    <div class="stat-item fade-up delay-3">
+      <span class="stat-value" data-target="100" data-suffix="%">â€”</span>
+      <span class="stat-label">Verified &amp; Active</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• CERTS GRID â•â• -->
+<section class="section">
+  <div class="container">
+    <div class="section-header center fade-up">
+      <div class="overline" style="justify-content:center; margin-bottom:1rem;">Academic &amp; Professional</div>
+      <h2 class="h2">Full Certification <span class="text-underline">Portfolio</span></h2>
+      <p class="section-desc">Internationally recognised qualifications from the world's foremost educational and professional bodies.</p>
+    </div>
+
+    <div class="cert-grid-full stagger-children">
+
+      <div class="cert-card-v2 featured fade-up">
+        <div class="cert-num-tag">01</div>
+        <div class="cert-icon-v2">ðŸŽ“</div>
+        <div class="cert-org-v2">University Degree</div>
+        <div class="cert-title-v2">Bachelor of Education â€” English</div>
+        <div class="cert-desc-v2">Four-year academic degree specializing in English language, linguistics, and educational pedagogy. Provides the scholarly foundation for all professional teaching practice.</div>
+        <div class="cert-year-v2">Awarded Â· 2016</div>
+      </div>
+
+      <div class="cert-card-v2 featured fade-up delay-1">
+        <div class="cert-num-tag">02</div>
+        <div class="cert-icon-v2">ðŸŒ</div>
+        <div class="cert-org-v2">British Council</div>
+        <div class="cert-title-v2">New Teacher Training Programme (NTTP)</div>
+        <div class="cert-desc-v2">Prestigious international teacher development programme by the British Council â€” the world's foremost English language authority â€” covering advanced EFL methodology and leadership.</div>
+        <div class="cert-year-v2">Certified Â· 2019</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up delay-2">
+        <div class="cert-num-tag">03</div>
+        <div class="cert-icon-v2">ðŸ“‹</div>
+        <div class="cert-org-v2">International TEFL</div>
+        <div class="cert-title-v2">TEFL 120 Hours Certificate</div>
+        <div class="cert-desc-v2">Internationally recognized 120-hour Teaching English as a Foreign Language certification covering modern EFL methodology, lesson planning, and learner assessment.</div>
+        <div class="cert-year-v2">Certified Â· 2018</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up">
+        <div class="cert-num-tag">04</div>
+        <div class="cert-icon-v2">ðŸ“Š</div>
+        <div class="cert-org-v2">IELTS Specialist</div>
+        <div class="cert-title-v2">IELTS Teacher Training Certificate</div>
+        <div class="cert-desc-v2">Advanced specialist training in IELTS examination preparation â€” covering band descriptors, examiner expectations, and personalised student coaching for all four skills.</div>
+        <div class="cert-year-v2">Certified Â· 2020</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up delay-1">
+        <div class="cert-num-tag">05</div>
+        <div class="cert-icon-v2">ðŸ’¼</div>
+        <div class="cert-org-v2">Cambridge / BEC Aligned</div>
+        <div class="cert-title-v2">Business English Certificate</div>
+        <div class="cert-desc-v2">Professional qualification in Business English teaching â€” covering corporate communication, professional writing, presentations, negotiations, and business correspondence.</div>
+        <div class="cert-year-v2">Certified Â· 2021</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up delay-2">
+        <div class="cert-num-tag">06</div>
+        <div class="cert-icon-v2">ðŸ’»</div>
+        <div class="cert-org-v2">ICDL Foundation</div>
+        <div class="cert-title-v2">ICDL â€” International Computer Driving Licence</div>
+        <div class="cert-desc-v2">The world's leading digital literacy certification, enabling modern technology-enhanced English teaching environments and professional e-learning delivery.</div>
+        <div class="cert-year-v2">Certified Â· 2021</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up">
+        <div class="cert-num-tag">07</div>
+        <div class="cert-icon-v2">ðŸ“œ</div>
+        <div class="cert-org-v2">Professional Diploma</div>
+        <div class="cert-title-v2">Professional Teaching Diploma â€” Level 1</div>
+        <div class="cert-desc-v2">Advanced diploma extending core B.Ed. foundations with specialised teaching strategies, curriculum design, and formative assessment practice for EFL contexts.</div>
+        <div class="cert-year-v2">Awarded Â· 2017</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up delay-1">
+        <div class="cert-num-tag">08</div>
+        <div class="cert-icon-v2">ðŸ…</div>
+        <div class="cert-org-v2">Professional Diploma</div>
+        <div class="cert-title-v2">Professional Teaching Diploma â€” Level 2</div>
+        <div class="cert-desc-v2">Higher-level diploma covering advanced curriculum design, language assessment, differentiated instruction, and inclusive teaching methodologies for diverse learner groups.</div>
+        <div class="cert-year-v2">Awarded Â· 2018</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up delay-2">
+        <div class="cert-num-tag">09</div>
+        <div class="cert-icon-v2">ðŸ—£ï¸</div>
+        <div class="cert-org-v2">Pronunciation Specialist</div>
+        <div class="cert-title-v2">English Pronunciation &amp; Phonetics Certificate</div>
+        <div class="cert-desc-v2">Specialist certification in English phonetics, phonology, and pronunciation coaching â€” enabling targeted accent reduction and spoken fluency development.</div>
+        <div class="cert-year-v2">Certified Â· 2020</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up">
+        <div class="cert-num-tag">10</div>
+        <div class="cert-icon-v2">ðŸ§’</div>
+        <div class="cert-org-v2">Young Learners Programme</div>
+        <div class="cert-title-v2">Teaching English to Young Learners</div>
+        <div class="cert-desc-v2">Specialized certification for instructing children and young adult learners in English, incorporating play-based, communicative, and age-appropriate methodology.</div>
+        <div class="cert-year-v2">Certified Â· 2019</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up delay-1">
+        <div class="cert-num-tag">11</div>
+        <div class="cert-icon-v2">âœï¸</div>
+        <div class="cert-org-v2">Advanced English</div>
+        <div class="cert-title-v2">Advanced Grammar &amp; Writing Certificate</div>
+        <div class="cert-desc-v2">Specialist certificate in advanced English grammar, academic writing, and written communication â€” covering complex structures and formal written English across registers.</div>
+        <div class="cert-year-v2">Certified Â· 2022</div>
+      </div>
+
+      <div class="cert-card-v2 fade-up delay-2">
+        <div class="cert-num-tag">12</div>
+        <div class="cert-icon-v2">ðŸ–¥ï¸</div>
+        <div class="cert-org-v2">Digital Education</div>
+        <div class="cert-title-v2">Online English Teaching Certificate</div>
+        <div class="cert-desc-v2">Professional certification in online English language teaching â€” covering virtual classroom management, digital tool integration, and effective remote learner assessment.</div>
+        <div class="cert-year-v2">Certified Â· 2022</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• TRUST SECTION â•â• -->
+<section class="section glow-section" style="background:var(--onyx-mid);">
+  <div class="container">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center;">
+      <div class="slide-right">
+        <div class="overline" style="margin-bottom:1.1rem;">Why It Matters</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">Credentials That<br/><span class="text-green italic">Guarantee Quality</span></h2>
+        <p style="color:var(--text-muted); font-size:0.93rem; line-height:1.85; margin-bottom:1.1rem;">
+          In education, qualifications aren't just paperwork â€” they represent a verified commitment to professional standards, tested methodology, and ongoing development. Every certification Ahmed Hassan holds was earned through rigorous examination and real-world demonstration.
+        </p>
+        <p style="color:var(--text-muted); font-size:0.93rem; line-height:1.85; margin-bottom:2.25rem;">
+          When you train with Ahmed Hassan, you're not just getting a tutor â€” you're accessing internationally certified expertise validated by the world's leading educational institutions.
+        </p>
+        <a href="about.html" class="btn btn-secondary">Learn About Ahmed Hassan â†’</a>
+      </div>
+      <div class="slide-left delay-2" style="display:flex; flex-direction:column; gap:1rem;">
+        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
+          <div style="font-size:1.4rem; flex-shrink:0;">âœ…</div>
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">British Council Approved</div>
+            <div style="font-size:0.83rem; color:var(--text-muted);">NTTP certified by the world's leading English authority</div>
+          </div>
+        </div>
+        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
+          <div style="font-size:1.4rem; flex-shrink:0;">ðŸŒ</div>
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">Internationally Recognised</div>
+            <div style="font-size:0.83rem; color:var(--text-muted);">Qualifications accepted worldwide in academia and industry</div>
+          </div>
+        </div>
+        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
+          <div style="font-size:1.4rem; flex-shrink:0;">ðŸ“ˆ</div>
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">Continuously Developing</div>
+            <div style="font-size:0.83rem; color:var(--text-muted);">Ongoing CPD ensures teaching reflects the latest methodology</div>
+          </div>
+        </div>
+        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
+          <div style="font-size:1.4rem; flex-shrink:0;">ðŸŽ¯</div>
+          <div>
+            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">Specialist IELTS Expertise</div>
+            <div style="font-size:0.83rem; color:var(--text-muted);">Dedicated IELTS teacher training for measurable student results</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:clamp(5rem,10vw,9rem) 0; position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background:radial-gradient(ellipse 800px 350px at 50% 50%, rgba(14,76,146,0.065), transparent 70%); pointer-events:none;"></div>
+  <div class="container text-center relative z-1 fade-up">
+    <h2 class="h2" style="margin-bottom:1rem;">Train with a <span class="text-green italic">Certified</span> Expert</h2>
+    <p class="section-desc" style="margin:0 auto 2.75rem;">Your English goals deserve the best. Book your session with Ahmed Hassan today.</p>
+    <div class="flex justify-center gap-4 flex-wrap">
+      <a href="contact.html" class="btn btn-primary btn-lg">Book a Session</a>
+      <a href="courses.html" class="btn btn-secondary btn-lg">View Courses</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo" style="margin-bottom:1rem; display:inline-flex;"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+        <p>Professional English training and IELTS preparation by a certified British Council educator.</p>
+        <div class="social-links" style="margin-top:1.5rem;"><a href="#" class="social-link">ðŸ’¬</a><a href="#" class="social-link">f</a><a href="#" class="social-link">ðŸ“·</a><a href="#" class="social-link">in</a><a href="#" class="social-link">â–¶</a></div>
+      </div>
+      <div class="footer-col"><h4>Navigation</h4><a href="index.html">Home</a><a href="about.html">About</a><a href="courses.html">Courses</a><a href="certifications.html">Certifications</a></div>
+      <div class="footer-col"><h4>Programs</h4><a href="courses.html">IELTS Preparation</a><a href="courses.html">Business English</a><a href="courses.html">General English</a><a href="courses.html">Speaking Training</a></div>
+      <div class="footer-col"><h4>Connect</h4><a href="contact.html">Contact</a><a href="pricing.html">Pricing</a><a href="testimonials.html">Testimonials</a><a href="contact.html">Book a Session</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>Â© 2025 Englishine â€” All Rights Reserved.</span>
+      <span>IELTS Specialist Â· Certified English Educator</span>
+    </div>
+  </div>
+</footer>
+<script src="script.js"></script>
+<script>
+  // Spotlight on cert cards
+  document.querySelectorAll('.cert-card-v2').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mouse-x', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--mouse-y', ((e.clientY - r.top)  / r.height * 100) + '%');
+    });
+  });
+</script>
+</body>
+</html>
+
+

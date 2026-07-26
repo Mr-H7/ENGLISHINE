@@ -1,0 +1,676 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact â€” Englishine</title>
+  <meta name="description" content="Book a session or get in touch with Englishine â€” IELTS Specialist and Certified English Educator." />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* â”€â”€ WhatsApp button â”€â”€ */
+    .whatsapp-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      background: #25D366;
+      color: #fff;
+      font-family: var(--font-label);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 1rem 2rem;
+      border-radius: var(--r-sm);
+      transition: all 0.35s var(--ease-out);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .whatsapp-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .whatsapp-btn:hover {
+      background: #20bd5a;
+      box-shadow: 0 0 40px rgba(37,211,102,0.45);
+      transform: translateY(-2px);
+      color: #fff;
+    }
+    .whatsapp-btn:hover::before { opacity: 1; }
+    .whatsapp-icon {
+      width: 20px; height: 20px;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    /* â”€â”€ Contact form â”€â”€ */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 5rem;
+      align-items: start;
+    }
+    @media (max-width: 960px) { .contact-grid { grid-template-columns: 1fr; gap: 3rem; } }
+
+    /* â”€â”€ Booking card â”€â”€ */
+    .booking-card-v2 {
+      position: relative;
+      background: linear-gradient(160deg, rgba(14,76,146,0.1) 0%, var(--onyx-card) 65%);
+      border-radius: var(--r-lg);
+      padding: 2.75rem;
+      overflow: hidden;
+    }
+    .booking-card-v2::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-lg);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(14,76,146,0.38), rgba(14,76,146,0.08) 50%, transparent 80%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .booking-card-v2 .glow-corner {
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14,76,146,0.12), transparent 70%);
+      pointer-events: none;
+    }
+
+    /* â”€â”€ Step rows â”€â”€ */
+    .step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+      position: relative;
+    }
+    .step-row:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 17px;
+      top: 44px;
+      width: 1px;
+      height: calc(100% - 8px);
+      background: linear-gradient(to bottom, rgba(14,76,146,0.25), transparent);
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(14,76,146,0.1);
+      border: 1px solid rgba(14,76,146,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--green);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .step-text h4 {
+      font-family: var(--font-head);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+    .step-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* â”€â”€ Contact info items â”€â”€ */
+    .contact-info-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .contact-info-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--onyx-card);
+      border: 1px solid var(--onyx-border2);
+      border-radius: var(--r-md);
+      transition: all 0.25s var(--ease-out);
+    }
+    .contact-info-item:hover {
+      border-color: rgba(14,76,146,0.22);
+      transform: translateX(4px);
+    }
+    .cii-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--r-sm);
+      background: rgba(14,76,146,0.08);
+      border: 1px solid rgba(14,76,146,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .cii-label {
+      font-family: var(--font-label);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 0.2rem;
+    }
+    .cii-value {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-main);
+    }
+
+    /* â”€â”€ Social grid â”€â”€ */
+    .social-grid-v2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.85rem;
+    }
+    .social-card-v2 {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 1rem 1.25rem;
+      background: var(--onyx-card);
+      border: 1px solid var(--onyx-border2);
+      border-radius: var(--r-md);
+      transition: all 0.3s var(--ease-out);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .social-card-v2::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-md);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(14,76,146,0.2), transparent 60%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .social-card-v2:hover { border-color: rgba(14,76,146,0.2); transform: translateY(-3px); box-shadow: var(--shadow-card); }
+    .social-card-v2:hover::before { opacity: 1; }
+    .sc-icon {
+      width: 40px; height: 40px;
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .sc-name {
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.04em;
+    }
+    .sc-handle {
+      font-size: 0.72rem;
+      color: var(--text-faint);
+    }
+
+    /* â”€â”€ Availability cards â”€â”€ */
+    .avail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) { .avail-grid { grid-template-columns: 1fr; } }
+    .avail-card {
+      position: relative;
+      background: var(--onyx-card);
+      border-radius: var(--r-md);
+      padding: 2rem;
+      text-align: center;
+      overflow: hidden;
+      transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
+    }
+    .avail-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: var(--r-md);
+      padding: 1px;
+      background: linear-gradient(135deg, rgba(14,76,146,0.15), rgba(14,76,146,0.03) 50%, transparent 80%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+    .avail-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .avail-card.featured-avail {
+      background: linear-gradient(160deg, rgba(14,76,146,0.08), var(--onyx-card) 70%);
+    }
+    .avail-card.featured-avail::before {
+      background: linear-gradient(135deg, rgba(14,76,146,0.3), rgba(14,76,146,0.06) 50%, transparent 80%);
+    }
+
+    /* â”€â”€ CTA â”€â”€ */
+    .cta-section {
+      padding: clamp(5rem,9vw,8rem) 0;
+      background: var(--onyx-mid);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 800px 350px at 50% 50%, rgba(14,76,146,0.06), transparent 70%);
+      pointer-events: none;
+    }
+
+    /* â”€â”€ Form success state â”€â”€ */
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      background: rgba(14,76,146,0.05);
+      border: 1px solid rgba(14,76,146,0.2);
+      border-radius: var(--r-lg);
+    }
+    .form-success.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor-dot" id="cursor-dot"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+<div id="scroll-progress"></div>
+
+<!-- NAVBAR -->
+<nav class="navbar" aria-label="Primary navigation">
+  <a href="index.html" class="nav-logo" aria-label="Englishine home"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="courses.html">Courses</a></li><li><a href="videos.html">Videos</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="scholarships.html">Scholarships</a></li><li><a href="certifications.html">Certifications</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li></ul>
+  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Free Placement Test</a><button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button></div>
+</nav>
+<div class="mobile-menu"><button class="mobile-menu-close" aria-label="Close menu">×</button><a href="index.html">Home</a><a href="courses.html">Courses</a><a href="videos.html">Videos</a><a href="pricing.html">Pricing</a><a href="scholarships.html">Scholarships</a><a href="certifications.html">Certifications</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+  <div class="page-hero-grid"></div>
+  <div class="page-hero-bg"></div>
+  <div class="container relative z-1 text-center">
+    <div class="overline fade-up" style="justify-content:center; margin-bottom:1.25rem;">Let's Connect</div>
+    <h1 class="h1 fade-up delay-1" style="margin-bottom:1.25rem;">Get in Touch with<br/><span class="text-green italic">Ahmed Hassan</span></h1>
+    <p class="section-desc fade-up delay-2" style="margin:0 auto 2.5rem;">Ready to start your English journey? Book a free consultation or send a message â€” a personal response is guaranteed within 24 hours.</p>
+    <div class="fade-up delay-3" style="display:flex; align-items:center; justify-content:center; gap:1rem; flex-wrap:wrap;">
+      <a href="https://wa.me/yourphonenumber" class="whatsapp-btn" target="_blank" rel="noopener noreferrer">
+        <svg class="whatsapp-icon" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16.003 2.667C8.637 2.667 2.667 8.637 2.667 16c0 2.368.651 4.583 1.784 6.491L2.667 29.333l7.052-1.757A13.26 13.26 0 0016.003 29.333C23.363 29.333 29.333 23.363 29.333 16S23.363 2.667 16.003 2.667zm0 24.267a11.07 11.07 0 01-5.653-1.549l-.404-.24-4.187 1.043 1.075-3.952-.264-.41A11.069 11.069 0 014.933 16c0-6.107 4.963-11.067 11.07-11.067S27.067 9.893 27.067 16s-4.963 11.067-11.064 11.067v-.133zm6.072-8.288c-.33-.165-1.957-.965-2.261-1.075-.304-.11-.525-.165-.747.165-.22.33-.855 1.075-1.049 1.295-.193.22-.385.248-.715.083-.33-.165-1.393-.514-2.653-1.638-.98-.872-1.643-1.948-1.835-2.278-.193-.33-.021-.509.144-.673.149-.148.33-.385.495-.577.165-.193.22-.33.33-.55.11-.22.055-.412-.028-.578-.083-.165-.747-1.803-1.023-2.467-.269-.648-.544-.56-.747-.57-.193-.009-.413-.011-.633-.011-.22 0-.578.083-.88.412-.303.33-1.155 1.129-1.155 2.754 0 1.626 1.183 3.196 1.348 3.416.165.22 2.326 3.553 5.637 4.984.788.34 1.403.543 1.882.695.79.252 1.51.216 2.078.131.634-.095 1.957-.8 2.233-1.572.275-.77.275-1.431.193-1.571-.083-.142-.303-.22-.633-.385z"/></svg>
+        Chat on WhatsApp
+      </a>
+      <a href="#contact-form" class="btn btn-secondary" onclick="document.getElementById('contact-form').scrollIntoView({behavior:'smooth'}); return false;">Or Send a Message â†“</a>
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• MAIN CONTACT â•â• -->
+<section class="section" id="placement-test">
+  <div class="container">
+    <div class="contact-grid">
+
+      <!-- LEFT â€” Form -->
+      <div class="slide-right">
+        <div class="overline" style="margin-bottom:1.25rem;">Send a Message</div>
+        <h2 class="h2" style="margin-bottom:0.75rem;">Start the<br/><span class="text-green">Conversation</span></h2>
+        <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.8; margin-bottom:2.5rem;">Fill in the form and Ahmed Hassan will get back to you personally within 24 hours to discuss your goals and recommend the right programme.</p>
+
+        <form id="contact-form" novalidate>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
+            <div class="form-group">
+              <label class="form-label" for="first-name">First Name</label>
+              <input class="form-input" type="text" id="first-name" name="first_name" placeholder="Your first name" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="last-name">Last Name</label>
+              <input class="form-input" type="text" id="last-name" name="last_name" placeholder="Your last name" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Email Address</label>
+            <input class="form-input" type="email" id="email" name="email" placeholder="your@email.com" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Phone / WhatsApp <span style="color:var(--text-faint); font-weight:400;">(Optional)</span></label>
+            <input class="form-input" type="tel" id="phone" name="phone" placeholder="+20 XXX XXX XXXX" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="course">Interested Programme</label>
+            <select class="form-input form-select" id="course" name="course">
+              <option value="" disabled selected>Select a programmeâ€¦</option>
+              <option value="ielts">IELTS Preparation</option>
+              <option value="general">General English</option>
+              <option value="business">Business English</option>
+              <option value="speaking">Speaking &amp; Communication</option>
+              <option value="exam">Exam Preparation</option>
+              <option value="unsure">Not sure yet â€” need advice</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="level">Current English Level</label>
+            <select class="form-input form-select" id="level" name="level">
+              <option value="" disabled selected>Select your levelâ€¦</option>
+              <option value="beginner">Beginner (A1â€“A2)</option>
+              <option value="elementary">Elementary (B1)</option>
+              <option value="intermediate">Intermediate (B2)</option>
+              <option value="upper">Upper Intermediate (C1)</option>
+              <option value="advanced">Advanced (C2)</option>
+              <option value="unsure">Not sure</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="message">Your Message</label>
+            <textarea class="form-textarea" id="message" name="message" placeholder="Tell Ahmed Hassan about your goals, timeline, or any specific needsâ€¦" required></textarea>
+          </div>
+
+          <p style="font-size:0.78rem; color:var(--text-faint); line-height:1.6; margin-bottom:1.5rem;">
+            By submitting this form you agree to be contacted regarding your enquiry. Your information is never shared with third parties.
+          </p>
+
+          <button type="submit" class="btn btn-primary btn-lg w-full magnetic" style="justify-content:center;">
+            Send Message â†’
+          </button>
+        </form>
+
+        <div class="form-success" id="form-success">
+          <div style="font-size:2.5rem; margin-bottom:1rem;">âœ…</div>
+          <h3 class="h3" style="margin-bottom:0.75rem;">Message Sent!</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.75;">Thank you for reaching out. Ahmed Hassan will review your message and respond personally within 24 hours.</p>
+        </div>
+      </div>
+
+      <!-- RIGHT â€” Info & Booking -->
+      <div class="slide-left" style="display:flex; flex-direction:column; gap:2rem;">
+
+        <!-- WhatsApp CTA -->
+        <div class="booking-card-v2">
+          <div class="glow-corner"></div>
+          <div style="position:relative; z-index:1;">
+            <div class="overline" style="margin-bottom:1rem;">Fastest Response</div>
+            <h3 class="h3" style="margin-bottom:0.75rem;">Message on<br/><span class="text-green">WhatsApp</span></h3>
+            <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.8; margin-bottom:1.75rem;">
+              For the fastest response, reach Ahmed Hassan directly on WhatsApp. Typical response time: under 2 hours during working hours.
+            </p>
+            <a href="https://wa.me/yourphonenumber" class="whatsapp-btn" target="_blank" rel="noopener noreferrer" style="width:100%;">
+              <svg class="whatsapp-icon" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16.003 2.667C8.637 2.667 2.667 8.637 2.667 16c0 2.368.651 4.583 1.784 6.491L2.667 29.333l7.052-1.757A13.26 13.26 0 0016.003 29.333C23.363 29.333 29.333 23.363 29.333 16S23.363 2.667 16.003 2.667zm0 24.267a11.07 11.07 0 01-5.653-1.549l-.404-.24-4.187 1.043 1.075-3.952-.264-.41A11.069 11.069 0 014.933 16c0-6.107 4.963-11.067 11.07-11.067S27.067 9.893 27.067 16s-4.963 11.067-11.064 11.067v-.133zm6.072-8.288c-.33-.165-1.957-.965-2.261-1.075-.304-.11-.525-.165-.747.165-.22.33-.855 1.075-1.049 1.295-.193.22-.385.248-.715.083-.33-.165-1.393-.514-2.653-1.638-.98-.872-1.643-1.948-1.835-2.278-.193-.33-.021-.509.144-.673.149-.148.33-.385.495-.577.165-.193.22-.33.33-.55.11-.22.055-.412-.028-.578-.083-.165-.747-1.803-1.023-2.467-.269-.648-.544-.56-.747-.57-.193-.009-.413-.011-.633-.011-.22 0-.578.083-.88.412-.303.33-1.155 1.129-1.155 2.754 0 1.626 1.183 3.196 1.348 3.416.165.22 2.326 3.553 5.637 4.984.788.34 1.403.543 1.882.695.79.252 1.51.216 2.078.131.634-.095 1.957-.8 2.233-1.572.275-.77.275-1.431.193-1.571-.083-.142-.303-.22-.633-.385z"/></svg>
+              Chat on WhatsApp
+            </a>
+          </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="contact-info-grid">
+          <div class="contact-info-item">
+            <div class="cii-icon">âœ‰ï¸</div>
+            <div>
+              <div class="cii-label">Email</div>
+              <div class="cii-value">ahmed.english@example.com</div>
+            </div>
+          </div>
+          <div class="contact-info-item">
+            <div class="cii-icon">ðŸ“ž</div>
+            <div>
+              <div class="cii-label">Phone / WhatsApp</div>
+              <div class="cii-value">+20 XXX XXX XXXX</div>
+            </div>
+          </div>
+          <div class="contact-info-item">
+            <div class="cii-icon">ðŸ•</div>
+            <div>
+              <div class="cii-label">Response Time</div>
+              <div class="cii-value">Within 24 hours guaranteed</div>
+            </div>
+          </div>
+          <div class="contact-info-item">
+            <div class="cii-icon">ðŸŒ</div>
+            <div>
+              <div class="cii-label">Teaching Availability</div>
+              <div class="cii-value">Online Worldwide Â· In-Person Available</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social -->
+        <div>
+          <div style="font-family:var(--font-label); font-size:0.68rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-faint); margin-bottom:1rem;">Follow &amp; Connect</div>
+          <div class="social-grid-v2">
+            <a href="#" class="social-card-v2" target="_blank" rel="noopener">
+              <div class="sc-icon" style="background:rgba(37,211,102,0.1);">ðŸ’¬</div>
+              <div><div class="sc-name">WhatsApp</div><div class="sc-handle">Direct Message</div></div>
+            </a>
+            <a href="#" class="social-card-v2" target="_blank" rel="noopener">
+              <div class="sc-icon" style="background:rgba(24,119,242,0.1);">f</div>
+              <div><div class="sc-name">Facebook</div><div class="sc-handle">@AhmedEnglish</div></div>
+            </a>
+            <a href="#" class="social-card-v2" target="_blank" rel="noopener">
+              <div class="sc-icon" style="background:rgba(228,64,95,0.1);">ðŸ“·</div>
+              <div><div class="sc-name">Instagram</div><div class="sc-handle">@ahmed.english</div></div>
+            </a>
+            <a href="#" class="social-card-v2" target="_blank" rel="noopener">
+              <div class="sc-icon" style="background:rgba(10,102,194,0.1);">in</div>
+              <div><div class="sc-name">LinkedIn</div><div class="sc-handle">Ahmed Hassan</div></div>
+            </a>
+            <a href="#" class="social-card-v2" target="_blank" rel="noopener">
+              <div class="sc-icon" style="background:rgba(255,0,0,0.08);">â–¶</div>
+              <div><div class="sc-name">YouTube</div><div class="sc-handle">Free IELTS Lessons</div></div>
+            </a>
+            <a href="#" class="social-card-v2" target="_blank" rel="noopener">
+              <div class="sc-icon" style="background:rgba(0,168,232,0.1);">âœˆ</div>
+              <div><div class="sc-name">Telegram</div><div class="sc-handle">@AhmedIELTS</div></div>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• HOW TO BOOK â•â• -->
+<section class="section" style="background:var(--onyx-mid);">
+  <div class="container">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:start;">
+
+      <div class="slide-right">
+        <div class="overline" style="margin-bottom:1rem;">Getting Started</div>
+        <h2 class="h2" style="margin-bottom:1.25rem;">How to Book<br/><span class="text-green">Your Session</span></h2>
+        <p style="color:var(--text-muted); font-size:0.9rem; line-height:1.85; margin-bottom:2.5rem;">
+          Booking with Ahmed Hassan is simple and personal. From initial contact to your first session, the process is designed to be smooth and transparent.
+        </p>
+
+        <div class="step-row">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <h4>Send Your Enquiry</h4>
+            <p>Fill in the contact form above, message on WhatsApp, or email directly. Tell Ahmed Hassan about your goals and current level.</p>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <h4>Free 30-Min Consultation</h4>
+            <p>Ahmed Hassan schedules a free consultation to assess your English level, understand your goals, and recommend the best programme.</p>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <h4>Receive Your Personalised Plan</h4>
+            <p>You'll receive a tailored study plan outlining your programme, session schedule, materials, and milestones.</p>
+          </div>
+        </div>
+        <div class="step-row" style="margin-bottom:0;">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <h4>Begin Your Journey</h4>
+            <p>Start your first session and experience the difference that expert, certified, personalised English instruction makes from day one.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick booking card -->
+      <div class="slide-left">
+        <div class="card" style="padding:2.75rem; border-color:rgba(14,76,146,0.18);">
+          <div class="overline" style="margin-bottom:1.25rem;">Quick Booking</div>
+          <h3 class="h3" style="margin-bottom:1rem;">Book a Free<br/>Consultation Now</h3>
+          <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.8; margin-bottom:2rem;">
+            The fastest way to get started is a quick WhatsApp message. Tell Ahmed Hassan your name and your goal â€” he'll take it from there.
+          </p>
+
+          <a href="https://wa.me/yourphonenumber?text=Hello%20Mr.%20Ahmed%2C%20I%20am%20interested%20in%20your%20English%20courses.%20I%20would%20like%20to%20book%20a%20free%20consultation." class="whatsapp-btn" target="_blank" rel="noopener noreferrer" style="width:100%; margin-bottom:1.5rem;">
+            <svg class="whatsapp-icon" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16.003 2.667C8.637 2.667 2.667 8.637 2.667 16c0 2.368.651 4.583 1.784 6.491L2.667 29.333l7.052-1.757A13.26 13.26 0 0016.003 29.333C23.363 29.333 29.333 23.363 29.333 16S23.363 2.667 16.003 2.667zm0 24.267a11.07 11.07 0 01-5.653-1.549l-.404-.24-4.187 1.043 1.075-3.952-.264-.41A11.069 11.069 0 014.933 16c0-6.107 4.963-11.067 11.07-11.067S27.067 9.893 27.067 16s-4.963 11.067-11.064 11.067v-.133zm6.072-8.288c-.33-.165-1.957-.965-2.261-1.075-.304-.11-.525-.165-.747.165-.22.33-.855 1.075-1.049 1.295-.193.22-.385.248-.715.083-.33-.165-1.393-.514-2.653-1.638-.98-.872-1.643-1.948-1.835-2.278-.193-.33-.021-.509.144-.673.149-.148.33-.385.495-.577.165-.193.22-.33.33-.55.11-.22.055-.412-.028-.578-.083-.165-.747-1.803-1.023-2.467-.269-.648-.544-.56-.747-.57-.193-.009-.413-.011-.633-.011-.22 0-.578.083-.88.412-.303.33-1.155 1.129-1.155 2.754 0 1.626 1.183 3.196 1.348 3.416.165.22 2.326 3.553 5.637 4.984.788.34 1.403.543 1.882.695.79.252 1.51.216 2.078.131.634-.095 1.957-.8 2.233-1.572.275-.77.275-1.431.193-1.571-.083-.142-.303-.22-.633-.385z"/></svg>
+            Book via WhatsApp
+          </a>
+
+          <div style="text-align:center; position:relative; margin-bottom:1.5rem;">
+            <div style="height:1px; background:var(--onyx-border2);"></div>
+            <span style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--onyx-card); padding:0 0.75rem; font-family:var(--font-label); font-size:0.68rem; color:var(--text-faint); letter-spacing:0.08em;">OR</span>
+          </div>
+
+          <a href="#contact-form" class="btn btn-secondary w-full magnetic" style="justify-content:center;" onclick="document.getElementById('main-contact-form').scrollIntoView({behavior:'smooth'}); return false;">
+            Use the Contact Form â†‘
+          </a>
+
+          <div style="margin-top:1.5rem; padding:1.25rem; background:rgba(14,76,146,0.05); border:1px solid rgba(14,76,146,0.12); border-radius:var(--r-sm); text-align:center;">
+            <div style="font-size:1.3rem; margin-bottom:0.4rem;">ðŸ›¡ï¸</div>
+            <div style="font-family:var(--font-label); font-size:0.72rem; font-weight:600; color:var(--text-muted); line-height:1.65;">First session satisfaction guarantee<br/>Not satisfied? You pay nothing.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• AVAILABILITY â•â• -->
+<section class="section">
+  <div class="container">
+    <div class="section-header center fade-up" style="margin-bottom:3.5rem;">
+      <div class="overline" style="justify-content:center; margin-bottom:1rem;">Schedule</div>
+      <h2 class="h2">Session <span class="text-green text-underline">Availability</span></h2>
+      <p class="section-desc" style="margin-top:0.75rem;">Flexible scheduling across time zones â€” sessions available 6 days a week.</p>
+    </div>
+
+    <div class="avail-grid stagger-children">
+      <div class="avail-card fade-up">
+        <div style="font-size:2.25rem; margin-bottom:1rem;">ðŸŒ…</div>
+        <h4 style="font-family:var(--font-head); font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;">Morning</h4>
+        <div style="font-family:var(--font-label); font-size:0.8rem; font-weight:700; color:var(--green); margin-bottom:0.6rem;">8:00 AM â€“ 12:00 PM</div>
+        <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.6;">Available Sunday â€“ Thursday</p>
+      </div>
+      <div class="avail-card featured-avail fade-up delay-1">
+        <div style="font-size:2.25rem; margin-bottom:1rem;">â˜€ï¸</div>
+        <h4 style="font-family:var(--font-head); font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;">Afternoon</h4>
+        <div style="font-family:var(--font-label); font-size:0.8rem; font-weight:700; color:var(--green); margin-bottom:0.6rem;">2:00 PM â€“ 6:00 PM</div>
+        <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.6;">Available Sunday â€“ Friday</p>
+      </div>
+      <div class="avail-card fade-up delay-2">
+        <div style="font-size:2.25rem; margin-bottom:1rem;">ðŸŒ™</div>
+        <h4 style="font-family:var(--font-head); font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;">Evening</h4>
+        <div style="font-family:var(--font-label); font-size:0.8rem; font-weight:700; color:var(--green); margin-bottom:0.6rem;">7:00 PM â€“ 10:00 PM</div>
+        <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.6;">Available Monday â€“ Thursday</p>
+      </div>
+    </div>
+
+    <div class="text-center mt-8 fade-up">
+      <p style="font-size:0.83rem; color:var(--text-faint);">Time zone: Egypt Standard Time · Online learning options available</p>
+    </div>
+  </div>
+</section>
+
+<!-- Section Divider -->
+<div class="section-divider"><div class="section-divider-dot"></div></div>
+
+<!-- â•â• CTA â•â• -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container text-center relative z-1 fade-up">
+    <div class="overline" style="justify-content:center; margin-bottom:1.5rem;">Take the First Step</div>
+    <h2 class="h2" style="margin-bottom:1rem;">Your English Journey<br/>Starts <span class="text-green">Today</span></h2>
+    <p class="section-desc" style="margin:0 auto 3rem;">Don't wait. Every day without proper guidance is a day further from your goal. Book your free consultation now.</p>
+    <div class="flex justify-center gap-4 flex-wrap">
+      <a href="https://wa.me/yourphonenumber" class="whatsapp-btn magnetic" target="_blank" rel="noopener noreferrer">
+        <svg class="whatsapp-icon" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16.003 2.667C8.637 2.667 2.667 8.637 2.667 16c0 2.368.651 4.583 1.784 6.491L2.667 29.333l7.052-1.757A13.26 13.26 0 0016.003 29.333C23.363 29.333 29.333 23.363 29.333 16S23.363 2.667 16.003 2.667zm0 24.267a11.07 11.07 0 01-5.653-1.549l-.404-.24-4.187 1.043 1.075-3.952-.264-.41A11.069 11.069 0 014.933 16c0-6.107 4.963-11.067 11.07-11.067S27.067 9.893 27.067 16s-4.963 11.067-11.064 11.067v-.133zm6.072-8.288c-.33-.165-1.957-.965-2.261-1.075-.304-.11-.525-.165-.747.165-.22.33-.855 1.075-1.049 1.295-.193.22-.385.248-.715.083-.33-.165-1.393-.514-2.653-1.638-.98-.872-1.643-1.948-1.835-2.278-.193-.33-.021-.509.144-.673.149-.148.33-.385.495-.577.165-.193.22-.33.33-.55.11-.22.055-.412-.028-.578-.083-.165-.747-1.803-1.023-2.467-.269-.648-.544-.56-.747-.57-.193-.009-.413-.011-.633-.011-.22 0-.578.083-.88.412-.303.33-1.155 1.129-1.155 2.754 0 1.626 1.183 3.196 1.348 3.416.165.22 2.326 3.553 5.637 4.984.788.34 1.403.543 1.882.695.79.252 1.51.216 2.078.131.634-.095 1.957-.8 2.233-1.572.275-.77.275-1.431.193-1.571-.083-.142-.303-.22-.633-.385z"/></svg>
+        Message on WhatsApp
+      </a>
+      <a href="pricing.html" class="btn btn-secondary btn-lg magnetic">View Pricing Plans</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo" style="margin-bottom:1rem; display:inline-flex;"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>English Learning Platform</small></span></a>
+        <p>Professional English training and IELTS preparation by a certified British Council educator. Your success is the goal.</p>
+        <div class="social-links mt-6">
+          <a href="#" class="social-link">ðŸ’¬</a><a href="#" class="social-link">f</a><a href="#" class="social-link">ðŸ“·</a><a href="#" class="social-link">in</a><a href="#" class="social-link">â–¶</a>
+        </div>
+      </div>
+      <div class="footer-col"><h4>Navigation</h4><a href="index.html">Home</a><a href="about.html">About</a><a href="courses.html">Courses</a><a href="certifications.html">Certifications</a></div>
+      <div class="footer-col"><h4>Programs</h4><a href="courses.html">IELTS Preparation</a><a href="courses.html">Business English</a><a href="courses.html">General English</a><a href="courses.html">Speaking Training</a><a href="courses.html">Exam Preparation</a></div>
+      <div class="footer-col"><h4>Connect</h4><a href="contact.html">Contact</a><a href="pricing.html">Pricing</a><a href="testimonials.html">Testimonials</a><a href="contact.html">Book a Session</a></div>
+    </div>
+    <div class="footer-bottom">
+      <span>Â© 2025 Englishine â€” All Rights Reserved.</span>
+      <span style="color:var(--text-faint);">IELTS Specialist Â· Certified English Educator</span>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+<script>
+  // Form submit (demo â€” shows success state)
+  const form = document.getElementById('main-contact-form');
+  const success = document.getElementById('form-success');
+  if (form) {
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      form.style.display = 'none';
+      success.classList.add('visible');
+    });
+  }
+</script>
+</body>
+</html>
+
+
+
+
