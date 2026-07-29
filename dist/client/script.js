@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    ENGLISHINE â€” script.js v2.0
    Advanced Animations Â· Luxury Interactions Â· Premium UX
    ============================================================ */
@@ -467,6 +467,18 @@
   /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
      PAGE ENTRANCE ANIMATION
   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+  const videoFilterButtons = document.querySelectorAll('.library-filters [data-filter]');
+  const videoCards = document.querySelectorAll('.lesson-card[data-category]');
+  videoFilterButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const category = button.dataset.filter;
+      videoFilterButtons.forEach(item => item.classList.toggle('active', item === button));
+      videoCards.forEach(card => {
+        card.hidden = category !== 'all' && card.dataset.category !== category;
+      });
+    });
+  });
+
   document.body.style.opacity = '0';
   document.body.style.transition = 'opacity 0.5s ease';
   window.addEventListener('load', () => {
