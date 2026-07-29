@@ -285,12 +285,12 @@
       e.preventDefault();
       const btn = contactForm.querySelector('[type="submit"]');
       const orig = btn.innerHTML;
-      btn.innerHTML = '<span style="opacity:0.7;">Sendingâ€¦</span>';
+      btn.innerHTML = '<span style="opacity:0.7;">Sending...</span>';
       btn.disabled = true;
       btn.style.cursor = 'not-allowed';
 
       setTimeout(() => {
-        btn.innerHTML = 'âœ“ Message Sent';
+        btn.innerHTML = '✓ Message Sent';
         btn.style.background = 'linear-gradient(135deg,#0E4C92,#04326D)';
         btn.style.boxShadow = '0 0 32px rgba(14,76,146,0.35)';
         contactForm.reset();
