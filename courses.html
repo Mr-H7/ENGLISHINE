@@ -1,45 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Structured English Courses — Englishine</title>
-  <meta name="description" content="Structured English programmes for middle and high school students, grammar and writing, exam preparation, and top student improvement." />
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="Explore structured English programmes for middle and high school students, grammar and writing, exam preparation, and advanced follow-up.">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="courses-page">
 <div id="scroll-progress"></div>
-<nav class="navbar" aria-label="Primary navigation">
-  <a href="index.html" class="nav-logo" aria-label="Englishine home"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a>
-  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a class="active" href="courses.html">Courses</a></li><li><a href="videos.html">Videos</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="scholarships.html">Scholarships</a></li><li><a href="certifications.html">Certifications</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li></ul>
-  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Book a Free Placement Test</a><button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button></div>
+<nav class="navbar home-navbar" aria-label="Primary navigation">
+  <a href="index.html" class="nav-logo home-brand" aria-label="Englishine home">
+    <img src="assets/logo/englishine-logo.svg" alt="" class="official-logo">
+    <span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a class="active" href="courses.html">Programmes</a></li>
+    <li><a href="videos.html">Video Library</a></li>
+    <li><a href="pricing.html">Pricing</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="certifications.html">Certifications</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="contact.html#placement-test" class="btn-nav">Book Placement Test</a>
+    <button class="hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
 </nav>
-<div class="mobile-menu"><button class="mobile-menu-close" aria-label="Close menu">×</button><a href="index.html">Home</a><a href="courses.html">Courses</a><a href="videos.html">Videos</a><a href="pricing.html">Pricing</a><a href="scholarships.html">Scholarships</a><a href="certifications.html">Certifications</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
-<header class="platform-page-hero">
-  <div class="hero-grid"></div>
-  <div class="container relative z-1 text-center">
-    <div class="overline fade-up">Training Programmes</div>
-    <h1 class="h1 fade-up delay-1">Structured English <span class="text-blue italic">Courses</span></h1>
-    <p class="section-desc fade-up delay-2">Focused programmes for school students, grammar development, writing support, exam preparation, and top student improvement.</p>
-    <div class="library-filters fade-up delay-3" style="margin-top:2.5rem; margin-bottom:0;">
-      <a class="active" href="#programmes">All Courses</a><a href="#middle-school">Middle School</a><a href="#high-school">High School</a><a href="#grammar-writing">Grammar &amp; Writing</a><a href="#exam-preparation">Exam Preparation</a><a href="#top-students">Top Students</a>
+<div class="mobile-menu" aria-hidden="true">
+  <button class="mobile-menu-close" type="button" aria-label="Close menu">×</button>
+  <a href="index.html">Home</a><a href="courses.html">Programmes</a><a href="videos.html">Video Library</a><a href="pricing.html">Pricing</a><a href="about.html">About</a><a href="certifications.html">Certifications</a><a href="contact.html">Contact</a>
+</div>
+
+<header class="courses-hero" id="courses-top">
+  <div class="home-grid-texture"></div>
+  <div class="home-container courses-hero-layout">
+    <div class="courses-hero-copy">
+      <p class="home-eyebrow fade-up">Programmes</p>
+      <h1 class="fade-up delay-1">Structured English Courses for <em>Every Learning Stage</em></h1>
+      <p class="fade-up delay-2">Choose the right English track for your school stage, skill level, and learning goal — from curriculum explanation to grammar, writing, exam preparation, and advanced follow-up.</p>
+      <div class="home-actions fade-up delay-3"><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Free Placement Test</a><a href="#programme-browser" class="home-btn home-btn-ghost">Explore Programmes</a></div>
+      <div class="courses-hero-chips fade-up delay-4"><span>Middle School</span><span>High School</span><span>Grammar &amp; Writing</span><span>Exam Preparation</span><span>Top Students Program</span></div>
+    </div>
+    <div class="course-dashboard fade-in delay-2" aria-label="Englishine programme pathway preview">
+      <div class="dashboard-top"><span class="dashboard-label">Your Englishine Path</span><span class="dashboard-status">Stage-based</span></div>
+      <div class="dashboard-stage"><small>01 · Choose your stage</small><div><span class="selected">Middle School</span><span>High School</span></div></div>
+      <div class="dashboard-path">
+        <article><span>01</span><div><small>Foundation</small><strong>Curriculum Explanation</strong></div><i></i></article>
+        <article><span>02</span><div><small>Skill building</small><strong>Grammar &amp; Writing</strong></div><i></i></article>
+        <article><span>03</span><div><small>Goal</small><strong>Exam Preparation</strong></div><i></i></article>
+      </div>
+      <div class="dashboard-mentor"><img src="assets/mr-ahmed/mr-ahmed-portrait.png" alt="Mr Ahmed Abo Mazen"><div><small>Guided by</small><strong>Mr Ahmed Abo Mazen</strong><span>English Instructor &amp; Founder</span></div></div>
     </div>
   </div>
 </header>
+
 <main>
-<section class="section" id="programmes"><div class="container">
-  <div class="split-heading fade-up"><div><div class="overline">Choose Your Programme</div><h2 class="h2">School-stage support with a <span class="text-blue italic">clear structure.</span></h2></div><p class="section-desc">Each programme combines explanation, guided practice, video review, and access that follows the student’s stage and subscription.</p></div>
-  <div class="course-catalog-grid stagger-children">
-    <article class="course-card course-product card-3d fade-up" id="middle-school"><div class="course-top"><span class="badge">Middle School</span><span class="course-format">Guided Programme</span></div><div class="course-art course-art-a"><span>MID</span><b>BUILD STRONG FOUNDATIONS</b></div><h3>Middle School English</h3><p>Structured English lessons for middle school students covering curriculum, grammar, vocabulary, reading, and writing.</p><div class="course-specs"><span>Stage: Middle School</span><span>Format: Recorded + Guided</span><span>Access: Subscription</span></div><div class="course-bottom"><div><small>Availability</small><strong>Coming Soon</strong></div><a href="contact.html" class="btn btn-secondary btn-sm">View Programme</a></div></article>
-    <article class="course-card course-product card-3d fade-up" id="high-school"><div class="course-top"><span class="badge">High School</span><span class="course-format">Curriculum Support</span></div><div class="course-art course-art-b"><span>HIGH</span><b>EXPLAIN · PRACTISE · IMPROVE</b></div><h3>High School English</h3><p>Focused English support for high school students with curriculum explanation, exam practice, and writing development.</p><div class="course-specs"><span>Stage: High School</span><span>Format: Recorded + Guided</span><span>Access: Subscription</span></div><div class="course-bottom"><div><small>Availability</small><strong>Coming Soon</strong></div><a href="pricing.html" class="btn btn-primary btn-sm">Join Subscription</a></div></article>
-    <article class="course-card course-product card-3d fade-up" id="grammar-writing"><div class="course-top"><span class="badge">Core Skills</span><span class="course-format">Practice Track</span></div><div class="course-art course-art-c"><span>G+W</span><b>ACCURACY IN EVERY ANSWER</b></div><h3>Grammar &amp; Writing</h3><p>Practical lessons to strengthen grammar accuracy, sentence structure, paragraph writing, and exam answers.</p><div class="course-specs"><span>Level: Stage-Based</span><span>Format: Lessons + Practice</span><span>Access: Subscription</span></div><div class="course-bottom"><div><small>Availability</small><strong>Coming Soon</strong></div><a href="courses.html#grammar-writing" class="btn btn-secondary btn-sm">Learn More</a></div></article>
-    <article class="course-card course-product card-3d fade-up" id="exam-preparation"><div class="course-top"><span class="badge">School Exams</span><span class="course-format">Revision Track</span></div><div class="course-art course-art-b"><span>EXAM</span><b>REVISE WITH PURPOSE</b></div><h3>Exam Preparation</h3><p>Targeted revision, model questions, exam strategies, and guided practice for school assessments.</p><div class="course-specs"><span>Level: Middle + High School</span><span>Format: Revision + Models</span><span>Access: Subscription</span></div><div class="course-bottom"><div><small>Availability</small><strong>Coming Soon</strong></div><a href="contact.html" class="btn btn-secondary btn-sm">View Programme</a></div></article>
-    <article class="course-card course-product card-3d fade-up" id="top-students"><div class="course-top"><span class="badge">Advanced Follow-Up</span><span class="course-format">Higher-Level Practice</span></div><div class="course-art course-art-a"><span>TOP</span><b>AIM FOR STRONGER RESULTS</b></div><h3>Top Students Program</h3><p>Advanced follow-up and higher-level practice for motivated students aiming for stronger results.</p><div class="course-specs"><span>Level: Motivated Students</span><span>Format: Advanced Practice</span><span>Access: Subscription</span></div><div class="course-bottom"><div><small>Availability</small><strong>Coming Soon</strong></div><a href="contact.html" class="btn btn-primary btn-sm">Learn More</a></div></article>
+<section class="courses-section programme-browser" id="programme-browser">
+  <div class="home-container">
+    <header class="courses-section-head fade-up"><p class="home-eyebrow">Programme Browser</p><h2>Find the Track That <em>Matches Your Needs</em></h2><p>Start with a programme category, then narrow the options by school year, skill, or learning goal.</p></header>
+
+    <div class="courses-filter-shell fade-up">
+      <div class="courses-main-filters" role="group" aria-label="Programme categories">
+        <button type="button" class="active" data-course-filter="all" aria-pressed="true">All Programmes</button>
+        <button type="button" data-course-filter="middle" aria-pressed="false">Middle School</button>
+        <button type="button" data-course-filter="high" aria-pressed="false">High School</button>
+        <button type="button" data-course-filter="grammar" aria-pressed="false">Grammar &amp; Writing</button>
+        <button type="button" data-course-filter="exam" aria-pressed="false">Exam Preparation</button>
+        <button type="button" data-course-filter="top" aria-pressed="false">Top Students</button>
+      </div>
+
+      <div class="courses-subfilter" data-subfilter-panel="middle" data-filter-attribute="year" hidden>
+        <span>Middle School Years</span>
+        <div role="group" aria-label="Middle School years"><button type="button" class="active" data-subfilter="all">All Middle School</button><button type="button" data-subfilter="first">1st Year Middle School</button><button type="button" data-subfilter="second">2nd Year Middle School</button><button type="button" data-subfilter="third">3rd Year Middle School</button></div>
+      </div>
+      <div class="courses-subfilter" data-subfilter-panel="high" data-filter-attribute="year" hidden>
+        <span>High School Years</span>
+        <div role="group" aria-label="High School years"><button type="button" class="active" data-subfilter="all">All High School</button><button type="button" data-subfilter="first">1st Year High School</button><button type="button" data-subfilter="second">2nd Year High School</button><button type="button" data-subfilter="third">3rd Year High School</button></div>
+      </div>
+      <div class="courses-subfilter" data-subfilter-panel="grammar" data-filter-attribute="skill" hidden>
+        <span>Grammar &amp; Writing Skills</span>
+        <div role="group" aria-label="Grammar and writing skills"><button type="button" class="active" data-subfilter="all">All Skills</button><button type="button" data-subfilter="grammar-foundations">Grammar Foundations</button><button type="button" data-subfilter="sentence-structure">Sentence Structure</button><button type="button" data-subfilter="paragraph-writing">Paragraph Writing</button><button type="button" data-subfilter="common-mistakes">Common Mistakes</button></div>
+      </div>
+      <div class="courses-subfilter" data-subfilter-panel="exam" data-filter-attribute="track" hidden>
+        <span>Exam Preparation Focus</span>
+        <div role="group" aria-label="Exam preparation focus"><button type="button" class="active" data-subfilter="all">All Exam Prep</button><button type="button" data-subfilter="revision-plans">Revision Plans</button><button type="button" data-subfilter="model-questions">Model Questions</button><button type="button" data-subfilter="exam-techniques">Exam Techniques</button><button type="button" data-subfilter="writing-for-exams">Writing for Exams</button></div>
+      </div>
+      <div class="courses-subfilter" data-subfilter-panel="top" data-filter-attribute="track" hidden>
+        <span>Top Students Focus</span>
+        <div role="group" aria-label="Top Students tracks"><button type="button" class="active" data-subfilter="all">All Top Students</button><button type="button" data-subfilter="top-middle">Top Middle School Students</button><button type="button" data-subfilter="top-high">Top High School Students</button><button type="button" data-subfilter="advanced-grammar">Advanced Grammar &amp; Writing</button><button type="button" data-subfilter="exam-excellence">Exam Excellence</button></div>
+      </div>
+    </div>
+
+    <div class="courses-card-grid" id="courses-grid">
+      <article class="course-stage-card card-3d fade-up" data-category="middle" data-stage="middle-school" data-year="first">
+        <div class="course-card-head"><span class="course-category">Middle School</span><span class="course-year">1st Year</span></div><b class="course-number">01</b>
+        <h3>1st Year Middle School English</h3><p>Structured English support for first-year middle school students, focusing on curriculum explanation, grammar foundations, vocabulary, reading, and writing practice.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Curriculum explanation</li><li>Grammar foundations</li><li>Vocabulary</li><li>Reading practice</li><li>Writing basics</li></ul></div>
+        <div class="course-access"><span>Structured lessons</span><span>Guided follow-up</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">Ask About This Track <span>→</span></a>
+      </article>
+      <article class="course-stage-card card-3d fade-up" data-category="middle" data-stage="middle-school" data-year="second">
+        <div class="course-card-head"><span class="course-category">Middle School</span><span class="course-year">2nd Year</span></div><b class="course-number">02</b>
+        <h3>2nd Year Middle School English</h3><p>A structured track for second-year middle school students to strengthen grammar, vocabulary, reading comprehension, writing, and exam preparation.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Grammar development</li><li>Vocabulary practice</li><li>Reading comprehension</li><li>Writing practice</li><li>Exam-style questions</li></ul></div>
+        <div class="course-access"><span>Structured lessons</span><span>Guided follow-up</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">Ask About This Track <span>→</span></a>
+      </article>
+      <article class="course-stage-card card-3d fade-up" data-category="middle" data-stage="middle-school" data-year="third">
+        <div class="course-card-head"><span class="course-category">Middle School</span><span class="course-year">3rd Year</span></div><b class="course-number">03</b>
+        <h3>3rd Year Middle School English</h3><p>Focused English support for third-year middle school students, combining curriculum explanation, revision, writing support, and exam-focused practice.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Curriculum revision</li><li>Exam questions</li><li>Writing support</li><li>Common mistakes</li><li>Final revision</li></ul></div>
+        <div class="course-access"><span>Revision support</span><span>Guided practice</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">Ask About This Track <span>→</span></a>
+      </article>
+
+      <article class="course-stage-card card-3d fade-up" data-category="high" data-stage="high-school" data-year="first">
+        <div class="course-card-head"><span class="course-category">High School</span><span class="course-year">1st Year</span></div><b class="course-number">04</b>
+        <h3>1st Year High School English</h3><p>A clear learning track for first-year high school students, helping them build stronger grammar, reading, writing, and curriculum understanding.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Curriculum explanation</li><li>Grammar practice</li><li>Reading comprehension</li><li>Writing development</li><li>Study plan</li></ul></div>
+        <div class="course-access"><span>Curriculum support</span><span>Study guidance</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">Ask About This Track <span>→</span></a>
+      </article>
+      <article class="course-stage-card card-3d fade-up" data-category="high" data-stage="high-school" data-year="second">
+        <div class="course-card-head"><span class="course-category">High School</span><span class="course-year">2nd Year</span></div><b class="course-number">05</b>
+        <h3>2nd Year High School English</h3><p>Structured English support for second-year high school students with practical training, writing improvement, exam-style questions, and follow-up.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Grammar accuracy</li><li>Writing improvement</li><li>Exam practice</li><li>Question-solving</li><li>Follow-up</li></ul></div>
+        <div class="course-access"><span>Practical training</span><span>Regular follow-up</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">Ask About This Track <span>→</span></a>
+      </article>
+      <article class="course-stage-card card-3d fade-up" data-category="high" data-stage="high-school" data-year="third">
+        <div class="course-card-head"><span class="course-category">High School</span><span class="course-year">3rd Year</span></div><b class="course-number">06</b>
+        <h3>3rd Year High School English</h3><p>Exam-focused English preparation for third-year high school students, built around curriculum revision, model questions, writing support, and exam strategy.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Final revision</li><li>Model questions</li><li>Exam techniques</li><li>Writing for exams</li><li>Common mistakes</li></ul></div>
+        <div class="course-access"><span>Exam-focused</span><span>Revision guidance</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">Ask About This Track <span>→</span></a>
+      </article>
+
+      <article class="course-stage-card skill-card card-3d fade-up" data-category="grammar" data-stage="skill-track" data-skill="grammar-foundations sentence-structure paragraph-writing common-mistakes">
+        <div class="course-card-head"><span class="course-category">Grammar &amp; Writing</span><span class="course-year">Skill Builder</span></div><b class="course-number">07</b>
+        <h3>Grammar &amp; Writing</h3><p>Practical training for grammar accuracy, sentence structure, paragraph writing, and stronger exam answers.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Grammar foundations</li><li>Sentence structure</li><li>Paragraph writing</li><li>Common mistakes</li><li>Answer improvement</li></ul></div>
+        <div class="course-access"><span>Stage-based</span><span>Practice track</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">View Programme <span>→</span></a>
+      </article>
+      <article class="course-stage-card skill-card card-3d fade-up" data-category="exam" data-stage="skill-track" data-track="revision-plans model-questions exam-techniques writing-for-exams">
+        <div class="course-card-head"><span class="course-category">Exam Preparation</span><span class="course-year">Exam Ready</span></div><b class="course-number">08</b>
+        <h3>Exam Preparation</h3><p>Focused revision, model questions, exam techniques, and guided practice to help students enter exams with more confidence.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Revision plans</li><li>Model questions</li><li>Exam techniques</li><li>Timing awareness</li><li>Writing for exams</li></ul></div>
+        <div class="course-access"><span>Revision track</span><span>Guided practice</span><span>Access: Coming Soon</span></div><a href="contact.html" class="course-card-cta">View Programme <span>→</span></a>
+      </article>
+      <article class="course-stage-card skill-card card-3d fade-up" data-category="top" data-stage="advanced" data-track="top-middle top-high advanced-grammar exam-excellence">
+        <div class="course-card-head"><span class="course-category">Top Students</span><span class="course-year">Advanced Track</span></div><b class="course-number">09</b>
+        <h3>Top Students Program</h3><p>Advanced practice and extra follow-up for motivated students aiming for stronger performance, better writing, and consistent progress.</p>
+        <div class="course-practice"><small>Students will practise</small><ul><li>Advanced exercises</li><li>Stronger writing</li><li>Extra follow-up</li><li>Exam strategy</li><li>Higher-level practice</li></ul></div>
+        <div class="course-access"><span>Advanced practice</span><span>Extra follow-up</span><span>Access: Coming Soon</span></div><a href="#top-students-programme" class="course-card-cta">Explore Top Students Program <span>→</span></a>
+      </article>
+    </div>
+
+    <div class="courses-empty-state" id="courses-empty-state" hidden><strong>No programme matches this filter yet.</strong><p>Try another track or book a placement test.</p><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Placement Test</a></div>
   </div>
-</div></section>
-<section class="section section-surface"><div class="container path-layout"><div class="fade-up"><div class="overline">Programme Access</div><h2 class="h2">Learn by stage.<br><span class="text-blue">Progress step by step.</span></h2><p class="section-desc">Mr Ahmed Abo Mazen helps students choose the programme that matches their school stage, current needs, and exam plan.</p><a href="contact.html#placement-test" class="btn btn-primary">Book a Free Placement Test</a></div><div class="glass-card pricing-guidance fade-up"><small>Subscription learning</small><h3>Access follows the student’s programme.</h3><p>Lessons and videos may unlock gradually according to the student’s subscription, school stage, and learning plan.</p><a href="pricing.html">View subscriptions →</a></div></div></section>
-<section class="final-cta"><div class="container text-center relative z-1"><div class="overline">Your Next Step</div><h2 class="h2">Choose the right programme for <span class="text-blue italic">your school stage.</span></h2><p class="section-desc">Start with a placement test or speak with Mr Ahmed Abo Mazen about the student’s curriculum and goals.</p><div class="hero-actions justify-center"><a href="contact.html#placement-test" class="btn btn-primary btn-lg">Book a Free Placement Test</a><a href="pricing.html" class="btn btn-secondary btn-lg">View Subscriptions</a></div></div></section>
+</section>
+
+<section class="courses-section choose-track-section" id="choose-track">
+  <div class="home-container">
+    <header class="courses-section-head fade-up"><p class="home-eyebrow">Not Sure Where to Start?</p><h2>Choose by <em>Stage, Skill, or Goal</em></h2><p>Use the route that best describes what the student needs right now.</p></header>
+    <div class="guidance-grid">
+      <article class="guidance-card card-3d fade-up"><span>01</span><h3>Choose by School Stage</h3><p>For students who want curriculum explanation and year-based support.</p><a href="#programme-browser" data-guidance-filter="middle">Browse stage tracks →</a></article>
+      <article class="guidance-card card-3d fade-up"><span>02</span><h3>Choose by Skill</h3><p>For students who need grammar, writing, common mistakes, or answer improvement.</p><a href="#programme-browser" data-guidance-filter="grammar">Browse skill tracks →</a></article>
+      <article class="guidance-card card-3d fade-up"><span>03</span><h3>Choose by Exam Goal</h3><p>For students preparing for exams, revision, model questions, and final practice.</p><a href="#programme-browser" data-guidance-filter="exam">Browse exam tracks →</a></article>
+    </div>
+    <div class="placement-guidance fade-up"><div><small>The safest next step</small><strong>Let the placement test guide the starting point.</strong><p>The placement test helps identify the right learning path based on the student's level, stage, and needs.</p></div><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Free Placement Test</a></div>
+  </div>
+</section>
+
+<section class="courses-section top-track-section" id="top-students-programme">
+  <div class="home-container top-track-layout">
+    <div class="top-track-copy slide-right"><p class="home-eyebrow">Top Students Program</p><h2>For Students Who Want to <em>Go Further</em></h2><p>The Top Students Program supports motivated students through advanced practice, extra follow-up, stronger writing, and exam-focused improvement.</p><div class="top-track-chips"><span>Advanced exercises</span><span>Writing support</span><span>Extra follow-up</span><span>Exam strategy</span><span>Consistent progress</span></div><a href="contact.html" class="home-btn home-btn-primary">Explore Top Students Program</a></div>
+    <div class="top-track-visual slide-left">
+      <div class="top-orbit"></div><span class="top-mark">TOP</span><strong>Advanced Practice</strong><div class="top-progress"><span><i style="width:78%"></i></span><small>Structured challenge</small></div><div class="top-mini-cards"><span>Writing</span><span>Grammar</span><span>Exam Strategy</span></div><div class="top-mentor">Guided by Mr Ahmed Abo Mazen</div>
+    </div>
+  </div>
+</section>
+
+<section class="courses-final-cta">
+  <div class="home-grid-texture"></div>
+  <div class="home-container fade-up"><p class="home-eyebrow">Start with the Right Track</p><h2>Not Sure Which Programme <em>Fits You?</em></h2><p>Book a free placement test and choose the learning path that matches your stage, level, and goals.</p><div class="home-actions"><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Free Placement Test</a><a href="contact.html" class="home-btn home-btn-ghost">Contact Us</a></div></div>
+</section>
 </main>
-<footer class="footer"><div class="container"><div class="footer-grid"><div class="footer-brand"><a href="index.html" class="nav-logo"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a><p>Structured English learning for middle and high school students. By Mr Ahmed Abo Mazen.</p></div><div class="footer-col"><h4>Platform</h4><a href="courses.html">Courses</a><a href="videos.html">Videos</a><a href="pricing.html">Subscriptions</a></div><div class="footer-col"><h4>Programmes</h4><a href="#middle-school">Middle School</a><a href="#high-school">High School</a><a href="#grammar-writing">Grammar &amp; Writing</a><a href="#exam-preparation">Exam Preparation</a><a href="#top-students">Top Students</a></div><div class="footer-col"><h4>Connect</h4><a href="about.html">About Mr Ahmed</a><a href="contact.html">Contact</a><a href="scholarships.html">Scholarships</a></div></div><div class="footer-bottom"><span>© 2026 Englishine. All rights reserved.</span><span>English Learning Platform · By Mr Ahmed Abo Mazen</span></div></div></footer>
+
+<footer class="footer home-footer courses-footer">
+  <div class="home-container">
+    <div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="nav-logo home-brand"><img src="assets/logo/englishine-logo.svg" alt="" class="official-logo"><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a><p>A premium English learning platform led by Mr Ahmed Abo Mazen, helping school students learn through structured lessons, guided videos, assignments, and follow-up.</p></div>
+      <div class="footer-col"><h4>Platform</h4><a href="index.html">Home</a><a href="courses.html">Programmes</a><a href="videos.html">Video Library</a><a href="pricing.html">Pricing</a><a href="about.html">About</a><a href="certifications.html">Certifications</a></div>
+      <div class="footer-col"><h4>Learning Tracks</h4><a href="#programme-browser" data-footer-filter="middle">Middle School English</a><a href="#programme-browser" data-footer-filter="high">High School English</a><a href="#programme-browser" data-footer-filter="grammar">Grammar &amp; Writing</a><a href="#programme-browser" data-footer-filter="exam">Exam Preparation</a><a href="#top-students-programme">Top Students Program</a></div>
+      <div class="footer-col"><h4>Contact</h4><span>WhatsApp — Coming Soon</span><span>Messenger — Coming Soon</span><span>Instagram — Englishine</span><span>Facebook — Englishine</span><span>Email — Coming Soon</span></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 Englishine. All rights reserved.</span><span>Led by Mr Ahmed Abo Mazen</span><span>Designed for structured English learning.</span></div>
+  </div>
+</footer>
 <script src="script.js"></script>
-</body></html>
+</body>
+</html>

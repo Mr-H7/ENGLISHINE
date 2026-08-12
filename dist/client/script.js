@@ -491,3 +491,73 @@
 
 })();
 
+
+/* Englishine Courses page filters */
+(() => {
+  const browser = document.querySelector('#programme-browser');
+  if (!browser) return;
+
+  const mainButtons = [...browser.querySelectorAll('[data-course-filter]')];
+  const panels = [...browser.querySelectorAll('[data-subfilter-panel]')];
+  const cards = [...browser.querySelectorAll('.course-stage-card[data-category]')];
+  const emptyState = browser.querySelector('#courses-empty-state');
+  let activeCategory = 'all';
+
+  const updateEmptyState = () => {
+    const visibleCount = cards.filter(card => !card.hidden).length;
+    if (emptyState) emptyState.hidden = visibleCount !== 0;
+  };
+
+  const showCategory = category => {
+    activeCategory = category;
+    mainButtons.forEach(button => {
+      const selected = button.dataset.courseFilter === category;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+
+    panels.forEach(panel => {
+      const selected = panel.dataset.subfilterPanel === category;
+      panel.hidden = !selected;
+      panel.querySelectorAll('[data-subfilter]').forEach((button, index) => {
+        button.classList.toggle('active', selected && index === 0);
+      });
+    });
+
+    cards.forEach(card => {
+      card.hidden = category !== 'all' && card.dataset.category !== category;
+    });
+    updateEmptyState();
+  };
+
+  mainButtons.forEach(button => {
+    button.addEventListener('click', () => showCategory(button.dataset.courseFilter));
+  });
+
+  panels.forEach(panel => {
+    const attribute = panel.dataset.filterAttribute;
+    const buttons = [...panel.querySelectorAll('[data-subfilter]')];
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const value = button.dataset.subfilter;
+        buttons.forEach(item => item.classList.toggle('active', item === button));
+        cards.forEach(card => {
+          if (card.dataset.category !== activeCategory) {
+            card.hidden = true;
+            return;
+          }
+          const values = (card.dataset[attribute] || '').split(' ');
+          card.hidden = value !== 'all' && !values.includes(value);
+        });
+        updateEmptyState();
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-guidance-filter], [data-footer-filter]').forEach(link => {
+    link.addEventListener('click', () => {
+      const category = link.dataset.guidanceFilter || link.dataset.footerFilter;
+      showCategory(category);
+    });
+  });
+})();
