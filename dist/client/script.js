@@ -116,6 +116,8 @@
     const open = state ?? !mobileMenu.classList.contains('open');
     hamburger?.classList.toggle('open', open);
     mobileMenu?.classList.toggle('open', open);
+    hamburger?.setAttribute('aria-expanded', String(open));
+    mobileMenu?.setAttribute('aria-hidden', String(!open));
     document.body.style.overflow = open ? 'hidden' : '';
   };
 
@@ -560,4 +562,158 @@
       showCategory(category);
     });
   });
+})();/* Englishine Videos page: static library data and filters */
+(() => {
+  const browser = document.querySelector('#video-browser');
+  const lessonGroupsRoot = document.querySelector('[data-lesson-groups]');
+  const reelGrid = document.querySelector('[data-reel-grid]');
+  if (!browser || !lessonGroupsRoot || !reelGrid) return;
+
+  const lessonGroups = [
+    { id: 'lesson-1-2', title: 'Lesson 1.2', status: 'Available', description: 'Explanation and practice for the combined Lesson 1 and Lesson 2 content.' },
+    { id: 'lesson-3', title: 'Lesson 3', status: 'Available', description: 'Lesson 3 explanation with a separate exercise solution video.' },
+    { id: 'lesson-4', title: 'Lesson 4 &mdash; Story', status: 'Coming Soon', description: 'This story lesson will be added soon as a visual or animated story explanation.' },
+    { id: 'lesson-5-6', title: 'Lesson 5.6', status: 'Available', description: 'Explanation and practice for the combined Lesson 5 and Lesson 6 content.' }
+  ];
+
+  const curriculumVideos = [
+    { lesson: 'lesson-1-2', title: 'Prep 1 Lesson 1.2 &mdash; Part 1', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'Watch Preview', href: 'contact.html' },
+    { lesson: 'lesson-1-2', title: 'Prep 1 Lesson 1.2 &mdash; Part 2', type: 'Explanation', mode: 'curriculum', status: 'locked', access: 'locked', action: 'Unlock Lesson', href: 'pricing.html' },
+    { lesson: 'lesson-1-2', title: 'Exercise on Lesson 1.2', type: 'Exercise Solution', mode: 'exercise', status: 'locked', access: 'locked', action: 'Unlock Solution', href: 'pricing.html' },
+    { lesson: 'lesson-3', title: 'Lesson 3 &mdash; Explanation', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'Watch Preview', href: 'contact.html' },
+    { lesson: 'lesson-3', title: 'Lesson 3 &mdash; Exercise Solution', type: 'Exercise Solution', mode: 'exercise', status: 'locked', access: 'locked', action: 'Unlock Solution', href: 'pricing.html' },
+    { lesson: 'lesson-4', title: 'Lesson 4 &mdash; Animated Story Explanation', type: 'Story', mode: 'stories', status: 'coming', access: 'coming', action: 'Coming Soon', href: '' },
+    { lesson: 'lesson-5-6', title: 'Lesson 5.6 &mdash; Explanation', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'Watch Preview', href: 'contact.html' },
+    { lesson: 'lesson-5-6', title: 'Lesson 5.6 &mdash; Exercise Solution', type: 'Exercise Solution', mode: 'exercise', status: 'locked', access: 'locked', action: 'Unlock Solution', href: 'pricing.html' }
+  ].map(video => ({ ...video, stage: 'prep-1', term: 'term-1', unit: 'unit-1' }));
+
+  const reels = [
+    { title: 'Common Grammar Mistake Students Repeat', category: 'grammar', label: 'Grammar' },
+    { title: 'Spelling Mistakes to Avoid', category: 'spelling', label: 'Spelling' },
+    { title: 'Translation Trap: Arabic to English', category: 'translation', label: 'Translation' },
+    { title: 'Useful Popular Expression', category: 'expressions', label: 'Popular Expressions' },
+    { title: 'Quick Exam Tip', category: 'exam-tips', label: 'Exam Tips' },
+    { title: 'Stay Consistent with English', category: 'motivation', label: 'Student Motivation' }
+  ];
+
+  const statusLabel = status => status === 'free-preview' ? 'Free Preview' : status === 'coming' ? 'Coming Soon' : 'Locked';
+  const thumbClass = video => video.mode === 'exercise' ? ' solution' : video.mode === 'stories' ? ' story' : '';
+  const thumbSymbol = video => video.mode === 'exercise' ? '�' : video.mode === 'stories' ? '?' : video.access === 'preview' ? '?' : '?';
+
+  lessonGroupsRoot.innerHTML = lessonGroups.map(group => {
+    const items = curriculumVideos.filter(video => video.lesson === group.id);
+    const gridClass = items.length === 1 ? ' one-card' : items.length === 2 ? ' two-cards' : '';
+    const cards = items.map(video => {
+      const action = video.href
+        ? '<a href="' + video.href + '" class="video-card-action">' + video.action + '<span>&#8594;</span></a>'
+        : '<span class="video-card-action disabled">' + video.action + '<span>&#8594;</span></span>';
+      return '<article class="library-video-card" data-video-card data-mode="' + video.mode + '" data-stage="' + video.stage + '" data-term="' + video.term + '" data-unit="' + video.unit + '" data-lesson="' + video.lesson + '" data-type="' + video.type.toLowerCase().replaceAll(' ', '-') + '" data-status="' + video.status + '" data-access="' + video.access + '"><div class="library-video-thumb' + thumbClass(video) + '"><span class="video-type">' + video.type + '</span><i class="video-lock ' + (video.access === 'preview' ? 'preview' : video.access === 'coming' ? 'soon' : '') + '">' + statusLabel(video.status) + '</i><b>' + thumbSymbol(video) + '</b><small>Duration TBA</small></div><div class="library-video-body"><div class="video-breadcrumb">1st Prep <span>�</span> First Term <span>�</span> Unit 1</div><h4>' + video.title + '</h4><p>' + group.title + ' � ' + video.type + '</p>' + action + '</div></article>';
+    }).join('');
+    return '<section class="lesson-group" data-lesson-group data-lesson-id="' + group.id + '"><header><div><span>' + group.title + '</span><small class="' + (group.status === 'Coming Soon' ? 'soon' : '') + '">' + group.status + '</small></div><p>' + group.description + '</p></header><div class="lesson-video-grid' + gridClass + '">' + cards + '</div></section>';
+  }).join('');
+
+  reelGrid.innerHTML = reels.map(reel =>
+    '<article class="reel-card" data-video-card data-mode="reels" data-reel-category="' + reel.category + '" data-type="free-reel" data-status="free" data-access="free"><div class="reel-thumb"><span>' + reel.label + '</span><b>?</b><small>Free � Duration TBA</small></div><div><h3>' + reel.title + '</h3><p>Curated free reel placeholder</p><span class="reel-action">Watch Reel <i>&#8594;</i></span></div></article>'
+  ).join('');
+
+  const modeButtons = [...browser.querySelectorAll('[data-video-mode]')];
+  const curriculumButtons = [...browser.querySelectorAll('[data-curriculum-filter]')];
+  const reelButtons = [...document.querySelectorAll('[data-reel-filter]')];
+  const resetButtons = [...document.querySelectorAll('[data-video-reset]')];
+  const curriculumBrowser = browser.querySelector('[data-curriculum-browser]');
+  const curriculumLibrary = browser.querySelector('[data-curriculum-library]');
+  const reelsSection = document.querySelector('[data-reels-section]');
+  const curriculumEmptyState = browser.querySelector('[data-curriculum-empty]');
+  const emptyState = browser.querySelector('[data-video-empty]');
+  const pathHeading = browser.querySelector('.library-path-head h3');
+  const pathSummary = browser.querySelector('.library-path-head>span');
+  const filters = { mode: 'all', stage: 'prep-1', term: 'term-1', unit: 'unit-1', reel: 'all' };
+  const labels = {
+    'prep-1': '1st Prep', 'prep-2': '2nd Prep', 'prep-3': '3rd Prep',
+    'secondary-1': '1st Secondary', 'secondary-2': '2nd Secondary', 'secondary-3': '3rd Secondary',
+    'term-1': 'First Term', 'term-2': 'Second Term',
+    'unit-1': 'Unit 1', 'unit-2': 'Unit 2', 'unit-3': 'Unit 3', 'unit-4': 'Unit 4', 'unit-5': 'Unit 5', 'unit-6': 'Unit 6'
+  };
+
+  const selectButton = (buttons, selected, dataKey) => {
+    buttons.forEach(button => {
+      const active = button.dataset[dataKey] === selected;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  };
+
+  const applyFilters = () => {
+    const curriculumCards = [...lessonGroupsRoot.querySelectorAll('[data-video-card]')];
+    const reelCards = [...reelGrid.querySelectorAll('[data-video-card]')];
+    const curriculumModeVisible = filters.mode !== 'reels';
+    const reelsModeVisible = filters.mode === 'all' || filters.mode === 'reels';
+    curriculumBrowser.hidden = !curriculumModeVisible;
+    curriculumLibrary.hidden = !curriculumModeVisible;
+    reelsSection.hidden = !reelsModeVisible;
+
+    let visibleCurriculum = 0;
+    curriculumCards.forEach(card => {
+      const modeMatch =
+        filters.mode === 'all' ||
+        filters.mode === card.dataset.mode ||
+        (filters.mode === 'locked' && card.dataset.access === 'locked') ||
+        (filters.mode === 'coming' && card.dataset.status === 'coming');
+      const pathMatch = card.dataset.stage === filters.stage && card.dataset.term === filters.term && card.dataset.unit === filters.unit;
+      card.hidden = !(curriculumModeVisible && modeMatch && pathMatch);
+      if (!card.hidden) visibleCurriculum += 1;
+    });
+
+    lessonGroupsRoot.querySelectorAll('[data-lesson-group]').forEach(group => {
+      group.hidden = ![...group.querySelectorAll('[data-video-card]')].some(card => !card.hidden);
+    });
+
+    let visibleReels = 0;
+    reelCards.forEach(card => {
+      const categoryMatch = filters.reel === 'all' || card.dataset.reelCategory === filters.reel;
+      card.hidden = !(reelsModeVisible && categoryMatch);
+      if (!card.hidden) visibleReels += 1;
+    });
+
+    pathHeading.textContent = labels[filters.stage] + ' ' + String.fromCharCode(8212) + ' ' + labels[filters.term] + ' ' + String.fromCharCode(8212) + ' ' + labels[filters.unit];
+    pathSummary.textContent = visibleCurriculum ? visibleCurriculum + (visibleCurriculum === 1 ? ' video item' : ' video items') : 'Content coming soon';
+    curriculumEmptyState.hidden = !curriculumModeVisible || visibleCurriculum !== 0;
+    emptyState.hidden = curriculumModeVisible || visibleReels !== 0;
+  };
+
+  modeButtons.forEach(button => button.addEventListener('click', () => {
+    filters.mode = button.dataset.videoMode;
+    selectButton(modeButtons, filters.mode, 'videoMode');
+    applyFilters();
+  }));
+
+  curriculumButtons.forEach(button => button.addEventListener('click', () => {
+    const group = button.dataset.curriculumFilter;
+    filters[group] = button.dataset.filterValue;
+    selectButton(curriculumButtons.filter(item => item.dataset.curriculumFilter === group), filters[group], 'filterValue');
+    applyFilters();
+  }));
+
+  reelButtons.forEach(button => button.addEventListener('click', () => {
+    filters.reel = button.dataset.reelFilter;
+    selectButton(reelButtons, filters.reel, 'reelFilter');
+    applyFilters();
+  }));
+
+  const resetFilters = () => {
+    Object.assign(filters, { mode: 'all', stage: 'prep-1', term: 'term-1', unit: 'unit-1', reel: 'all' });
+    selectButton(modeButtons, filters.mode, 'videoMode');
+    ['stage', 'term', 'unit'].forEach(group => selectButton(curriculumButtons.filter(item => item.dataset.curriculumFilter === group), filters[group], 'filterValue'));
+    selectButton(reelButtons, filters.reel, 'reelFilter');
+    applyFilters();
+  };
+  resetButtons.forEach(button => button.addEventListener('click', resetFilters));
+
+  document.querySelectorAll('[data-footer-video-mode]').forEach(link => link.addEventListener('click', () => {
+    filters.mode = link.dataset.footerVideoMode;
+    selectButton(modeButtons, filters.mode, 'videoMode');
+    applyFilters();
+  }));
+
+  applyFilters();
 })();
