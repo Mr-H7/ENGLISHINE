@@ -1,527 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Testimonials — Englishine</title>
-  <meta name="description" content="Read learner feedback on Englishine school-stage programmes, grammar and writing support, exam preparation, and guided video learning." />
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    /* ── Masonry layout ── */
-    .testimonials-masonry {
-      columns: 3;
-      column-gap: 1.75rem;
-    }
-    .testimonials-masonry .tcard {
-      break-inside: avoid;
-      margin-bottom: 1.75rem;
-      display: inline-block;
-      width: 100%;
-    }
-    @media (max-width: 960px) { .testimonials-masonry { columns: 2; } }
-    @media (max-width: 560px) { .testimonials-masonry { columns: 1; } }
-
-    /* ── Testimonial card v2 ── */
-    .tcard {
-      position: relative;
-      background: var(--onyx-card);
-      border-radius: var(--r-md);
-      padding: 2rem;
-      overflow: hidden;
-      transition: transform 0.35s var(--ease-out), box-shadow 0.35s var(--ease-out);
-    }
-    .tcard::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--r-md);
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(14,76,146,0.18), rgba(14,76,146,0.04) 40%, transparent 70%);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-      transition: opacity 0.35s;
-    }
-    .tcard::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--r-md);
-      background: radial-gradient(600px circle at var(--mouse-x,50%) var(--mouse-y,50%), rgba(14,76,146,0.05), transparent 40%);
-      opacity: 0;
-      transition: opacity 0.4s;
-      pointer-events: none;
-    }
-    .tcard:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-    .tcard:hover::after { opacity: 1; }
-    .tcard.featured-tcard {
-      background: linear-gradient(160deg, rgba(14,76,146,0.1) 0%, var(--onyx-card) 65%);
-    }
-    .tcard.featured-tcard::before {
-      background: linear-gradient(135deg, rgba(14,76,146,0.35), rgba(14,76,146,0.08) 50%, transparent 80%);
-    }
-
-    /* ── Score badge ── */
-    .score-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(14,76,146,0.1);
-      border: 1px solid rgba(14,76,146,0.22);
-      color: var(--green);
-      font-family: var(--font-label);
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 0.22rem 0.65rem;
-      border-radius: 99px;
-      margin-bottom: 0.85rem;
-    }
-
-    /* ── Quote mark ── */
-    .quote-mark {
-      font-family: var(--font-head);
-      font-size: 5rem;
-      line-height: 0.6;
-      color: rgba(14,76,146,0.1);
-      float: left;
-      margin-right: 0.3rem;
-      margin-top: 0.5rem;
-    }
-
-    /* ── Rating summary ── */
-    .rating-panel {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 2.5rem;
-      align-items: center;
-      padding: 2.5rem;
-      position: relative;
-      background: var(--onyx-card);
-      border-radius: var(--r-lg);
-      overflow: hidden;
-    }
-    .rating-panel::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--r-lg);
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(14,76,146,0.25), rgba(14,76,146,0.05) 50%, transparent 80%);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-    .rating-score-block {
-      text-align: center;
-      padding-right: 2.5rem;
-      border-right: 1px solid var(--onyx-border2);
-    }
-    .rating-score-num {
-      font-family: var(--font-head);
-      font-size: 4.5rem;
-      font-weight: 700;
-      color: var(--green);
-      line-height: 1;
-      letter-spacing: -0.03em;
-    }
-    .rating-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 0.85rem;
-      margin-bottom: 0.55rem;
-    }
-    .rating-bar-label {
-      font-family: var(--font-label);
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--text-faint);
-      width: 12px;
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .rating-bar-track {
-      flex: 1;
-      height: 5px;
-      background: var(--onyx-high);
-      border-radius: 99px;
-      overflow: hidden;
-    }
-    .rating-bar-fill {
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg, var(--green), rgba(14,76,146,0.5));
-      border-radius: 99px;
-      transition: width 1.4s var(--ease-out);
-    }
-    .rating-bar-count {
-      font-family: var(--font-label);
-      font-size: 0.68rem;
-      color: var(--text-faint);
-      width: 32px;
-      flex-shrink: 0;
-    }
-    .rating-meta-block {
-      padding-left: 2.5rem;
-      border-left: 1px solid var(--onyx-border2);
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      flex-shrink: 0;
-    }
-    @media (max-width: 768px) {
-      .rating-panel { grid-template-columns: 1fr; gap: 1.5rem; }
-      .rating-score-block { padding-right: 0; border-right: none; border-bottom: 1px solid var(--onyx-border2); padding-bottom: 1.5rem; }
-      .rating-meta-block { padding-left: 0; border-left: none; border-top: 1px solid var(--onyx-border2); padding-top: 1.5rem; flex-direction: row; }
-    }
-
-    /* ── Featured testimonial ── */
-    .featured-quote-wrap {
-      position: relative;
-      background: linear-gradient(160deg, rgba(14,76,146,0.09) 0%, var(--onyx-card) 60%);
-      border-radius: var(--r-lg);
-      padding: 3.5rem;
-      overflow: hidden;
-    }
-    .featured-quote-wrap::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: var(--r-lg);
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(14,76,146,0.35), rgba(14,76,146,0.06) 60%, transparent 85%);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-    .featured-bg-quote {
-      position: absolute;
-      top: 1rem; right: 2.5rem;
-      font-family: var(--font-head);
-      font-size: 11rem;
-      line-height: 1;
-      color: rgba(14,76,146,0.06);
-      pointer-events: none;
-      user-select: none;
-    }
-    .score-pill {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(14,76,146,0.07);
-      border: 1px solid rgba(14,76,146,0.2);
-      border-radius: var(--r-md);
-      padding: 1.75rem 2.25rem;
-      flex-shrink: 0;
-    }
-
-    /* ── CTA section ── */
-    .cta-section {
-      padding: clamp(5rem,9vw,8rem) 0;
-      background: var(--onyx-mid);
-      position: relative;
-      overflow: hidden;
-    }
-    .cta-section-glow {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 800px 350px at 50% 50%, rgba(14,76,146,0.06), transparent 70%);
-      pointer-events: none;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Performance &amp; Top Students - Englishine</title>
+  <meta name="description" content="See how Englishine can organize student progress around lesson activity, assignments, consistency, improvement, and structured teacher follow-up.">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="performance-page">
+<div id="scroll-progress"></div>
+<nav class="navbar home-navbar" aria-label="Primary navigation">
+  <a href="index.html" class="nav-logo home-brand" aria-label="Englishine home"><img src="assets/logo/englishine-logo.svg" alt="" class="official-logo"><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a>
+  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="courses.html">Programmes</a></li><li><a href="videos.html">Video Library</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="about.html">About</a></li><li><a href="certifications.html">Certifications</a></li><li><a href="contact.html">Contact</a></li></ul>
+  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Book Placement Test</a><button class="hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
+</nav>
+<div class="mobile-menu" aria-hidden="true"><button class="mobile-menu-close" type="button" aria-label="Close menu">x</button><a href="index.html">Home</a><a href="courses.html">Programmes</a><a href="videos.html">Video Library</a><a href="pricing.html">Pricing</a><a href="about.html">About</a><a href="certifications.html">Certifications</a><a href="contact.html">Contact</a></div>
 
-<!-- RATING SUMMARY -->
-<section class="section-sm">
-  <div class="container">
-    <div class="rating-panel fade-up">
-      <div class="rating-score-block"><div class="rating-score-num">Clear</div><div style="font-family:var(--font-label); font-size:0.68rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em;">Lesson Structure</div></div>
-      <div class="rating-bar-wrap" style="display:grid; gap:1rem;"><div class="detail-row"><span>Course plans</span><span>Step by step</span></div><div class="detail-row"><span>Practice</span><span>Focused and practical</span></div><div class="detail-row"><span>Support</span><span>Live and recorded</span></div></div>
-      <div class="rating-meta-block"><div style="text-align:center;"><div style="font-family:var(--font-head); font-size:1.35rem; font-weight:700; color:var(--text-main);">Exam</div><div style="font-size:0.68rem; color:var(--text-faint); text-transform:uppercase;">Preparation</div></div><div style="text-align:center;"><div style="font-family:var(--font-head); font-size:1.35rem; font-weight:700; color:var(--green);">Grammar</div><div style="font-size:0.68rem; color:var(--text-faint); text-transform:uppercase;">&amp; Writing</div></div><div style="text-align:center;"><div style="font-family:var(--font-head); font-size:1.35rem; font-weight:700; color:var(--text-main);">School</div><div style="font-size:0.68rem; color:var(--text-faint); text-transform:uppercase;">Stages</div></div></div>
+<header class="performance-hero">
+  <div class="home-grid-texture"></div>
+  <div class="home-container performance-hero-layout">
+    <div class="performance-hero-copy">
+      <p class="home-eyebrow fade-up">Student Performance</p>
+      <h1 class="fade-up delay-1">Top Students &amp; <em>Progress Highlights</em></h1>
+      <p class="fade-up delay-2">Englishine highlights students who stay consistent, complete assignments, watch lessons, and keep improving through structured follow-up with Mr Ahmed Abo Mazen.</p>
+      <div class="home-actions fade-up delay-3"><a href="contact.html#placement-test" class="home-btn home-btn-primary">Start Your Progress</a><a href="courses.html" class="home-btn home-btn-ghost">Explore Courses</a></div>
+      <div class="performance-hero-chips fade-up delay-4"><span>Lessons Watched</span><span>Assignments Completed</span><span>Consistency</span><span>Teacher Follow-up</span><span>Approved-Only Showcase</span></div>
+    </div>
+    <div class="performance-dashboard fade-in delay-2" aria-label="Student progress dashboard preview">
+      <div class="performance-dashboard-head"><div><small>Learning Activity</small><strong>Structured progress view</strong></div><span>Example Only</span></div>
+      <div class="performance-dashboard-focus"><small>Consistency Score</small><strong>Progress over pressure</strong><p>A learning view can bring lesson activity, assignments, and teacher review into one clear direction.</p></div>
+      <div class="performance-dashboard-grid">
+        <article><div><small>Assignment Progress</small><strong>Practice completed</strong></div><span>Tracked</span></article>
+        <article><div><small>Video Progress</small><strong>Assigned path followed</strong></div><span>Reviewed</span></article>
+        <article><div><small>Teacher Review</small><strong>Correction and guidance</strong></div><span>Guided</span></article>
+        <article><div><small>Consistency</small><strong>Regular learning habits</strong></div><span>Focused</span></article>
+      </div>
+      <div class="performance-dashboard-note"><i></i><p><small>Privacy direction</small><strong>Approved student information only</strong></p></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="performance-section ranking-explainer">
+  <div class="home-container">
+    <header class="performance-section-head fade-up"><p class="home-eyebrow">How It Works</p><h2>Progress Is Measured by <em>Consistency, Not Hype</em></h2><p>Englishine can organize progress around meaningful learning activity and regular follow-up.</p></header>
+    <div class="ranking-factor-grid">
+      <article class="ranking-factor-card fade-up"><span>01</span><h3>Lessons Watched</h3><p>Students build progress by following their assigned video lessons.</p></article>
+      <article class="ranking-factor-card fade-up delay-1"><span>02</span><h3>Assignments Completed</h3><p>Completed assignments help show practice, effort, and responsibility.</p></article>
+      <article class="ranking-factor-card fade-up delay-2"><span>03</span><h3>Consistency</h3><p>Regular study habits matter more than random last-minute effort.</p></article>
+      <article class="ranking-factor-card fade-up"><span>04</span><h3>Teacher Follow-up</h3><p>Progress can be reviewed through correction, feedback, and guidance.</p></article>
+      <article class="ranking-factor-card fade-up delay-1"><span>05</span><h3>Improvement</h3><p>Englishine focuses on step-by-step improvement, not fake promises.</p></article>
+    </div>
+    <p class="ranking-rule-note fade-up">Ranking rules can be adjusted as the platform grows.</p>
+  </div>
+</section>
+
+<section class="performance-section top-students-section" id="top-students">
+  <div class="home-container">
+    <header class="performance-section-head fade-up"><p class="home-eyebrow">Top Students</p><h2>Top Students <em>This Month</em></h2><p>A safe placeholder leaderboard for students who show strong learning activity, assignment completion, and consistency.</p></header>
+    <div class="student-leaderboard fade-up">
+      <article class="student-performance-row featured">
+        <div class="student-position">01</div><div class="student-placeholder"><span>S1</span><div><strong>Student #01</strong><small>Most Consistent</small></div></div>
+        <div class="student-metric"><small>Lessons watched</small><strong>24</strong></div><div class="student-metric"><small>Assignments</small><strong>18</strong></div>
+        <div class="student-progress"><div><small>Consistency</small><strong>92%</strong></div><span><i style="width:92%"></i></span></div>
+        <div class="student-progress"><div><small>Progress</small><strong>87%</strong></div><span><i style="width:87%"></i></span></div>
+      </article>
+      <article class="student-performance-row">
+        <div class="student-position">02</div><div class="student-placeholder"><span>S2</span><div><strong>Student #02</strong><small>Assignment Leader</small></div></div>
+        <div class="student-metric"><small>Lessons watched</small><strong>21</strong></div><div class="student-metric"><small>Assignments</small><strong>20</strong></div>
+        <div class="student-progress"><div><small>Consistency</small><strong>89%</strong></div><span><i style="width:89%"></i></span></div>
+        <div class="student-progress"><div><small>Progress</small><strong>84%</strong></div><span><i style="width:84%"></i></span></div>
+      </article>
+      <article class="student-performance-row">
+        <div class="student-position">03</div><div class="student-placeholder"><span>S3</span><div><strong>Student #03</strong><small>Video Progress</small></div></div>
+        <div class="student-metric"><small>Lessons watched</small><strong>19</strong></div><div class="student-metric"><small>Assignments</small><strong>15</strong></div>
+        <div class="student-progress"><div><small>Consistency</small><strong>86%</strong></div><span><i style="width:86%"></i></span></div>
+        <div class="student-progress"><div><small>Progress</small><strong>82%</strong></div><span><i style="width:82%"></i></span></div>
+      </article>
+      <article class="student-performance-row">
+        <div class="student-position">04</div><div class="student-placeholder"><span>S4</span><div><strong>Student #04</strong><small>Strong Improvement</small></div></div>
+        <div class="student-metric"><small>Lessons watched</small><strong>17</strong></div><div class="student-metric"><small>Assignments</small><strong>14</strong></div>
+        <div class="student-progress"><div><small>Consistency</small><strong>81%</strong></div><span><i style="width:81%"></i></span></div>
+        <div class="student-progress"><div><small>Progress</small><strong>78%</strong></div><span><i style="width:78%"></i></span></div>
+      </article>
+      <article class="student-performance-row">
+        <div class="student-position">05</div><div class="student-placeholder"><span>S5</span><div><strong>Student #05</strong><small>Steady Progress</small></div></div>
+        <div class="student-metric"><small>Lessons watched</small><strong>15</strong></div><div class="student-metric"><small>Assignments</small><strong>12</strong></div>
+        <div class="student-progress"><div><small>Consistency</small><strong>76%</strong></div><span><i style="width:76%"></i></span></div>
+        <div class="student-progress"><div><small>Progress</small><strong>74%</strong></div><span><i style="width:74%"></i></span></div>
+      </article>
+    </div>
+    <div class="leaderboard-disclosure fade-up"><span>Placeholder leaderboard</span><p>Student names and scores are shown only when approved. The rows above are sample examples for the future platform structure.</p></div>
+  </div>
+</section>
+
+<section class="performance-section tracked-metrics-section">
+  <div class="home-container">
+    <header class="performance-section-head fade-up"><p class="home-eyebrow">Learning Signals</p><h2>What Englishine <em>Tracks</em></h2><p>Englishine can organize progress around these learning areas. This page does not imply that a live tracking backend is active yet.</p></header>
+    <div class="tracked-metric-grid">
+      <article class="tracked-metric-card fade-up"><span>01</span><h3>Video Progress</h3><p>How much of the assigned video path the student follows.</p></article>
+      <article class="tracked-metric-card fade-up delay-1"><span>02</span><h3>Assignment Completion</h3><p>Whether the student submits and completes required practice.</p></article>
+      <article class="tracked-metric-card fade-up delay-2"><span>03</span><h3>Grammar &amp; Writing Improvement</h3><p>Progress in accuracy, sentence structure, paragraphs, and exam answers.</p></article>
+      <article class="tracked-metric-card fade-up"><span>04</span><h3>Exam Readiness</h3><p>Preparation through revision, model questions, and exam techniques.</p></article>
+      <article class="tracked-metric-card fade-up delay-1"><span>05</span><h3>Follow-up Status</h3><p>Teacher guidance, correction, and progress support.</p></article>
     </div>
   </div>
 </section>
 
-<!-- Section Divider -->
-<div class="section-divider"><div class="section-divider-dot"></div></div>
+<section class="top-program-highlight">
+  <div class="home-grid-texture"></div>
+  <div class="home-container top-program-layout">
+    <div class="top-program-copy fade-up"><p class="home-eyebrow">Advanced Track</p><h2>For Students Who Want to <em>Go Further</em></h2><p>The Top Students Program supports motivated students through advanced practice, extra follow-up, stronger writing, and exam-focused improvement.</p><div class="top-program-chips"><span>Advanced exercises</span><span>Writing support</span><span>Extra follow-up</span><span>Exam strategy</span><span>Consistent progress</span></div><a href="courses.html" class="home-btn home-btn-primary">Explore Top Students Program</a></div>
+    <div class="top-program-panel fade-up"><div class="top-program-panel-head"><small>Top Students Program</small><strong>Advanced learning direction</strong></div><ul><li><span>01</span><div><strong>Practise beyond the basics</strong><small>Use higher-level exercises and focused challenges.</small></div></li><li><span>02</span><div><strong>Strengthen writing</strong><small>Develop clearer, more accurate answers and paragraphs.</small></div></li><li><span>03</span><div><strong>Review progress</strong><small>Use extra follow-up to decide what needs attention next.</small></div></li></ul></div>
+  </div>
+</section>
 
-<!-- ══ FEATURED TESTIMONIAL ══ -->
-<section class="section-sm">
-  <div class="container">
-    <div class="section-header center fade-up" style="margin-bottom:3rem;">
-      <div class="overline" style="justify-content:center; margin-bottom:1rem;">Learner Perspective</div>
-      <h2 class="h2">Featured <span class="text-green text-underline">Feedback</span></h2>
-    </div>
-
-    <div class="featured-quote-wrap slide-right">
-      <div class="featured-bg-quote">"</div>
-      <div style="display:grid; grid-template-columns:1fr auto; gap:3rem; align-items:start; position:relative; z-index:1;">
-        <div>
-          <div class="score-badge">Learner Feedback</div>
-          <blockquote style="font-family:var(--font-head); font-size:1.3rem; font-weight:500; color:var(--text-main); line-height:1.7; font-style:italic; margin-bottom:2rem;">“The lessons are clear, organised, and easy to follow. I always know what to practise next.”</blockquote>
-          <div class="testimonial-author">
-            <div class="author-avatar" style="width:52px; height:52px; font-size:1.1rem; background:linear-gradient(135deg,var(--green),rgba(14,76,146,0.4)); color:var(--onyx);">YA</div>
-            <div>
-              <div class="author-name" style="font-size:1rem;">Englishine Learner</div>
-              <div class="author-tag">Exam Preparation</div>
-            </div>
-          </div>
-        </div>
-        <div class="score-pill">
-          <div style="font-family:var(--font-label); font-size:0.62rem; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.35rem;">Learning Track</div>
-          <div style="font-family:var(--font-head); font-size:3.5rem; font-weight:700; color:var(--green); line-height:1; letter-spacing:-0.03em;">Speaking</div>
-          <div style="font-family:var(--font-label); font-size:0.62rem; color:var(--text-faint); margin-top:0.3rem;">Structured practice</div>
-        </div>
-      </div>
+<section class="performance-section approved-stories-section">
+  <div class="home-container">
+    <header class="performance-section-head fade-up"><p class="home-eyebrow">Testimonials</p><h2>Student Stories Will Be Added <em>Only When Approved</em></h2><p>Englishine will show student or parent feedback only after permission is confirmed. Until then, this page focuses on progress, consistency, and learning activity.</p></header>
+    <div class="approved-story-grid">
+      <article class="approved-story-card fade-up"><div><span>SF</span><small>Approval Required</small></div><h3>Student Feedback</h3><p>Student feedback can be added here once approved.</p><footer>No quote or identity published</footer></article>
+      <article class="approved-story-card fade-up delay-1"><div><span>PF</span><small>Approval Required</small></div><h3>Parent Feedback</h3><p>Parent feedback can be added here once approved.</p><footer>No quote or identity published</footer></article>
+      <article class="approved-story-card fade-up delay-2"><div><span>PS</span><small>Approval Required</small></div><h3>Progress Story</h3><p>A student progress story can be added here once reviewed and approved.</p><footer>No result or photo published</footer></article>
     </div>
   </div>
 </section>
 
-<!-- Section Divider -->
-<div class="section-divider"><div class="section-divider-dot"></div></div>
-
-<!-- ══ MASONRY TESTIMONIALS ══ -->
-<section class="section" style="padding-top:0;">
-  <div class="container">
-    <div class="section-header center fade-up" style="margin-bottom:3.5rem;">
-      <div class="overline" style="justify-content:center; margin-bottom:1rem;">Learner Feedback</div>
-      <h2 class="h2">What Students <span class="text-green text-underline">Value Most</span></h2>
-      <p class="section-desc" style="margin-top:0.75rem;">Feedback highlights the lesson structure, practice options, and support learners find most useful.</p>
-    </div>
-
-    <div class="testimonials-masonry">
-
-      <div class="tcard fade-up">
-        <div class="score-badge">Learner Feedback</div>
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The exam preparation helped me understand each question and practise with a clear plan.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar">SR</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">High School English</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-1">
-        <div class="score-badge">Learner Feedback</div>
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The mix of recorded lessons and live support makes it easier to stay consistent.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#0077cc,var(--onyx-high));">KA</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Middle School English</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-2">
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The course sequence is easy to follow, and each lesson has a clear purpose.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#cc5500,var(--onyx-high));">NJ</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Speaking Track</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up">
-        <div class="score-badge">Learner Feedback</div>
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The speaking activities give me useful practice without making the lesson feel rushed.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,var(--green),rgba(14,76,146,0.4)); color:var(--onyx);">DA</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Exam Preparation</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-1">
-        <div class="score-badge">Learner Feedback</div>
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The feedback is specific and helps me understand what to work on next.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#8B44AC,var(--onyx-high));">LM</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">High School English</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-2">
-        <div class="score-badge">Learner Feedback</div>
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The High School English lessons focus on communication I can use at work.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#009966,var(--onyx-high));">FO</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Middle School English</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up">
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The placement test gave me a sensible starting point for my course.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#cc3300,var(--onyx-high));">TH</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Video Library</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-1">
-        <div class="score-badge">Learner Feedback</div>
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The video lessons are concise and useful when I need to review a topic.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#AA0099,var(--onyx-high));">RN</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Middle School English</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-2">
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The balance of explanation and practice makes the lessons easy to follow.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#0055AA,var(--onyx-high));">AM</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Exam Preparation</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up">
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The writing feedback is clear and gives me practical points to revise.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#006633,var(--onyx-high));">MK</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Speaking Track</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-1">
-        <div class="score-badge">Learner Feedback</div>
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“I can review recorded lessons before live practice, which helps me prepare.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#774400,var(--onyx-high));">LH</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Middle School English</div></div>
-        </div>
-      </div>
-
-      <div class="tcard fade-up delay-2">
-        <div class="stars" style="margin-bottom:1rem;"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <p class="testimonial-text">“The learning plan keeps the course focused on my current level and goals.”</p>
-        <div class="testimonial-author" style="margin-top:1.5rem;">
-          <div class="author-avatar" style="background:linear-gradient(135deg,#990033,var(--onyx-high));">SA</div>
-          <div><div class="author-name">Englishine Learner</div><div class="author-tag">Exam Preparation</div></div>
-        </div>
-      </div>
-
-    </div>
+<section class="performance-trust-section">
+  <div class="home-container performance-trust-layout">
+    <div class="performance-trust-copy fade-up"><p class="home-eyebrow">For Students &amp; Parents</p><h2>A Clearer Way to Follow <em>Learning Progress</em></h2><p>Englishine is designed to help students and parents understand what has been watched, what has been practised, what needs correction, and what should be improved next.</p></div>
+    <div class="performance-trust-list fade-up"><ul><li><span>01</span><strong>What to watch</strong></li><li><span>02</span><strong>What to practise</strong></li><li><span>03</span><strong>What to submit</strong></li><li><span>04</span><strong>What needs correction</strong></li><li><span>05</span><strong>What to revise next</strong></li></ul></div>
   </div>
 </section>
 
-<!-- Section Divider -->
-<div class="section-divider"><div class="section-divider-dot"></div></div>
+<section class="performance-final-cta"><div class="home-grid-texture"></div><div class="home-container fade-up"><p class="home-eyebrow">Start Your Progress</p><h2>Ready to Build Consistent <em>English Progress?</em></h2><p>Start with a placement test and choose the learning path that matches your stage, level, and goals.</p><div class="home-actions"><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Free Placement Test</a><a href="courses.html" class="home-btn home-btn-ghost">View Courses</a></div><div class="performance-final-chips"><span>Middle School</span><span>High School</span><span>Guided Videos</span><span>Assignments</span><span>Follow-up</span></div></div></section>
+</main>
 
-<!-- ══ TRUST STRIP ══ -->
-<section class="section-sm" style="background:var(--onyx-mid);">
-  <div class="container">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center;">
-      <div class="slide-right">
-        <div class="overline" style="margin-bottom:1rem;">What Learners Value</div>
-        <h2 class="h2" style="margin-bottom:1.25rem;">A Clear <span class="text-green">Learning</span><br/>Experience</h2>
-        <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.85;">Englishine courses are organised around clear levels, focused practice, and practical feedback.</p>
-      </div>
-      <div class="slide-left" style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;">
-        <div class="card" style="padding:1.75rem; text-align:center;">
-          <div style="font-size:1.75rem; margin-bottom:0.75rem;">🎯</div>
-          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Diagnostic-First</div>
-          <div style="font-size:0.82rem; color:var(--text-muted);">The placement test identifies your current level and learning priorities</div>
-        </div>
-        <div class="card" style="padding:1.75rem; text-align:center;">
-          <div style="font-size:1.75rem; margin-bottom:0.75rem;">📈</div>
-          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Measurable Progress</div>
-          <div style="font-size:0.82rem; color:var(--text-muted);">Progress reviews help identify what to practise next</div>
-        </div>
-        <div class="card" style="padding:1.75rem; text-align:center;">
-          <div style="font-size:1.75rem; margin-bottom:0.75rem;">🛡️</div>
-          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Flexible Support</div>
-          <div style="font-size:0.82rem; color:var(--text-muted);">Discuss your goals and learning format before booking a paid session</div>
-        </div>
-        <div class="card" style="padding:1.75rem; text-align:center;">
-          <div style="font-size:1.75rem; margin-bottom:0.75rem;">🌍</div>
-          <div style="font-family:var(--font-head); font-size:0.95rem; font-weight:600; margin-bottom:0.35rem;">Live and Recorded</div>
-          <div style="font-size:0.82rem; color:var(--text-muted);">Combine recorded lessons with live practice where available</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Section Divider -->
-<div class="section-divider"><div class="section-divider-dot"></div></div>
-
-<!-- ══ CTA ══ -->
-<section class="cta-section">
-  <div class="cta-section-glow"></div>
-  <div class="container text-center relative z-1 fade-up">
-    <div class="overline" style="justify-content:center; margin-bottom:1.5rem;">Your Next Step</div>
-    <h2 class="h2" style="margin-bottom:1rem;">Ready to Start with a <span class="text-green">Clear Plan?</span></h2>
-    <p class="section-desc" style="margin:0 auto 3rem;">Take the free placement test and find the course path that matches your current level and goals.</p>
-    <div class="flex justify-center gap-4 flex-wrap">
-      <a href="contact.html#placement-test" class="btn btn-primary btn-lg magnetic">Book a Free Placement Test</a>
-      <a href="pricing.html" class="btn btn-secondary btn-lg magnetic">View Pricing Plans</a>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <a href="index.html" class="nav-logo" style="margin-bottom:1rem; display:inline-flex;"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a>
-        <p>Structured English learning for middle and high school students. By Mr Ahmed Abo Mazen.</p>
-        <div class="social-links mt-6"><a href="#" class="social-link">💬</a><a href="#" class="social-link">f</a><a href="#" class="social-link">📷</a><a href="#" class="social-link">in</a><a href="#" class="social-link">▶</a></div>
-      </div>
-      <div class="footer-col"><h4>Navigation</h4><a href="index.html">Home</a><a href="about.html">About</a><a href="courses.html">Courses</a><a href="certifications.html">Certifications</a></div>
-      <div class="footer-col"><h4>Programmes</h4><a href="courses.html#middle-school">Middle School English</a><a href="courses.html#high-school">High School English</a><a href="courses.html#grammar-writing">Grammar &amp; Writing</a><a href="courses.html#exam-preparation">Exam Preparation</a><a href="courses.html#top-students">Top Students Program</a></div>
-      <div class="footer-col"><h4>Connect</h4><a href="contact.html">Contact</a><a href="pricing.html">Pricing</a><a href="testimonials.html">Testimonials</a><a href="contact.html">Book a Session</a></div>
-    </div>
-    <div class="footer-bottom"><span>© 2026 Englishine. All rights reserved.</span><span>English Learning Platform · By Mr Ahmed Abo Mazen</span></div>
-  </div>
-</footer>
-
+<footer class="footer home-footer performance-footer"><div class="home-container"><div class="footer-grid"><div class="footer-brand"><a href="index.html" class="nav-logo home-brand"><img src="assets/logo/englishine-logo.svg" alt="" class="official-logo"><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a><p>A premium English learning platform led by Mr Ahmed Abo Mazen, helping school students learn through structured lessons, guided videos, assignments, and follow-up.</p></div><div class="footer-col"><h4>Platform</h4><a href="index.html">Home</a><a href="courses.html">Programmes</a><a href="videos.html">Video Library</a><a href="pricing.html">Pricing</a><a href="about.html">About</a><a href="certifications.html">Certifications</a></div><div class="footer-col"><h4>Progress</h4><a href="#top-students">Top Students</a><a href="courses.html">Top Students Program</a><a href="videos.html">Guided Videos</a><a href="contact.html#placement-test">Placement Test</a></div><div class="footer-col"><h4>Next Step</h4><a href="contact.html#placement-test">Book a Free Placement Test</a><a href="courses.html">View Programmes</a><a href="contact.html">Contact Englishine</a></div></div><div class="footer-bottom"><span>&copy; 2026 Englishine. All rights reserved.</span><span>Led by Mr Ahmed Abo Mazen</span><span>Structured English learning for school students.</span></div></div></footer>
 <script src="script.js"></script>
-<script>
-  // Spotlight on tcard elements
-  document.querySelectorAll('.tcard').forEach(card => {
-    card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      card.style.setProperty('--mouse-x', ((e.clientX - r.left) / r.width * 100) + '%');
-      card.style.setProperty('--mouse-y', ((e.clientY - r.top)  / r.height * 100) + '%');
-    });
-  });
-
-  // Animate rating bars on scroll
-  const bars = document.querySelectorAll('.rating-bar-fill[data-width]');
-  const barObs = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.width = entry.target.dataset.width;
-        barObs.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.3 });
-  bars.forEach(b => barObs.observe(b));
-</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
