@@ -1,384 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Certifications — Englishine</title>
-  <meta name="description" content="Review the qualifications and professional development that support Englishine teaching." />
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    .cert-grid-full {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-    }
-    @media (max-width: 900px) { .cert-grid-full { grid-template-columns: repeat(2,1fr); } }
-    @media (max-width: 540px)  { .cert-grid-full { grid-template-columns: 1fr; } }
-
-    .cert-card-v2 {
-      background: var(--onyx-card);
-      border-radius: var(--r-md);
-      padding: 2.25rem 1.75rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 0.85rem;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
-      cursor: default;
-    }
-    .cert-card-v2::before {
-      content: '';
-      position: absolute; inset: 0;
-      border-radius: var(--r-md);
-      padding: 1px;
-      background: linear-gradient(145deg, rgba(14,76,146,0.2) 0%, rgba(14,76,146,0.04) 45%, transparent 65%);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-      pointer-events: none;
-      opacity: 0.5;
-      transition: opacity 0.35s;
-    }
-    .cert-card-v2::after {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(14,76,146,0.05), transparent 40%);
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.4s;
-    }
-    .cert-card-v2:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
-    .cert-card-v2:hover::before { opacity: 1; }
-    .cert-card-v2:hover::after  { opacity: 1; }
-    .cert-card-v2.featured {
-      background: linear-gradient(160deg, rgba(14,76,146,0.08) 0%, var(--onyx-card) 60%);
-    }
-    .cert-card-v2.featured::before { opacity: 1; }
-
-    .cert-num-tag {
-      position: absolute;
-      top: 1rem; right: 1.25rem;
-      font-family: var(--font-label);
-      font-size: 0.6rem;
-      font-weight: 800;
-      color: var(--text-faint);
-      letter-spacing: 0.1em;
-    }
-    .cert-icon-v2 {
-      width: 76px; height: 76px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(14,76,146,0.12), rgba(14,76,146,0.03));
-      border: 1px solid rgba(14,76,146,0.22);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2rem;
-      transition: all 0.4s var(--ease-out);
-      position: relative; z-index: 1;
-      flex-shrink: 0;
-    }
-    .cert-card-v2:hover .cert-icon-v2 {
-      background: linear-gradient(135deg, rgba(14,76,146,0.18), rgba(14,76,146,0.07));
-      border-color: rgba(14,76,146,0.42);
-      box-shadow: 0 0 28px rgba(14,76,146,0.18);
-      transform: scale(1.08);
-    }
-    .cert-title-v2 {
-      font-family: var(--font-head);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-head);
-      line-height: 1.35;
-      position: relative; z-index: 1;
-    }
-    .cert-desc-v2 {
-      font-size: 0.83rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-      position: relative; z-index: 1;
-    }
-    .cert-org-v2 {
-      font-family: var(--font-label);
-      font-size: 0.65rem;
-      font-weight: 800;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--green);
-      position: relative; z-index: 1;
-    }
-    .cert-year-v2 {
-      font-family: var(--font-label);
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--text-faint);
-      letter-spacing: 0.08em;
-      position: relative; z-index: 1;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certifications &amp; Professional Development - Englishine</title>
+  <meta name="description" content="Explore the academic background, teacher training, and professional development that support Mr Ahmed Abo Mazen's English teaching practice.">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-
+<body class="certifications-page">
 <div id="scroll-progress"></div>
-
-<!-- NAVBAR -->
-<nav class="navbar" aria-label="Primary navigation">
-  <a href="index.html" class="nav-logo" aria-label="Englishine home"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a>
-  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="courses.html">Courses</a></li><li><a href="videos.html">Videos</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="scholarships.html">Scholarships</a></li><li><a href="certifications.html">Certifications</a></li><li><a href="about.html">About</a></li><li><a href="contact.html">Contact</a></li></ul>
-  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Book a Free Placement Test</a><button class="hamburger" aria-label="Open menu"><span></span><span></span><span></span></button></div>
+<nav class="navbar home-navbar" aria-label="Primary navigation">
+  <a href="index.html" class="nav-logo home-brand" aria-label="Englishine home"><img src="assets/logo/englishine-logo.svg" alt="" class="official-logo"><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a>
+  <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="courses.html">Programmes</a></li><li><a href="videos.html">Video Library</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="about.html">About</a></li><li><a class="active" href="certifications.html">Certifications</a></li><li><a href="contact.html">Contact</a></li></ul>
+  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">Book Placement Test</a><button class="hamburger" type="button" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button></div>
 </nav>
-<div class="mobile-menu"><button class="mobile-menu-close" aria-label="Close menu">×</button><a href="index.html">Home</a><a href="courses.html">Courses</a><a href="videos.html">Videos</a><a href="pricing.html">Pricing</a><a href="scholarships.html">Scholarships</a><a href="certifications.html">Certifications</a><a href="about.html">About</a><a href="contact.html">Contact</a></div>
+<div class="mobile-menu" aria-hidden="true"><button class="mobile-menu-close" type="button" aria-label="Close menu">x</button><a href="index.html">Home</a><a href="courses.html">Programmes</a><a href="videos.html">Video Library</a><a href="pricing.html">Pricing</a><a href="about.html">About</a><a href="certifications.html">Certifications</a><a href="contact.html">Contact</a></div>
 
-<!-- PAGE HERO -->
-<section class="page-hero">
-  <div class="page-hero-grid"></div>
-  <div class="container relative z-1 text-center">
-    <div class="overline fade-up" style="justify-content:center; margin-bottom:1.25rem;">Verified Credentials</div>
-    <h1 class="h1 fade-up delay-1" style="margin-bottom:1.25rem;">
-      Qualifications &amp;<br/><span class="text-green italic">Certifications</span>
-    </h1>
-    <p class="section-desc fade-up delay-2" style="margin:0 auto;">
-      These qualifications and training areas reflect continued professional development in English teaching.
-    </p>
-  </div>
-</section>
-
-<div class="section-divider"><div class="section-divider-dot"></div></div>
-
-<!-- ══ STATS STRIP ══ -->
-<div style="background:var(--onyx-mid);">
-  <div class="stats-strip">
-    <div class="stat-item fade-up">
-      <span class="stat-value">B.Ed.</span><span class="stat-label">English Education</span>
+<header class="certifications-hero">
+  <div class="home-grid-texture"></div>
+  <div class="home-container certifications-hero-layout">
+    <div class="certifications-hero-copy">
+      <p class="home-eyebrow fade-up">Professional Development</p>
+      <h1 class="fade-up delay-1">Built on Continuous Learning and <em>Teaching Practice</em></h1>
+      <p class="fade-up delay-2">Mr Ahmed's teaching approach is supported by years of experience, ongoing professional development, and a commitment to clearer, more practical English learning.</p>
+      <div class="home-actions fade-up delay-3"><a href="about.html" class="home-btn home-btn-primary">Learn About Mr Ahmed</a><a href="contact.html#placement-test" class="home-btn home-btn-ghost">Book a Free Placement Test</a></div>
+      <div class="certifications-hero-chips fade-up delay-4"><span>18+ Years Experience</span><span>English Education</span><span>Teacher Training</span><span>Practical Teaching</span><span>Continuous Development</span></div>
     </div>
-    <div class="stat-item fade-up delay-1">
-      <span class="stat-value">NTTP</span><span class="stat-label">British Council Training</span>
-    </div>
-    <div class="stat-item fade-up delay-2">
-      <span class="stat-value">120h</span><span class="stat-label">TEFL Training</span>
-    </div>
-    <div class="stat-item fade-up delay-3">
-      <span class="stat-value">DIP.</span><span class="stat-label">Teaching Development</span>
+    <div class="credentials-dashboard fade-in delay-2" aria-label="Englishine professional development overview">
+      <div class="credentials-dashboard-head"><div><small>Englishine Instructor Profile</small><strong>Development in practice</strong></div><span>Mr Ahmed Abo Mazen</span></div>
+      <div class="credentials-focus"><small>Professional direction</small><strong>Learn, apply, and improve</strong><p>Academic preparation and teacher development support a clearer learning experience for school students.</p></div>
+      <div class="credentials-path">
+        <article><span>01</span><div><small>Foundation</small><strong>English Education</strong></div><i>Academic</i></article>
+        <article><span>02</span><div><small>Development</small><strong>Teacher Training</strong></div><i>Ongoing</i></article>
+        <article><span>03</span><div><small>Application</small><strong>Structured Teaching</strong></div><i>Practical</i></article>
+      </div>
+      <div class="credentials-dashboard-note"><span></span><p><small>Teaching focus</small><strong>Clear explanation and guided practice</strong></p></div>
     </div>
   </div>
-</div>
+</header>
 
-<div class="section-divider"><div class="section-divider-dot"></div></div>
-
-<!-- ══ CERTS GRID ══ -->
-<section class="section">
-  <div class="container">
-    <div class="section-header center fade-up">
-      <div class="overline" style="justify-content:center; margin-bottom:1rem;">Academic &amp; Professional</div>
-      <h2 class="h2">Professional Qualifications &amp; <span class="text-underline">Training</span></h2>
-      <p class="section-desc">A summary of the qualifications and professional development that support Englishine teaching.</p>
-    </div>
-
-    <div class="cert-grid-full stagger-children">
-
-      <div class="cert-card-v2 featured fade-up">
-        <div class="cert-num-tag">01</div>
-        <div class="cert-icon-v2">🎓</div>
-        <div class="cert-org-v2">University Degree</div>
-        <div class="cert-title-v2">Bachelor of Education — English</div>
-        <div class="cert-desc-v2">Four-year academic degree specialising in English language, linguistics, and educational pedagogy. Provides the scholarly foundation for all professional teaching practice.</div>
-        <div class="cert-year-v2">Academic Qualification</div>
-      </div>
-
-      <div class="cert-card-v2 featured fade-up delay-1">
-        <div class="cert-num-tag">02</div>
-        <div class="cert-icon-v2">🌐</div>
-        <div class="cert-org-v2">British Council</div>
-        <div class="cert-title-v2">New Teacher Training Programme (NTTP)</div>
-        <div class="cert-desc-v2">Teacher development through the British Council New Teacher Training Programme, covering practical EFL methodology and classroom planning.</div>
-        <div class="cert-year-v2">Professional Development</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up delay-2">
-        <div class="cert-num-tag">03</div>
-        <div class="cert-icon-v2">📋</div>
-        <div class="cert-org-v2">International TEFL</div>
-        <div class="cert-title-v2">TEFL 120 Hours Certificate</div>
-        <div class="cert-desc-v2">A 120-hour TEFL qualification covering EFL methodology, lesson planning, and learner assessment.</div>
-        <div class="cert-year-v2">TEFL Qualification</div>
-      </div>
-
-
-      <div class="cert-card-v2 fade-up delay-1">
-        <div class="cert-num-tag">05</div>
-        <div class="cert-icon-v2">💼</div>
-        <div class="cert-org-v2">Cambridge / BEC Aligned</div>
-        <div class="cert-title-v2">Business English Certificate</div>
-        <div class="cert-desc-v2">Professional qualification in Business English teaching — covering corporate communication, professional writing, presentations, negotiations, and business correspondence.</div>
-        <div class="cert-year-v2">Business English Training</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up delay-2">
-        <div class="cert-num-tag">06</div>
-        <div class="cert-icon-v2">💻</div>
-        <div class="cert-org-v2">ICDL Foundation</div>
-        <div class="cert-title-v2">ICDL — International Computer Driving Licence</div>
-        <div class="cert-desc-v2">Digital literacy training that supports online resources, virtual lessons, and professional learning delivery.</div>
-        <div class="cert-year-v2">Digital Skills</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up">
-        <div class="cert-num-tag">07</div>
-        <div class="cert-icon-v2">📜</div>
-        <div class="cert-org-v2">Professional Diploma</div>
-        <div class="cert-title-v2">Professional Teaching Diploma — Level 1</div>
-        <div class="cert-desc-v2">Advanced diploma extending core B.Ed. foundations with specialised teaching strategies, curriculum design, and formative assessment practice for EFL contexts.</div>
-        <div class="cert-year-v2">Teaching Diploma</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up delay-1">
-        <div class="cert-num-tag">08</div>
-        <div class="cert-icon-v2">🏅</div>
-        <div class="cert-org-v2">Private Teaching Diploma</div>
-        <div class="cert-title-v2">Private Teaching Diploma — Level 2</div>
-        <div class="cert-desc-v2">Higher-level diploma covering advanced curriculum design, language assessment, differentiated instruction, and inclusive teaching methodologies for diverse learner groups.</div>
-        <div class="cert-year-v2">Teaching Diploma</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up delay-2">
-        <div class="cert-num-tag">09</div>
-        <div class="cert-icon-v2">🗣️</div>
-        <div class="cert-org-v2">Pronunciation Specialist</div>
-        <div class="cert-title-v2">English Pronunciation &amp; Phonetics Certificate</div>
-        <div class="cert-desc-v2">Specialist certification in English phonetics, phonology, and pronunciation coaching — enabling targeted accent reduction and spoken fluency development.</div>
-        <div class="cert-year-v2">Pronunciation Training</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up">
-        <div class="cert-num-tag">10</div>
-        <div class="cert-icon-v2">🧒</div>
-        <div class="cert-org-v2">Young Learners Programme</div>
-        <div class="cert-title-v2">Teaching English to Young Learners</div>
-        <div class="cert-desc-v2">Specialised certification for instructing children and young adult learners in English, incorporating play-based, communicative, and age-appropriate methodology.</div>
-        <div class="cert-year-v2">Young Learner Training</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up delay-1">
-        <div class="cert-num-tag">11</div>
-        <div class="cert-icon-v2">✍️</div>
-        <div class="cert-org-v2">Advanced English</div>
-        <div class="cert-title-v2">Advanced Grammar &amp; Writing Certificate</div>
-        <div class="cert-desc-v2">Specialist certificate in advanced English grammar, academic writing, and written communication — covering complex structures and formal written English across registers.</div>
-        <div class="cert-year-v2">Writing Training</div>
-      </div>
-
-      <div class="cert-card-v2 fade-up delay-2">
-        <div class="cert-num-tag">12</div>
-        <div class="cert-icon-v2">🖥️</div>
-        <div class="cert-org-v2">Digital Education</div>
-        <div class="cert-title-v2">Online English Teaching Certificate</div>
-        <div class="cert-desc-v2">Professional certification in online English language teaching — covering virtual classroom management, digital tool integration, and effective remote learner assessment.</div>
-        <div class="cert-year-v2">Online Teaching</div>
-      </div>
-
+<main>
+<section class="certifications-section credibility-overview">
+  <div class="home-container">
+    <header class="certifications-section-head fade-up"><p class="home-eyebrow">Credibility in Practice</p><h2>Teaching Experience Supported by <em>Development</em></h2><p>Professional learning matters most when it strengthens the way students understand, practise, and progress.</p></header>
+    <div class="credibility-grid">
+      <article class="credibility-card fade-up"><span>01</span><h3>Academic Foundation</h3><p>Mr Ahmed's English education background supports his structured approach to teaching students.</p></article>
+      <article class="credibility-card fade-up"><span>02</span><h3>Teacher Training</h3><p>Professional development helps strengthen lesson planning, explanation, and classroom practice.</p></article>
+      <article class="credibility-card fade-up"><span>03</span><h3>Practical Application</h3><p>Englishine focuses on applying knowledge through clear explanations, practice, correction, and follow-up.</p></article>
     </div>
   </div>
 </section>
 
-<div class="section-divider"><div class="section-divider-dot"></div></div>
-
-<!-- ══ TRUST SECTION ══ -->
-<section class="section glow-section" style="background:var(--onyx-mid);">
-  <div class="container">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center;">
-      <div class="slide-right">
-        <div class="overline" style="margin-bottom:1.1rem;">Why It Matters</div>
-        <h2 class="h2" style="margin-bottom:1.25rem;">Credentials That Support<br/><span class="text-green italic">Structured Teaching</span></h2>
-        <p style="color:var(--text-muted); font-size:0.93rem; line-height:1.85; margin-bottom:1.1rem;">
-          Professional qualifications support clear teaching standards, informed lesson planning, and continued development.
-        </p>
-        <p style="color:var(--text-muted); font-size:0.93rem; line-height:1.85; margin-bottom:2.25rem;">
-          Englishine combines these qualifications with practical course planning, guided practice, and learner feedback.
-        </p>
-        <a href="about.html" class="btn btn-secondary">Learn About Mr Ahmed Abo Mazen →</a>
-      </div>
-      <div class="slide-left delay-2" style="display:flex; flex-direction:column; gap:1rem;">
-        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
-          <div style="font-size:1.4rem; flex-shrink:0;">✅</div>
-          <div>
-            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">British Council Development</div>
-            <div style="font-size:0.83rem; color:var(--text-muted);">British Council NTTP professional development</div>
-          </div>
-        </div>
-        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
-          <div style="font-size:1.4rem; flex-shrink:0;">🌍</div>
-          <div>
-            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">Teaching Foundation</div>
-            <div style="font-size:0.83rem; color:var(--text-muted);">Qualifications that support structured English teaching</div>
-          </div>
-        </div>
-        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
-          <div style="font-size:1.4rem; flex-shrink:0;">📈</div>
-          <div>
-            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">Continuously Developing</div>
-            <div style="font-size:0.83rem; color:var(--text-muted);">Ongoing CPD ensures teaching reflects the latest methodology</div>
-          </div>
-        </div>
-        <div class="card" style="display:flex; gap:1rem; align-items:center; padding:1.35rem 1.5rem;">
-          <div style="font-size:1.4rem; flex-shrink:0;">🎯</div>
-          <div>
-            <div style="font-weight:600; font-size:0.9rem; color:var(--text-head); margin-bottom:0.2rem;">School-Stage Teaching Focus</div>
-            <div style="font-size:0.83rem; color:var(--text-muted);">Structured explanation, grammar, writing, and school exam support</div>
-          </div>
-        </div>
-      </div>
+<section class="certifications-section certificate-library" id="certificates">
+  <div class="home-container">
+    <header class="certifications-section-head fade-up"><p class="home-eyebrow">Certificates &amp; Training</p><h2>Professional Development <em>Background</em></h2><p>A focused record of academic preparation and training that supports Mr Ahmed's continued teaching practice.</p></header>
+    <div class="approved-certificate-grid">
+      <article class="approved-certificate-card fade-up">
+        <div class="certificate-card-head"><span>Academic Foundation</span><small>Academic Background</small></div>
+        <div class="certificate-symbol" aria-hidden="true">B.Ed</div>
+        <h3>Bachelor of Education &mdash; English</h3>
+        <p>An academic foundation in English education that supports Mr Ahmed's long-term teaching practice.</p>
+        <footer><span>English Education</span><strong>Academic Background</strong></footer>
+      </article>
+      <article class="approved-certificate-card fade-up delay-1">
+        <div class="certificate-card-head"><span>Teaching Development</span><small>Professional Development</small></div>
+        <div class="certificate-symbol" aria-hidden="true">120h</div>
+        <h3>TEFL 120-Hour Certificate</h3>
+        <p>Professional development focused on English language teaching methods and classroom practice.</p>
+        <footer><span>Teaching Methods</span><strong>Professional Development</strong></footer>
+      </article>
+      <article class="approved-certificate-card fade-up delay-2">
+        <div class="certificate-card-head"><span>Teacher Training</span><small>Professional Development</small></div>
+        <div class="certificate-symbol" aria-hidden="true">NTTP</div>
+        <h3>British Council NTTP</h3>
+        <p>Teacher training experience that supports clearer, more structured English instruction.</p>
+        <footer><span>Teacher Training</span><strong>Professional Development</strong></footer>
+      </article>
+      <article class="approved-certificate-card fade-up">
+        <div class="certificate-card-head"><span>Professional Development</span><small>Training Background</small></div>
+        <div class="certificate-symbol" aria-hidden="true">ITT</div>
+        <h3>IELTS Teacher Training</h3>
+        <p>Shown as part of Mr Ahmed's professional development background only.</p>
+        <footer><span>Teacher Development</span><strong>Training Background</strong></footer>
+      </article>
+      <article class="approved-certificate-card fade-up delay-1">
+        <div class="certificate-card-head"><span>Certificate Only</span><small>Professional Development</small></div>
+        <div class="certificate-symbol" aria-hidden="true">BE</div>
+        <h3>Business English &mdash; Marketing &amp; Sales</h3>
+        <p>Shown as a professional development certificate only. Business English is not currently presented as an active Englishine course.</p>
+        <footer><span>Marketing &amp; Sales</span><strong>Certificate Only</strong></footer>
+      </article>
+      <article class="approved-certificate-card fade-up delay-2">
+        <div class="certificate-card-head"><span>Private Teaching Development</span><small>Professional Development</small></div>
+        <div class="certificate-symbol" aria-hidden="true">L2</div>
+        <h3>Private Teaching Diploma &mdash; Level 2</h3>
+        <p>Professional development related to private teaching, student support, and structured learning.</p>
+        <footer><span>Private Teaching</span><strong>Professional Development</strong></footer>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
-<section style="padding:clamp(5rem,10vw,9rem) 0; position:relative; overflow:hidden;">
-  <div style="position:absolute; inset:0; background:radial-gradient(ellipse 800px 350px at 50% 50%, rgba(14,76,146,0.065), transparent 70%); pointer-events:none;"></div>
-  <div class="container text-center relative z-1 fade-up">
-    <h2 class="h2" style="margin-bottom:1rem;">Learn with a <span class="text-green italic">Qualified</span> Instructor</h2>
-    <p class="section-desc" style="margin:0 auto 2.75rem;">Explore the available courses or begin with a free placement test.</p>
-    <div class="flex justify-center gap-4 flex-wrap">
-      <a href="contact.html" class="btn btn-primary btn-lg">Book a Session</a>
-      <a href="courses.html" class="btn btn-secondary btn-lg">View Courses</a>
+<section class="certifications-note-section">
+  <div class="home-container">
+    <div class="credentials-note-card fade-up">
+      <div><p class="home-eyebrow">Credentials in Context</p><h2>A Clear and Honest View of Credentials</h2></div>
+      <div><p>Certificates are shown as part of Mr Ahmed's professional development and teaching background. Englishine focuses on using this experience to provide clearer explanations, practical training, mistake correction, and regular student follow-up.</p><aside>Some certificates may support teaching development without being presented as active Englishine courses.</aside></div>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <a href="index.html" class="nav-logo" style="margin-bottom:1rem; display:inline-flex;"><span class="englishine-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a>
-        <p>Structured English learning for middle and high school students. By Mr Ahmed Abo Mazen.</p>
-        <div class="social-links" style="margin-top:1.5rem;"><a href="#" class="social-link">💬</a><a href="#" class="social-link">f</a><a href="#" class="social-link">📷</a><a href="#" class="social-link">in</a><a href="#" class="social-link">▶</a></div>
-      </div>
-      <div class="footer-col"><h4>Navigation</h4><a href="index.html">Home</a><a href="about.html">About</a><a href="courses.html">Courses</a><a href="certifications.html">Certifications</a></div>
-      <div class="footer-col"><h4>Programmes</h4><a href="courses.html#middle-school">Middle School English</a><a href="courses.html#high-school">High School English</a><a href="courses.html#grammar-writing">Grammar &amp; Writing</a><a href="courses.html#exam-preparation">Exam Preparation</a><a href="courses.html#top-students">Top Students Program</a></div>
-      <div class="footer-col"><h4>Connect</h4><a href="contact.html">Contact</a><a href="pricing.html">Pricing</a><a href="testimonials.html">Testimonials</a><a href="contact.html">Book a Session</a></div>
+<section class="certifications-section teaching-impact-section">
+  <div class="home-container">
+    <header class="certifications-section-head fade-up"><p class="home-eyebrow">Teaching Impact</p><h2>How This <em>Supports Students</em></h2><p>Professional learning is applied through practical choices in each student's learning path.</p></header>
+    <div class="teaching-impact-grid">
+      <article class="teaching-impact-card fade-up"><span>01</span><h3>Clearer Explanation</h3><p>Ideas are broken into understandable steps with focused examples.</p></article>
+      <article class="teaching-impact-card fade-up"><span>02</span><h3>Better Lesson Structure</h3><p>Lessons connect curriculum goals, practice, revision, and next steps.</p></article>
+      <article class="teaching-impact-card fade-up"><span>03</span><h3>Practical Exercises</h3><p>Students apply what they learn through purposeful questions and assignments.</p></article>
+      <article class="teaching-impact-card fade-up"><span>04</span><h3>Stronger Follow-up</h3><p>Correction and guidance help students see where to focus next.</p></article>
     </div>
-    <div class="footer-bottom"><span>© 2026 Englishine. All rights reserved.</span><span>English Learning Platform · By Mr Ahmed Abo Mazen</span></div>
   </div>
-</footer>
+</section>
+
+<section class="certifications-final-cta"><div class="home-grid-texture"></div><div class="home-container fade-up"><p class="home-eyebrow">Learn with Confidence</p><h2>Start English with a Clear <em>Teaching Approach</em></h2><p>Book a free placement test and choose the learning path that matches your stage, level, and goals.</p><div class="home-actions"><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Free Placement Test</a><a href="courses.html" class="home-btn home-btn-ghost">View Courses</a></div></div></section>
+</main>
+
+<footer class="footer home-footer certifications-footer"><div class="home-container"><div class="footer-grid"><div class="footer-brand"><a href="index.html" class="nav-logo home-brand"><img src="assets/logo/englishine-logo.svg" alt="" class="official-logo"><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a><p>A premium English learning platform led by Mr Ahmed Abo Mazen, helping school students learn through structured lessons, guided videos, assignments, and follow-up.</p></div><div class="footer-col"><h4>Platform</h4><a href="index.html">Home</a><a href="courses.html">Programmes</a><a href="videos.html">Video Library</a><a href="pricing.html">Pricing</a><a href="about.html">About</a><a href="certifications.html">Certifications</a></div><div class="footer-col"><h4>Development</h4><a href="#certificates">Academic Background</a><a href="#certificates">Teacher Training</a><a href="#certificates">Professional Development</a><a href="about.html">About Mr Ahmed</a></div><div class="footer-col"><h4>Next Step</h4><a href="contact.html#placement-test">Book a Free Placement Test</a><a href="courses.html">View Programmes</a><a href="contact.html">Contact Englishine</a></div></div><div class="footer-bottom"><span>&copy; 2026 Englishine. All rights reserved.</span><span>Led by Mr Ahmed Abo Mazen</span><span>Structured English learning for school students.</span></div></div></footer>
 <script src="script.js"></script>
-<script>
-  // Spotlight on cert cards
-  document.querySelectorAll('.cert-card-v2').forEach(card => {
-    card.addEventListener('mousemove', e => {
-      const r = card.getBoundingClientRect();
-      card.style.setProperty('--mouse-x', ((e.clientX - r.left) / r.width * 100) + '%');
-      card.style.setProperty('--mouse-y', ((e.clientY - r.top)  / r.height * 100) + '%');
-    });
-  });
-</script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
