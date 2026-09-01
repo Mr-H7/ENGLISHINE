@@ -1,0 +1,9 @@
+{
+  "name": "englishine-arabic-mvp",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "lint": "node scripts/validate.mjs",
+    "build": "node scripts/build.mjs"
+  }
+}
