@@ -4359,3 +4359,28 @@ body::before{opacity:.018}
   .support-final-chips::-webkit-scrollbar { display: none; }
   .support-final-chips span { flex: 0 0 auto; font-size: 10px; }
 }
+/* ============================================================
+   ARABIC RTL PRODUCT EXTENSION
+   Uses the approved Englishine tokens, spacing and components.
+   ============================================================ */
+html[dir="rtl"] body{direction:rtl;text-align:right}
+html[dir="rtl"] .navbar,html[dir="rtl"] .home-container,html[dir="rtl"] .footer{direction:rtl}
+html[dir="rtl"] .nav-links a::after{left:auto;right:0}
+html[dir="rtl"] .home-section-head,html[dir="rtl"] .courses-section-head,html[dir="rtl"] .videos-section-head,html[dir="rtl"] .pricing-section-head,html[dir="rtl"] .home-final-cta,html[dir="rtl"] .courses-final-cta,html[dir="rtl"] .videos-final-cta,html[dir="rtl"] .pricing-final-cta{text-align:center}
+html[dir="rtl"] .about-content blockquote{border-left:0;border-right:2px solid #4a8fd3}
+html[dir="rtl"] .course-card-cta span,html[dir="rtl"] .video-card-action span{transform:scaleX(-1)}
+html[dir="rtl"] .footer-col,html[dir="rtl"] .footer-brand{text-align:right}
+html[dir="rtl"] input,html[dir="rtl"] select,html[dir="rtl"] textarea{text-align:right}
+.curriculum-path-section{background:#061633}
+.curriculum-filter-shell{margin-bottom:34px}
+.curriculum-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.curriculum-filter-grid label{display:grid;gap:8px;color:#9fb2c9;font:700 .68rem var(--font-label)}
+.curriculum-filter-grid select{width:100%;min-height:48px;padding:10px 13px;border:1px solid rgba(178,190,214,.16);border-radius:10px;background:#071b46;color:#f7fafc;font:600 .75rem var(--font-label);outline:none}
+.curriculum-filter-grid select:focus{border-color:#5e99d9;box-shadow:0 0 0 3px rgba(14,76,146,.2)}
+.curriculum-unit-card{min-height:560px}
+.curriculum-unit-card .course-practice li{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.curriculum-unit-card .course-practice li a{color:#8fc4f7;font:700 .64rem var(--font-label);white-space:nowrap}
+.curriculum-card-empty{padding:20px;margin-top:18px}
+.curriculum-card-empty strong{font-size:1rem}
+.curriculum-wide-empty{grid-column:1/-1}
+@media(max-width:760px){.curriculum-filter-grid{display:flex;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:5px}.curriculum-filter-grid label{min-width:220px;scroll-snap-align:start}.curriculum-unit-card{min-height:0}}

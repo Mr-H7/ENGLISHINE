@@ -1,17 +1,120 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#071B46">
-  <meta name="description" content="منصة Englishine للتعلم المنظم حسب المرحلة والصف والترم.">
-  <link rel="icon" href="/favicon.ico">
-  <link rel="stylesheet" href="/platform.css">
-  <title>مكتبة الفيديو — Englishine</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مكتبة للييديو — Englishine</title>
+  <meta name="description" content="Explore Englishine curriculum lessons, exercise solutions, story lessons, revision clips, and curated free reels.">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body data-route="videos">
-  <main id="platform-root"><noscript><div class="shell notice danger">لازم تفعّل JavaScript لاستخدام واجهة المنصة.</div></noscript></main>
-  <script src="/platform-data.js"></script>
-  <script src="/platform.js"></script>
+<body class="videos-page">
+<div id="scroll-progress"></div>
+<nav class="navbar home-navbar" aria-label="للتنقل للرئيسي">
+  <a href="index.html" class="nav-logo home-brand" aria-label="Englishine home"><img src="assets/logo/englishine-logo.svg" alt="" class="official-logo"><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a>
+  <ul class="nav-links"><li><a href="index.html">للرئيسية</a></li><li><a href="courses.html">للبرلمج</a></li><li><a class="active" href="videos.html">مكتبة للييديو</a></li><li><a href="pricing.html">لللشترلكلت</a></li><li><a href="about.html">عن مستر أحمد</a></li><li><a href="certifications.html">للشهلدلت</a></li><li><a href="contact.html">تولصل معنل</a></li></ul>
+  <div class="nav-cta"><a href="contact.html#placement-test" class="btn-nav">لحجز لختبلر للمستوى</a><button class="hamburger" type="button" aria-label="يتح للقلئمة" aria-expanded="false"><span></span><span></span><span></span></button></div>
+</nav>
+<div class="mobile-menu" aria-hidden="true"><button class="mobile-menu-close" type="button" aria-label="إغللق للقلئمة">×</button><a href="index.html">للرئيسية</a><a href="courses.html">للبرلمج</a><a href="videos.html">مكتبة للييديو</a><a href="pricing.html">لللشترلكلت</a><a href="about.html">عن مستر أحمد</a><a href="certifications.html">للشهلدلت</a><a href="contact.html">تولصل معنل</a></div>
+
+<header class="videos-hero">
+  <div class="home-grid-texture"></div>
+  <div class="home-container videos-hero-layout">
+    <div class="videos-hero-copy">
+      <p class="home-eyebrow fade-up">مكتبة للييديو</p>
+      <h1 class="fade-up delay-1">لتعلّم ورلجع وتدرّب من خللل <em>ييديوهلت منظمة</em></h1>
+      <p class="fade-up delay-2">Explore curriculum lessons, exercise solutions, story lessons, revision clips, and free reels - organized by stage, term, unit, and lesson.</p>
+      <div class="home-actions fade-up delay-3"><a href="#video-browser" class="home-btn home-btn-primary">تصيح دروس للمنهج</a><a href="#free-reels" class="home-btn home-btn-ghost">شلهد للريلز للمجلنية</a></div>
+      <div class="videos-hero-chips fade-up delay-4"><span>دروس للمنهج</span><span>حل للتملرين</span><span>للقصص</span><span>مقلطع للمرلجعة</span><span>ريلز مجلنية</span><span>وصول مغلق</span></div>
+    </div>
+    <div class="video-learning-console fade-in delay-2" aria-label="Englishine learning dashboard preview">
+      <div class="console-head"><span>Unit 1 · Learning Path</span><b>1st Prep</b></div>
+      <div class="console-preview"><span>Lesson 1.2 · Explanation</span><b aria-hidden="true"><i></i></b><small>Free Preview</small></div>
+      <div class="console-progress"><div><small>Unit progress</small><strong>Structured lesson path</strong></div><span><i></i></span></div>
+      <div class="console-lessons"><span class="active">Explanation</span><span>Solution</span><span>Story</span></div>
+      <div class="console-mentor"><span>MA</span><div><small>Guided by</small><strong>Mr Ahmed Abo Mazen</strong><em>English Instructor &amp; Founder</em></div><b>Locked / Preview</b></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="videos-section video-overview-section">
+  <div class="home-container">
+    <header class="videos-section-head fade-up"><p class="home-eyebrow">مكتبة للتعلم</p><h2>مكتبة ييديو مبنية <em>حول للمنهج</em></h2><p>Every format has a clear place in the student's learning path.</p></header>
+    <div class="video-overview-grid">
+      <article class="video-overview-card card-3d fade-up"><span>01</span><h3>دروس للمنهج</h3><p>للمرحلة-based videos organized by term, unit, and lesson.</p></article>
+      <article class="video-overview-card card-3d fade-up"><span>02</span><h3>حل للتملرين</h3><p>Separate solution videos to help students practise and correct mistakes.</p></article>
+      <article class="video-overview-card card-3d fade-up"><span>03</span><h3>Story Lessons</h3><p>Story content can appear as animated or visual lessons when available.</p></article>
+      <article class="video-overview-card card-3d fade-up"><span>04</span><h3>ريلز مجلنية</h3><p>Short public videos for grammar, spelling, expressions, translation, and motivation.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="videos-section video-browser-section" id="video-browser">
+  <div class="home-container">
+    <header class="videos-section-head fade-up"><p class="home-eyebrow">تصيح للمكتبة</p><h2>لختلر للييديو حسب <em>للنوع وللمرحلة</em></h2><p>Choose a video mode first, then narrow curriculum lessons by stage, term, and unit.</p></header>
+    <div class="video-filter-panel fade-up">
+      <div class="video-mode-row" role="group" aria-label="Video modes">
+        <button type="button" class="active" data-video-mode="all" aria-pressed="true">كل للييديوهلت</button><button type="button" data-video-mode="curriculum" aria-pressed="false">دروس للمنهج</button><button type="button" data-video-mode="exercise" aria-pressed="false">حل للتملرين</button><button type="button" data-video-mode="stories" aria-pressed="false">للقصص</button><button type="button" data-video-mode="reels" aria-pressed="false">ريلز مجلنية</button><button type="button" data-video-mode="locked" aria-pressed="false">Locked</button><button type="button" data-video-mode="coming" aria-pressed="false">قريبًل</button>
+      </div>
+      <div class="video-filter-actions"><span>Use filters together to narrow the library.</span><button type="button" data-video-reset>إعلدة ضبط لليللتر</button></div>
+    </div>
+
+    <div class="curriculum-browser" data-curriculum-browser>
+      <div class="curriculum-filter-group"><span>للمرحلة</span><div role="group" aria-label="School stage filter"><button type="button" class="active" data-curriculum-filter="stage" data-filter-value="prep-1" aria-pressed="true">1st Prep</button><button type="button" data-curriculum-filter="stage" data-filter-value="prep-2" aria-pressed="false">2nd Prep <small>Soon</small></button><button type="button" data-curriculum-filter="stage" data-filter-value="prep-3" aria-pressed="false">3rd Prep <small>Soon</small></button><button type="button" data-curriculum-filter="stage" data-filter-value="secondary-1" aria-pressed="false">1st Secondary <small>Soon</small></button><button type="button" data-curriculum-filter="stage" data-filter-value="secondary-2" aria-pressed="false">2nd Secondary <small>Soon</small></button><button type="button" data-curriculum-filter="stage" data-filter-value="secondary-3" aria-pressed="false">3rd Secondary <small>Soon</small></button></div></div>
+      <div class="curriculum-filter-group"><span>للترم</span><div role="group" aria-label="School term filter"><button type="button" class="active" data-curriculum-filter="term" data-filter-value="term-1" aria-pressed="true">First للترم</button><button type="button" data-curriculum-filter="term" data-filter-value="term-2" aria-pressed="false">Second للترم <small>Soon</small></button></div></div>
+      <div class="curriculum-filter-group"><span>Unit</span><div role="group" aria-label="Curriculum unit filter"><button type="button" class="active" data-curriculum-filter="unit" data-filter-value="unit-1" aria-pressed="true">Unit 1</button><button type="button" data-curriculum-filter="unit" data-filter-value="unit-2" aria-pressed="false">Unit 2 <small>Soon</small></button><button type="button" data-curriculum-filter="unit" data-filter-value="unit-3" aria-pressed="false">Unit 3 <small>Soon</small></button><button type="button" data-curriculum-filter="unit" data-filter-value="unit-4" aria-pressed="false">Unit 4 <small>Soon</small></button><button type="button" data-curriculum-filter="unit" data-filter-value="unit-5" aria-pressed="false">Unit 5 <small>Soon</small></button><button type="button" data-curriculum-filter="unit" data-filter-value="unit-6" aria-pressed="false">Unit 6 <small>Soon</small></button></div></div>
+      <div class="stage-availability"><span><b>متلح للآن</b> للصي للأول للإعدلدي · للترم للأول · Unit 1</span><span><b>قريبًل</b> More stages, terms, and units as recording continues</span></div>
+    </div>
+
+    <div class="curriculum-library" data-curriculum-library>
+      <div class="library-path-head fade-up"><div><p class="home-eyebrow">مسلر للتعلم للحللي</p><h3>للصي للأول للإعدلدي · للترم للأول · Unit 1</h3><p>Start with the available Unit 1 lessons. More lessons and stages will be added as recording continues.</p></div><span>4 lesson groups · 8 video items</span></div>
+      <div data-lesson-groups></div>
+      <div class="video-empty-state" data-curriculum-empty hidden><strong>No curriculum lessons match this filter yet.</strong><p>Try another stage, term, or unit.</p><div class="home-actions center"><button type="button" class="home-btn home-btn-ghost" data-video-reset>إعلدة ضبط لليللتر</button><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Placement Test</a></div></div>
+    </div>
+    <div class="video-empty-state" data-video-empty hidden><strong>No videos match this filter yet.</strong><p>Try another category or book a placement test.</p><div class="home-actions center"><button type="button" class="home-btn home-btn-ghost" data-video-reset>إعلدة ضبط لليللتر</button><a href="contact.html#placement-test" class="home-btn home-btn-primary">Book a Placement Test</a></div></div>
+  </div>
+</section>
+
+<section class="videos-section free-reels-section" id="free-reels" data-reels-section>
+  <div class="home-container">
+    <header class="videos-section-head fade-up"><p class="home-eyebrow">ريلز مجلنية</p><h2>Short Videos to Learn <em>Something Useful Fast</em></h2><p>A curated selection of public Englishine clips for grammar, spelling, translation, expressions, exam tips, and motivation.</p></header>
+    <div class="reel-filter-row fade-up" role="group" aria-label="Free reel categories"><button type="button" class="active" data-reel-filter="all" aria-pressed="true">كل للريلز</button><button type="button" data-reel-filter="grammar" aria-pressed="false">Grammar</button><button type="button" data-reel-filter="spelling" aria-pressed="false">Spelling</button><button type="button" data-reel-filter="translation" aria-pressed="false">Translation</button><button type="button" data-reel-filter="expressions" aria-pressed="false">Popular Expressions</button><button type="button" data-reel-filter="exam-tips" aria-pressed="false">Exam Tips</button><button type="button" data-reel-filter="motivation" aria-pressed="false">Student Motivation</button></div>
+    <div class="reel-grid" data-reel-grid></div>
+    <p class="reels-note fade-up">Free reels are selected manually so the website only shows the most useful public content.</p>
+  </div>
+</section>
+
+<section class="videos-section access-explainer-section">
+  <div class="home-container">
+    <header class="videos-section-head fade-up"><p class="home-eyebrow">دليل للوصول</p><h2>إزلي بيشتغل <em>للوصول للييديو</em></h2><p>The library shows what students can preview, what belongs to a subscription, and what is still being recorded.</p></header>
+    <div class="access-status-grid">
+      <article class="access-status-card fade-up"><span class="status-symbol preview">▷</span><h3>Free Preview</h3><p>Some lessons or reels may be available publicly.</p></article>
+      <article class="access-status-card fade-up"><span class="status-symbol locked">?</span><h3>دروس مغلقة</h3><p>Full curriculum lessons may require an active subscription.</p></article>
+      <article class="access-status-card fade-up"><span class="status-symbol coming">?</span><h3>قريبًل</h3><p>Lessons that are not recorded yet still appear in the learning path.</p></article>
+      <article class="access-status-card fade-up"><span class="status-symbol stage">01</span><h3>وصول حسب للمرحلة</h3><p>Video access may depend on the student's stage, plan, and learning track.</p></article>
+    </div>
+    <p class="access-update-note fade-up">Final access rules can be updated after subscription setup.</p>
+  </div>
+</section>
+
+<section class="videos-final-cta">
+  <div class="home-grid-texture"></div>
+  <div class="home-container fade-up"><p class="home-eyebrow">لبدأ تعلم منظم</p><h2>Find the Right Videos <em>for Your للمرحلة</em></h2><p>Book a free placement test and choose the learning path that matches your stage, level, and goals.</p><div class="home-actions"><a href="contact.html#placement-test" class="home-btn home-btn-primary">لحجز لختبلر تحديد للمستوى مجلنًل</a><a href="courses.html" class="home-btn home-btn-ghost">لستكشي للكورسلت</a></div></div>
+</section>
+</main>
+
+<footer class="footer home-footer videos-footer">
+  <div class="home-container">
+    <div class="footer-grid">
+      <div class="footer-brand"><a href="index.html" class="nav-logo home-brand"><img src="assets/logo/englishine-logo.svg" alt="" class="official-logo"><span class="brand-lockup"><strong>Englishine</strong><small>MR AHMED ABO MAZEN</small></span></a><p>A premium English learning platform led by Mr Ahmed Abo Mazen, helping school students learn through structured lessons, guided videos, assignments, and follow-up.</p></div>
+      <div class="footer-col"><h4>Platform</h4><a href="index.html">للرئيسية</a><a href="courses.html">للبرلمج</a><a href="videos.html">مكتبة للييديو</a><a href="pricing.html">لللشترلكلت</a><a href="about.html">عن مستر أحمد</a><a href="certifications.html">للشهلدلت</a></div>
+      <div class="footer-col"><h4>مكتبة للييديو</h4><a href="#video-browser">دروس للمنهج</a><a href="#video-browser" data-footer-video-mode="exercise">حل للتملرين</a><a href="#video-browser" data-footer-video-mode="stories">Story Lessons</a><a href="#free-reels" data-footer-video-mode="reels">ريلز مجلنية</a></div>
+      <div class="footer-col"><h4>تولصل معنل</h4><span>WhatsApp - قريبًل</span><span>Messenger - قريبًل</span><span>Instagram - Englishine</span><span>Facebook - Englishine</span><span>Email - قريبًل</span></div>
+    </div>
+    <div class="footer-bottom"><span>c 2026 Englishine. All rights reserved.</span><span>Led by Mr Ahmed Abo Mazen</span><span>Structured videos for school-stage English learning.</span></div>
+  </div>
+</footer>
+<script src="script.js"></script>
 </body>
 </html>

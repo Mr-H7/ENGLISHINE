@@ -577,13 +577,13 @@
   ];
 
   const curriculumVideos = [
-    { lesson: 'lesson-1-2', title: 'Prep 1 Lesson 1.2 &mdash; Part 1', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'Watch Preview', href: 'contact.html' },
+    { lesson: 'lesson-1-2', title: 'Prep 1 Lesson 1.2 &mdash; Part 1', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'شاهد المعاينة', href: '/lesson/' },
     { lesson: 'lesson-1-2', title: 'Prep 1 Lesson 1.2 &mdash; Part 2', type: 'Explanation', mode: 'curriculum', status: 'locked', access: 'locked', action: 'Unlock Lesson', href: 'pricing.html' },
     { lesson: 'lesson-1-2', title: 'Exercise on Lesson 1.2', type: 'Exercise Solution', mode: 'exercise', status: 'locked', access: 'locked', action: 'Unlock Solution', href: 'pricing.html' },
-    { lesson: 'lesson-3', title: 'Lesson 3 &mdash; Explanation', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'Watch Preview', href: 'contact.html' },
+    { lesson: 'lesson-3', title: 'Lesson 3 &mdash; Explanation', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'شاهد المعاينة', href: '/lesson/' },
     { lesson: 'lesson-3', title: 'Lesson 3 &mdash; Exercise Solution', type: 'Exercise Solution', mode: 'exercise', status: 'locked', access: 'locked', action: 'Unlock Solution', href: 'pricing.html' },
     { lesson: 'lesson-4', title: 'Lesson 4 &mdash; Animated Story Explanation', type: 'Story', mode: 'stories', status: 'coming', access: 'coming', action: 'Coming Soon', href: '' },
-    { lesson: 'lesson-5-6', title: 'Lesson 5.6 &mdash; Explanation', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'Watch Preview', href: 'contact.html' },
+    { lesson: 'lesson-5-6', title: 'Lesson 5.6 &mdash; Explanation', type: 'Explanation', mode: 'curriculum', status: 'free-preview', access: 'preview', action: 'شاهد المعاينة', href: '/lesson/' },
     { lesson: 'lesson-5-6', title: 'Lesson 5.6 &mdash; Exercise Solution', type: 'Exercise Solution', mode: 'exercise', status: 'locked', access: 'locked', action: 'Unlock Solution', href: 'pricing.html' }
   ].map(video => ({ ...video, stage: 'prep-1', term: 'term-1', unit: 'unit-1' }));
 
@@ -596,9 +596,9 @@
     { title: 'Stay Consistent with English', category: 'motivation', label: 'Student Motivation' }
   ];
 
-  const statusLabel = status => status === 'free-preview' ? 'Free Preview' : status === 'coming' ? 'Coming Soon' : 'Locked';
+  const statusLabel = status => status === 'free-preview' ? 'معاينة مجانية' : status === 'coming' ? 'قريبًا' : 'مغلق';
   const thumbClass = video => video.mode === 'exercise' ? ' solution' : video.mode === 'stories' ? ' story' : '';
-  const thumbSymbol = video => video.mode === 'exercise' ? '�' : video.mode === 'stories' ? '?' : video.access === 'preview' ? '?' : '?';
+  const thumbSymbol = video => video.mode === 'exercise' ? '✓' : video.mode === 'stories' ? '◇' : video.access === 'preview' ? '▷' : '◇';
 
   lessonGroupsRoot.innerHTML = lessonGroups.map(group => {
     const items = curriculumVideos.filter(video => video.lesson === group.id);
@@ -607,13 +607,13 @@
       const action = video.href
         ? '<a href="' + video.href + '" class="video-card-action">' + video.action + '<span>&#8594;</span></a>'
         : '<span class="video-card-action disabled">' + video.action + '<span>&#8594;</span></span>';
-      return '<article class="library-video-card" data-video-card data-mode="' + video.mode + '" data-stage="' + video.stage + '" data-term="' + video.term + '" data-unit="' + video.unit + '" data-lesson="' + video.lesson + '" data-type="' + video.type.toLowerCase().replaceAll(' ', '-') + '" data-status="' + video.status + '" data-access="' + video.access + '"><div class="library-video-thumb' + thumbClass(video) + '"><span class="video-type">' + video.type + '</span><i class="video-lock ' + (video.access === 'preview' ? 'preview' : video.access === 'coming' ? 'soon' : '') + '">' + statusLabel(video.status) + '</i><b>' + thumbSymbol(video) + '</b><small>Duration TBA</small></div><div class="library-video-body"><div class="video-breadcrumb">1st Prep <span>�</span> First Term <span>�</span> Unit 1</div><h4>' + video.title + '</h4><p>' + group.title + ' � ' + video.type + '</p>' + action + '</div></article>';
+      return '<article class="library-video-card" data-video-card data-mode="' + video.mode + '" data-stage="' + video.stage + '" data-term="' + video.term + '" data-unit="' + video.unit + '" data-lesson="' + video.lesson + '" data-type="' + video.type.toLowerCase().replaceAll(' ', '-') + '" data-status="' + video.status + '" data-access="' + video.access + '"><div class="library-video-thumb' + thumbClass(video) + '"><span class="video-type">' + video.type + '</span><i class="video-lock ' + (video.access === 'preview' ? 'preview' : video.access === 'coming' ? 'soon' : '') + '">' + statusLabel(video.status) + '</i><b>' + thumbSymbol(video) + '</b><small>Duration TBA</small></div><div class="library-video-body"><div class="video-breadcrumb">الصف الأول الإعدادي <span>›</span> الترم الأول <span>›</span> Unit 1</div><h4>' + video.title + '</h4><p>' + group.title + ' · ' + video.type + '</p>' + action + '</div></article>';
     }).join('');
     return '<section class="lesson-group" data-lesson-group data-lesson-id="' + group.id + '"><header><div><span>' + group.title + '</span><small class="' + (group.status === 'Coming Soon' ? 'soon' : '') + '">' + group.status + '</small></div><p>' + group.description + '</p></header><div class="lesson-video-grid' + gridClass + '">' + cards + '</div></section>';
   }).join('');
 
   reelGrid.innerHTML = reels.map(reel =>
-    '<article class="reel-card" data-video-card data-mode="reels" data-reel-category="' + reel.category + '" data-type="free-reel" data-status="free" data-access="free"><div class="reel-thumb"><span>' + reel.label + '</span><b>?</b><small>Free � Duration TBA</small></div><div><h3>' + reel.title + '</h3><p>Curated free reel placeholder</p><span class="reel-action">Watch Reel <i>&#8594;</i></span></div></article>'
+    '<article class="reel-card" data-video-card data-mode="reels" data-reel-category="' + reel.category + '" data-type="free-reel" data-status="free" data-access="free"><div class="reel-thumb"><span>' + reel.label + '</span><b>▷</b><small>مجاني · المدة لاحقًا</small></div><div><h3>' + reel.title + '</h3><p>نموذج ريل مجاني مختار يدويًا</p><span class="reel-action">شاهد الريل <i>&#8594;</i></span></div></article>'
   ).join('');
 
   const modeButtons = [...browser.querySelectorAll('[data-video-mode]')];
@@ -676,7 +676,7 @@
     });
 
     pathHeading.textContent = labels[filters.stage] + ' ' + String.fromCharCode(8212) + ' ' + labels[filters.term] + ' ' + String.fromCharCode(8212) + ' ' + labels[filters.unit];
-    pathSummary.textContent = visibleCurriculum ? visibleCurriculum + (visibleCurriculum === 1 ? ' video item' : ' video items') : 'Content coming soon';
+    pathSummary.textContent = visibleCurriculum ? visibleCurriculum + ' فيديو متاح' : 'المحتوى قريبًا';
     curriculumEmptyState.hidden = !curriculumModeVisible || visibleCurriculum !== 0;
     emptyState.hidden = curriculumModeVisible || visibleReels !== 0;
   };
@@ -716,4 +716,44 @@
   }));
 
   applyFilters();
+})();
+
+/* ENGLISHINE CURRICULUM HIERARCHY EXTENSION
+   Reuses the approved Courses filters and cards; data remains backend-ready. */
+(() => {
+  'use strict';
+  const data = window.EnglishineData;
+  const stageSelect = document.querySelector('#stage-filter');
+  const gradeSelect = document.querySelector('#grade-filter');
+  const termSelect = document.querySelector('#term-filter');
+  const unitGrid = document.querySelector('#curriculum-unit-grid');
+  if (!data || !stageSelect || !gradeSelect || !termSelect || !unitGrid) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const requestedStage = params.get('stage');
+  const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  stageSelect.innerHTML = data.stages.map(stage => `<option value="${safe(stage.id)}">${safe(stage.label)}</option>`).join('');
+  termSelect.innerHTML = data.terms.map(term => `<option value="${safe(term.id)}">${safe(term.label)}</option>`).join('');
+  stageSelect.value = data.stages.some(stage => stage.id === requestedStage) ? requestedStage : 'prep';
+
+  const renderUnits = () => {
+    const units = data.units.filter(unit => unit.stageId === stageSelect.value && unit.gradeId === gradeSelect.value && unit.termId === termSelect.value);
+    unitGrid.innerHTML = units.length ? units.map((unit, index) => {
+      const available = unit.status === 'available';
+      const lessons = unit.lessons.length ? `<div class="course-practice"><small>الدروس داخل الوحدة</small><ul>${unit.lessons.map(lesson => `<li><span>${safe(lesson.title)}</span><a href="${lesson.status === 'coming' ? '#curriculum-path' : '/lesson/'}">${lesson.status === 'coming' ? 'قريبًا' : 'افتح الدرس'}</a></li>`).join('')}</ul></div>` : '<div class="courses-empty-state curriculum-card-empty"><strong>المحتوى قيد التجهيز</strong><p>الوحدة موجودة في المسار، والدروس هتظهر بعد اعتمادها.</p></div>';
+      return `<article class="course-stage-card curriculum-unit-card card-3d"><div class="course-card-head"><span class="course-category">${safe(unit.title)}</span><span class="course-year">${available ? 'متاح' : 'قريبًا'}</span></div><b class="course-number">${String(index + 1).padStart(2, '0')}</b><h3>${safe(unit.subtitle)}</h3><p>${available ? 'افتح الوحدة وشاهد ترتيب الدروس ومكونات الشرح والواجب.' : 'مكان الوحدة محفوظ داخل التسلسل التعليمي بدون محتوى وهمي.'}</p>${lessons}<div class="course-access"><span>${safe(data.stages.find(stage => stage.id === stageSelect.value)?.label)}</span><span>${safe(termSelect.options[termSelect.selectedIndex]?.text)}</span><span>السعر قريبًا</span></div></article>`;
+    }).join('') : '<div class="courses-empty-state curriculum-wide-empty"><strong>لسه مفيش وحدات منشورة للمسار ده.</strong><p>جرّب الصف الأول الإعدادي — الترم الأول، أو اختار مسارًا آخر.</p><a href="/level-test/" class="home-btn home-btn-primary">ابدأ اختبار المستوى</a></div>';
+  };
+
+  const renderGrades = () => {
+    const stage = data.stages.find(item => item.id === stageSelect.value);
+    gradeSelect.innerHTML = stage.grades.map(grade => `<option value="${safe(grade.id)}">${safe(grade.label)}</option>`).join('');
+    if (stageSelect.value === 'prep') gradeSelect.value = 'prep1';
+    renderUnits();
+  };
+
+  stageSelect.addEventListener('change', renderGrades);
+  gradeSelect.addEventListener('change', renderUnits);
+  termSelect.addEventListener('change', renderUnits);
+  renderGrades();
 })();
