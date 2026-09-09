@@ -194,3 +194,49 @@
 @media (prefers-reduced-motion: reduce) {
   .home-editorial .about-portrait img { translate: none !important; }
 }
+/* Approved visual QA fixes: readable lockup, concise introduction, mobile pillars. */
+.home-editorial .home-navbar .nav-links { gap: clamp(12px, 1.2vw, 18px); }
+.home-editorial .home-navbar .nav-links a { font-size: 14px; line-height: 1.6; font-weight: 600; }
+.home-editorial .home-brand .brand-lockup small { font-size: 12px; line-height: 1.5; letter-spacing: .045em; }
+.home-editorial .home-brand .official-logo {
+  padding: 4px; background: var(--soft); border: 1px solid var(--mist);
+}
+.home-editorial .home-footer .footer-col h4 { font-size: 16px; line-height: 1.6; font-weight: 700; color: var(--soft); letter-spacing: 0; }
+.home-editorial .home-footer .footer-col a,
+.home-editorial .home-footer .footer-col span,
+.home-editorial .home-footer .footer-brand p { font-size: 15px; line-height: 1.85; color: var(--mist); }
+.home-editorial .home-footer .footer-col a { display: block; padding-block: 5px; }
+.home-editorial .home-footer .footer-bottom,
+.home-editorial .home-footer .footer-bottom span { font-size: 14px; line-height: 1.8; font-weight: 500; color: var(--mist); }
+.home-editorial .home-footer .footer-col a:hover { color: var(--soft); }
+.home-editorial #platform-introduction { padding-block: clamp(72px, 7vw, 104px); }
+.home-editorial #learning-belief { padding-block: clamp(64px, 7vw, 104px); }
+.home-editorial #learning-belief .statement-copy { font-size: clamp(36px, 4.8vw, 68px); line-height: 1.5; }
+.home-editorial #teaching-philosophy { padding-top: 32px; padding-bottom: 72px; }
+.home-editorial #learning-journey { padding-block: 80px; }
+.home-editorial #learning-journey .journey-list li { padding-block: 20px 24px; }
+.home-editorial #learning-journey .journey-note { margin-top: 28px; }
+.home-editorial #programmes { padding-top: 80px; }
+@media (max-width: 768px) {
+  .home-editorial #platform-introduction { padding-block: 64px; }
+  .home-editorial #learning-belief { padding-block: 56px; }
+  .home-editorial #learning-belief .statement-copy { font-size: 36px; }
+  .home-editorial #teaching-philosophy { padding-top: 24px; padding-bottom: 56px; }
+  .home-editorial #teaching-philosophy .philosophy-layout { gap: 24px; }
+  .home-editorial #teaching-philosophy .philosophy-copy { padding-top: 0; }
+  .home-editorial #teaching-philosophy .philosophy-principle { padding-block: 18px; }
+  .home-editorial #learning-journey { padding-block: 56px; }
+  .home-editorial #learning-journey .journey-layout { gap: 20px; }
+  .home-editorial #learning-journey .journey-list li { padding-block: 16px 20px; }
+  .home-editorial #programmes { padding-top: 56px; }
+}
+@media (max-width: 430px) {
+  .home-editorial .home-brand .brand-lockup small { font-size: 11px; letter-spacing: .02em; }
+  .home-editorial .platform-pillar-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 28px; }
+  .home-editorial .platform-pillar { display: grid; grid-template-columns: 30px minmax(0, 1fr); column-gap: 16px; row-gap: 6px; padding: 20px; }
+  .home-editorial .platform-pillar svg { grid-column: 1; grid-row: 1 / 3; width: 28px; height: 28px; margin: 4px 0 0; }
+  .home-editorial .platform-pillar h3 { grid-column: 2; margin: 0; font-size: 21px; }
+  .home-editorial .platform-pillar p { grid-column: 2; font-size: 16px; line-height: 1.7; }
+  .home-editorial .platform-intro-layout { gap: 24px; }
+  .home-editorial .platform-intro-visual figcaption { padding: 18px 22px; }
+}
