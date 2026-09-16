@@ -41,7 +41,7 @@ const staffRoles = [SystemRole.SUPER_ADMIN, SystemRole.ADMIN, SystemRole.TEACHER
 
 export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
   const storage = new StorageService();
-  const media = new MediaService(app.prisma);
+  const media = new MediaService(app.prisma, storage);
 
   app.post(
     '/admin/lessons/:lessonId/videos',
@@ -52,7 +52,12 @@ export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
       const file = await request.file();
       if (!file) throw new AppError(400, 'A video file is required', 'FILE_REQUIRED');
       const upload = await storage.save(file, 'video');
-      return reply.code(201).send({ data: await media.createVideo(lessonId, input, upload) });
+      try {
+        return reply.code(201).send({ data: await media.createVideo(lessonId, input, upload) });
+      } catch (error) {
+        await storage.remove(upload.storageKey);
+        throw error;
+      }
     },
   );
 
@@ -65,7 +70,12 @@ export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
       const file = await request.file();
       if (!file) throw new AppError(400, 'A PDF file is required', 'FILE_REQUIRED');
       const upload = await storage.save(file, 'material');
-      return reply.code(201).send({ data: await media.createResource(lessonId, input, upload) });
+      try {
+        return reply.code(201).send({ data: await media.createResource(lessonId, input, upload) });
+      } catch (error) {
+        await storage.remove(upload.storageKey);
+        throw error;
+      }
     },
   );
 
@@ -93,13 +103,11 @@ export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
   app.get('/media/videos/:videoId', { onRequest: authenticate }, async (request, reply) => {
     const { videoId } = z.object({ videoId: uuidSchema }).parse(request.params);
     const asset = await media.getVideoAsset(videoId, request.user.sub, request.user.roles);
-    const initial = await storage.open(asset.storageKey);
-    const size = initial.details.size;
-    initial.stream.destroy();
+    const { size } = await storage.stat(asset.storageKey, asset.storageProvider);
     const range = request.headers.range;
     reply.header('accept-ranges', 'bytes').header('content-type', asset.mimeType);
     if (!range) {
-      const file = await storage.open(asset.storageKey);
+      const file = await storage.open(asset.storageKey, { provider: asset.storageProvider });
       return reply.header('content-length', size).send(file.stream);
     }
     const match = /^bytes=(\d*)-(\d*)$/.exec(range);
@@ -109,7 +117,10 @@ export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
     if (start < 0 || end < start || end >= size) {
       return reply.code(416).header('content-range', `bytes */${size}`).send();
     }
-    const file = await storage.open(asset.storageKey, { start, end });
+    const file = await storage.open(asset.storageKey, {
+      range: { start, end },
+      provider: asset.storageProvider,
+    });
     return reply
       .code(206)
       .header('content-range', `bytes ${start}-${end}/${size}`)
@@ -120,7 +131,7 @@ export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
   app.get('/media/resources/:resourceId', { onRequest: authenticate }, async (request, reply) => {
     const { resourceId } = z.object({ resourceId: uuidSchema }).parse(request.params);
     const asset = await media.getResourceAsset(resourceId, request.user.sub, request.user.roles);
-    const file = await storage.open(asset.storageKey);
+    const file = await storage.open(asset.storageKey, { provider: asset.storageProvider });
     const safeName = asset.originalName.replace(/["\r\n]/g, '_');
     const disposition = asset.mimeType === 'application/pdf' ? 'inline' : 'attachment';
     return reply

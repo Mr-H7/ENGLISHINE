@@ -20,6 +20,9 @@ function isInsecureJwtSecret(secret: string): boolean {
   );
 }
 
+const blankToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value;
+
 function parseDurationSeconds(value: string): number {
   const match = /^(\d+)([smhd])$/i.exec(value.trim());
   if (!match) return 900;
@@ -55,6 +58,12 @@ const envSchema = z
     UPLOAD_MAX_FILE_BYTES: z.coerce.number().int().positive().default(2_147_483_648),
     MATERIAL_MAX_FILE_BYTES: z.coerce.number().int().positive().default(26_214_400),
     UPLOAD_MAX_FILES: z.coerce.number().int().positive().max(20).default(5),
+    STORAGE_DRIVER: z.enum(['local', 'r2']).default('local'),
+    R2_ACCOUNT_ID: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+    R2_ACCESS_KEY_ID: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+    R2_SECRET_ACCESS_KEY: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+    R2_BUCKET: z.preprocess(blankToUndefined, z.string().trim().min(1).optional()),
+    R2_ENDPOINT: z.preprocess(blankToUndefined, z.url().optional()),
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
     RATE_LIMIT_WINDOW: z.string().trim().min(1).default('1 minute'),
   })
@@ -87,6 +96,24 @@ const envSchema = z
         message: 'SameSite=None requires COOKIE_SECURE=true.',
       });
     }
+    if (value.STORAGE_DRIVER === 'r2') {
+      const required = [
+        ['R2_ACCOUNT_ID', value.R2_ACCOUNT_ID],
+        ['R2_ACCESS_KEY_ID', value.R2_ACCESS_KEY_ID],
+        ['R2_SECRET_ACCESS_KEY', value.R2_SECRET_ACCESS_KEY],
+        ['R2_BUCKET', value.R2_BUCKET],
+        ['R2_ENDPOINT', value.R2_ENDPOINT],
+      ] as const;
+      for (const [path, current] of required) {
+        if (!current) {
+          context.addIssue({
+            code: 'custom',
+            path: [path],
+            message: `${path} is required when STORAGE_DRIVER=r2.`,
+          });
+        }
+      }
+    }
   });
 
 const parsedEnv = envSchema.safeParse(process.env);
@@ -102,6 +129,11 @@ export const env = {
     .map((origin) => origin.trim())
     .filter(Boolean),
   ACCESS_COOKIE_MAX_AGE: parseDurationSeconds(parsedEnv.data.JWT_EXPIRES_IN),
+  R2_ACCOUNT_ID: parsedEnv.data.R2_ACCOUNT_ID ?? '',
+  R2_ACCESS_KEY_ID: parsedEnv.data.R2_ACCESS_KEY_ID ?? '',
+  R2_SECRET_ACCESS_KEY: parsedEnv.data.R2_SECRET_ACCESS_KEY ?? '',
+  R2_BUCKET: parsedEnv.data.R2_BUCKET ?? '',
+  R2_ENDPOINT: parsedEnv.data.R2_ENDPOINT ?? '',
 };
 
 export type Environment = typeof env;

@@ -9,8 +9,9 @@ import {
   type VideoType,
   type PrismaClient,
 } from '../generated/prisma/client.js';
+import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
-import type { StoredUpload } from './storage.service.js';
+import type { StoredUpload, StorageService } from './storage.service.js';
 
 export interface VideoInput {
   title: string;
@@ -31,14 +32,17 @@ export interface ResourceInput {
 type InputPatch<T> = { [Key in keyof T]?: T[Key] | undefined };
 
 export class MediaService {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    private readonly prisma: PrismaClient,
+    private readonly storage: StorageService,
+  ) {}
 
   async createVideo(lessonId: string, input: VideoInput, upload: StoredUpload) {
     const lesson = await this.prisma.lesson.findFirst({ where: { id: lessonId, deletedAt: null } });
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
     return this.prisma.$transaction(async (tx) => {
       const asset = await tx.fileAsset.create({
-        data: { storageProvider: 'local', isPublic: false, ...upload },
+        data: { storageProvider: env.STORAGE_DRIVER, isPublic: false, ...upload },
       });
       return tx.video.create({
         data: {
@@ -60,7 +64,7 @@ export class MediaService {
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
     return this.prisma.$transaction(async (tx) => {
       const asset = await tx.fileAsset.create({
-        data: { storageProvider: 'local', isPublic: false, ...upload },
+        data: { storageProvider: env.STORAGE_DRIVER, isPublic: false, ...upload },
       });
       return tx.lessonResource.create({
         data: { lessonId, assetId: asset.id, ...input },
@@ -86,8 +90,13 @@ export class MediaService {
   }
 
   async removeVideo(id: string) {
-    const video = await this.prisma.video.findFirst({ where: { id, deletedAt: null } });
+    const video = await this.prisma.video.findFirst({
+      where: { id, deletedAt: null },
+      include: { fileAsset: true },
+    });
     if (!video) throw new AppError(404, 'Video not found', 'VIDEO_NOT_FOUND');
+    const storageKey = video.fileAsset?.storageKey;
+    const storageProvider = video.fileAsset?.storageProvider;
     await this.prisma.$transaction([
       this.prisma.video.update({
         where: { id },
@@ -102,15 +111,25 @@ export class MediaService {
           ]
         : []),
     ]);
+    await this.removeUnreferencedObject(storageKey, storageProvider);
   }
 
   async removeResource(id: string) {
-    const resource = await this.prisma.lessonResource.findUnique({ where: { id } });
+    const resource = await this.prisma.lessonResource.findUnique({
+      where: { id },
+      include: { asset: true },
+    });
     if (!resource) throw new AppError(404, 'Resource not found', 'RESOURCE_NOT_FOUND');
+    const storageKey = resource.asset.storageKey;
+    const storageProvider = resource.asset.storageProvider;
     await this.prisma.$transaction([
       this.prisma.lessonResource.delete({ where: { id } }),
-      this.prisma.fileAsset.update({ where: { id: resource.assetId }, data: { deletedAt: new Date() } }),
+      this.prisma.fileAsset.update({
+        where: { id: resource.assetId },
+        data: { deletedAt: new Date() },
+      }),
     ]);
+    await this.removeUnreferencedObject(storageKey, storageProvider);
   }
 
   async getVideoAsset(videoId: string, userId: string, roles: SystemRole[]) {
@@ -222,5 +241,17 @@ export class MediaService {
       throw new AppError(403, 'Active course enrollment is required', 'ENROLLMENT_REQUIRED');
     }
     return enrollment;
+  }
+
+  private async removeUnreferencedObject(
+    storageKey: string | undefined,
+    provider?: string,
+  ): Promise<void> {
+    if (!storageKey) return;
+    const remaining = await this.prisma.fileAsset.count({
+      where: { storageKey, deletedAt: null },
+    });
+    if (remaining > 0) return;
+    await this.storage.remove(storageKey, provider);
   }
 }

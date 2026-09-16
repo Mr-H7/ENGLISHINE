@@ -42,11 +42,18 @@ if (env.NODE_ENV === 'production' && !env.TRUST_PROXY) {
     'TRUST_PROXY is false. Set TRUST_PROXY=true when this process sits behind a reverse proxy so client IPs, rate limits, and HTTPS cookie handling are correct.',
   );
 }
-if (env.NODE_ENV === 'production' && !isAbsolute(env.UPLOAD_DIR)) {
+if (
+  env.NODE_ENV === 'production' &&
+  env.STORAGE_DRIVER === 'local' &&
+  !isAbsolute(env.UPLOAD_DIR)
+) {
   app.log.warn(
     { uploadDir: env.UPLOAD_DIR },
     'UPLOAD_DIR is relative. Point it at an absolute path on a persistent volume so videos and PDFs survive restarts and redeploys.',
   );
+}
+if (env.NODE_ENV === 'production') {
+  app.log.info({ storageDriver: env.STORAGE_DRIVER }, 'Media storage driver selected');
 }
 
 try {

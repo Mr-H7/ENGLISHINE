@@ -14,9 +14,10 @@ Do not use `prisma migrate dev`, `prisma migrate reset`, or `prisma db push` on 
 - Node.js 22.x and npm 10+ on the API host (`backend/.nvmrc`)
 - PostgreSQL 14+ (Prisma migration lock is PostgreSQL-only)
 - TLS-terminating reverse proxy (nginx, Caddy, or equivalent) on 443
-- **Persistent block storage** mounted into the API process for uploads (see Media storage)
+- Persistent block storage for uploads **only when** `STORAGE_DRIVER=local`
 - Process supervisor (systemd, PM2, or the host's process manager)
-- Off-host backups for PostgreSQL **and** the upload volume
+- Off-host backups for PostgreSQL **and** media (R2 bucket or local upload volume)
+- Cloudflare R2 bucket `englishine-media` when `STORAGE_DRIVER=r2` (private, no public access)
 
 Recommended topology (preserves the proven local cookie/auth behavior):
 
@@ -25,26 +26,36 @@ Recommended topology (preserves the proven local cookie/auth behavior):
 3. Leave `VITE_API_URL` unset when building the frontend so the SPA calls same-origin `/api/v1`.
 4. Set `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `TRUST_PROXY=true`.
 
-Do not put this API on a serverless or ephemeral-disk host (Vercel serverless, container filesystems that reset on deploy). Uploaded MP4/PDF files would disappear.
+Do not put this API on a serverless host. Video Range streaming and large multipart uploads need a long-running Fastify process.
 
 ## Media storage (critical)
 
-The API stores videos and PDFs on the local filesystem. `StorageService` writes under `UPLOAD_DIR`:
+The API never exposes permanent public object URLs. Fastify remains the authorization authority for video and PDF delivery.
+
+Set `STORAGE_DRIVER` explicitly (`local` or `r2`). Production does **not** switch to R2 merely because `NODE_ENV=production`.
+
+### `STORAGE_DRIVER=local`
+
+`StorageService` writes under `UPLOAD_DIR`:
 
 - videos: `{UPLOAD_DIR}/videos/YYYY-MM/<uuid>.mp4` (also webm/mov)
 - materials: `{UPLOAD_DIR}/materials/YYYY-MM/<uuid>.pdf`
 
-`FileAsset.storageKey` in PostgreSQL is a relative key inside that directory. There is no object-storage adapter. Replacing local disk with S3 is out of scope for this release.
+`FileAsset.storageKey` in PostgreSQL is that relative key. Mount a persistent volume, set `UPLOAD_DIR` to an absolute path, and back it up with the database.
 
-Production requirement:
+### `STORAGE_DRIVER=r2`
 
-- Mount a **persistent volume** (block disk, bind-mount, or host directory that survives image rebuilds).
-- Set `UPLOAD_DIR` to an **absolute** path on that volume, for example `/var/lib/englishine/uploads`.
-- Create the directory before start (`mkdir -p` and give the Node user write access).
-- Back up this directory with the database. A database restore without the files (or the reverse) breaks playback.
-- When replacing the server, move the volume or rsync this directory. Do not start production with an empty `UPLOAD_DIR` if `FileAsset` rows already exist.
+Objects are stored in the private Cloudflare R2 bucket (default name `englishine-media`) using the same key convention. Required secrets:
 
-Local `./storage/uploads` is gitignored and is **not** production storage.
+- `R2_ACCOUNT_ID`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET`
+- `R2_ENDPOINT` (`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`)
+
+Keep the bucket private. Range video playback and PDF download go through `GET /api/v1/media/videos/:id` and `GET /api/v1/media/resources/:id` after authentication and enrollment checks. Back up the R2 bucket with PostgreSQL.
+
+Local `./storage/uploads` is gitignored and is **not** production R2 storage.
 
 ## Environment variables
 
@@ -62,7 +73,13 @@ Copy `backend/.env.production.example` into the host secret store. Never commit 
 | `COOKIE_SECURE` | `true` |
 | `COOKIE_SAME_SITE` | `lax` for same-origin proxy; `none` only if the API is a different site |
 | `CORS_ORIGINS` | Exact public SPA origin, e.g. `https://www.example.com`. Never `*` |
-| `UPLOAD_DIR` | Absolute path on the persistent volume |
+| `UPLOAD_DIR` | Absolute path on the persistent volume when `STORAGE_DRIVER=local` |
+| `STORAGE_DRIVER` | `local` or `r2` (explicit; not inferred from `NODE_ENV`) |
+| `R2_ACCOUNT_ID` | Required when `STORAGE_DRIVER=r2` |
+| `R2_ACCESS_KEY_ID` | Required when `STORAGE_DRIVER=r2` |
+| `R2_SECRET_ACCESS_KEY` | Required when `STORAGE_DRIVER=r2` |
+| `R2_BUCKET` | Private bucket name, e.g. `englishine-media` |
+| `R2_ENDPOINT` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
 | `BOOTSTRAP_ADMIN_*` | One-time secrets only. Never in frontend code |
 
 Frontend build:

@@ -9,6 +9,7 @@ export default tseslint.config(
       'src/generated/prisma/**',
       'eslint.config.js',
       'prisma.config.ts',
+      'scripts/**/*.mjs',
     ],
   },
   eslint.configs.recommended,

@@ -8,3 +8,6 @@ coverage/
 *.log
 src/generated/prisma/
 storage/
+.qa-session.json
+.qa-r2-run.json
+
