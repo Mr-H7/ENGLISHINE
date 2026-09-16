@@ -15,7 +15,7 @@ Do not use `prisma migrate dev`, `prisma migrate reset`, or `prisma db push` on 
 - PostgreSQL 14+ (Prisma migration lock is PostgreSQL-only)
 - TLS-terminating reverse proxy (nginx, Caddy, or equivalent) on 443
 - Persistent block storage for uploads **only when** `STORAGE_DRIVER=local`
-- Process supervisor (systemd, PM2, or the host's process manager), **or** Vercel with Root Directory `backend`
+- Process supervisor (systemd, PM2, or the host's process manager), **or** one Vercel project with `vercel.json` services (`frontend/` at `/`, `backend/` at `/api`)
 - Off-host backups for PostgreSQL **and** media (R2 bucket or local upload volume)
 - Cloudflare R2 bucket `englishine-media` when `STORAGE_DRIVER=r2` (private, no public access)
 
@@ -26,11 +26,15 @@ Recommended topology (preserves the proven local cookie/auth behavior):
 3. Leave `VITE_API_URL` unset when building the frontend so the SPA calls same-origin `/api/v1`.
 4. Set `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `TRUST_PROXY=true`.
 
-## Vercel (Fastify, Node 22)
+## Vercel (Vite + Fastify services, Node 22)
 
-Vercel detects Fastify from `backend/src/server.ts` when the Vercel project **Root Directory** is `backend`. Do not set a custom build command. `listen()` remains in `src/server.ts`; Vercel uses that call as the Function entry. Set Node 22 from `engines.node` / `.nvmrc`.
+One Vercel project deploys both services from repo-root `vercel.json`. Do **not** set the project Root Directory to `backend` or `frontend`. Leave `VITE_API_URL` unset so the SPA calls same-origin `/api/v1`.
 
-Required Vercel project env (same names as `.env.production.example`; never commit values): `NODE_ENV=production`, `DATABASE_URL`, `DIRECT_URL` (needed at install for `prisma generate`), `JWT_SECRET`, `COOKIE_SECURE=true`, `TRUST_PROXY=true`, `CORS_ORIGINS`, `STORAGE_DRIVER=r2`, and the `R2_*` keys. `VERCEL=1` is set by the platform.
+Top-level rewrites send `/api/*` to Fastify **without stripping the path**. Fastify still listens for `/api/v1/...`. Do not add a `request.path` transform that would produce `/api/api/v1` or drop `/api`.
+
+`listen()` remains in `backend/src/server.ts` (`entrypoint`). Set Node 22 from `engines.node` / `.nvmrc`.
+
+Required Vercel env (same names as `.env.production.example`; never commit values). Scope API secrets to the **backend** service: `NODE_ENV=production`, `DATABASE_URL`, `DIRECT_URL` (needed at install for `prisma generate`), `JWT_SECRET`, `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `TRUST_PROXY=true`, `CORS_ORIGINS` (the public HTTPS origin, e.g. `https://englishine.vercel.app`), `STORAGE_DRIVER=r2`, and the `R2_*` keys. `VERCEL=1` is set by the platform. Same-origin does **not** need `COOKIE_SAME_SITE=none`. Local Vite still proxies `/api` to `127.0.0.1:3001`.
 
 Vercel Function **request and non-streamed response bodies are capped at 4.5 MB**. Authenticated Range/206 video and PDF **streaming** can go through Fastify as Node streams. When `STORAGE_DRIVER=r2`, admin MP4/PDF uploads use a short-lived presigned PUT to private R2, then Fastify `HeadObject` finalize. The file body never enters the Vercel Function. Multipart `/admin/lessons/:id/videos|resources` remains for `STORAGE_DRIVER=local`. `STORAGE_DRIVER=local` is not viable on Vercel (ephemeral disk).
 
