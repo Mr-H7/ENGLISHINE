@@ -9,8 +9,8 @@ import {
 } from '../generated/prisma/client.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
+import { DirectUploadService } from '../services/direct-upload.service.js';
 import { MediaService } from '../services/media.service.js';
-import { StorageService } from '../services/storage.service.js';
 import { AppError } from '../utils/app-error.js';
 import { uuidSchema } from '../utils/validation.js';
 
@@ -39,9 +39,61 @@ const resourceQuerySchema = z.object({
 
 const staffRoles = [SystemRole.SUPER_ADMIN, SystemRole.ADMIN, SystemRole.TEACHER];
 
+const authorizeUploadSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('video'),
+    mimeType: z.string().trim().min(1).max(180),
+    byteSize: z.number().int().positive(),
+    originalName: z.string().trim().min(1).max(255),
+    title: z.string().trim().min(2).max(180),
+    type: z.enum(VideoType),
+    position: z.number().int().nonnegative().default(0),
+    status: z.enum(ContentStatus).optional(),
+    accessLevel: z.enum(AccessLevel).optional(),
+    durationSeconds: z.number().int().positive().optional(),
+  }),
+  z.object({
+    kind: z.literal('material'),
+    mimeType: z.string().trim().min(1).max(180),
+    byteSize: z.number().int().positive(),
+    originalName: z.string().trim().min(1).max(255),
+    title: z.string().trim().min(2).max(180),
+    type: z.enum(ResourceType).optional(),
+    position: z.number().int().nonnegative().default(0),
+    isDownload: z.boolean().optional(),
+  }),
+]);
+
+const finalizeUploadSchema = z.object({
+  authorization: z.string().trim().min(16).max(8_192),
+});
+
 export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
-  const storage = new StorageService();
+  const storage = app.storage;
   const media = new MediaService(app.prisma, storage);
+  const directUploads = new DirectUploadService(app.prisma, storage, media);
+
+  app.get('/admin/media/upload-mode', { onRequest: authorize(...staffRoles) }, () => ({
+    data: directUploads.uploadMode(),
+  }));
+
+  app.post(
+    '/admin/lessons/:lessonId/uploads/authorize',
+    { onRequest: authorize(...staffRoles) },
+    async (request, reply) => {
+      const { lessonId } = z.object({ lessonId: uuidSchema }).parse(request.params);
+      const input = authorizeUploadSchema.parse(request.body);
+      return reply.code(201).send({
+        data: await directUploads.authorize(request.user.sub, lessonId, input),
+      });
+    },
+  );
+
+  app.post('/admin/uploads/finalize', { onRequest: authorize(...staffRoles) }, async (request, reply) => {
+    const { authorization } = finalizeUploadSchema.parse(request.body);
+    const result = await directUploads.finalize(request.user.sub, authorization);
+    return reply.code(201).send({ data: result.record, meta: { kind: result.kind } });
+  });
 
   app.post(
     '/admin/lessons/:lessonId/videos',

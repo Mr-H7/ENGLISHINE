@@ -9,13 +9,16 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 import type { MultipartFile } from '@fastify/multipart';
 import { fileTypeFromFile } from 'file-type';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
+import { DIRECT_UPLOAD_TTL_SECONDS } from './media-upload.constants.js';
 import { assertSafeStorageKey, objectFolder } from './storage.keys.js';
 import type { StorageDriver, StoredObject, StoredUpload, UploadKind } from './storage.types.js';
 
@@ -118,7 +121,34 @@ export class R2StorageDriver implements StorageDriver {
     }
   }
 
-  async stat(storageKey: string): Promise<{ size: number }> {
+  async presignPut(
+    storageKey: string,
+    mimeType: string,
+  ): Promise<{ uploadUrl: string; headers: Record<string, string>; expiresIn: number }> {
+    const key = assertSafeStorageKey(storageKey);
+    const expiresIn = DIRECT_UPLOAD_TTL_SECONDS;
+    const uploadUrl = await getSignedUrl(
+      this.client,
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        ContentType: mimeType,
+      }),
+      {
+        expiresIn,
+        signableHeaders: new Set(['content-type']),
+      },
+    );
+    return {
+      uploadUrl,
+      headers: { 'content-type': mimeType },
+      expiresIn,
+    };
+  }
+
+  async headObject(
+    storageKey: string,
+  ): Promise<{ size: number; mimeType: string | null; checksum: string | null }> {
     const key = assertSafeStorageKey(storageKey);
     try {
       const object = await this.client.send(
@@ -128,7 +158,11 @@ export class R2StorageDriver implements StorageDriver {
       if (typeof size !== 'number') {
         throw new AppError(404, 'Stored object not found', 'STORAGE_OBJECT_NOT_FOUND');
       }
-      return { size };
+      return {
+        size,
+        mimeType: object.ContentType ?? null,
+        checksum: object.ETag ? object.ETag.replaceAll('"', '') : null,
+      };
     } catch (error) {
       if (error instanceof AppError) throw error;
       if (isMissingObject(error)) {
@@ -136,6 +170,11 @@ export class R2StorageDriver implements StorageDriver {
       }
       throw error;
     }
+  }
+
+  async stat(storageKey: string): Promise<{ size: number }> {
+    const object = await this.headObject(storageKey);
+    return { size: object.size };
   }
 
   async open(storageKey: string, range?: { start: number; end: number }): Promise<StoredObject> {

@@ -15,7 +15,7 @@ Do not use `prisma migrate dev`, `prisma migrate reset`, or `prisma db push` on 
 - PostgreSQL 14+ (Prisma migration lock is PostgreSQL-only)
 - TLS-terminating reverse proxy (nginx, Caddy, or equivalent) on 443
 - Persistent block storage for uploads **only when** `STORAGE_DRIVER=local`
-- Process supervisor (systemd, PM2, or the host's process manager)
+- Process supervisor (systemd, PM2, or the host's process manager), **or** Vercel with Root Directory `backend`
 - Off-host backups for PostgreSQL **and** media (R2 bucket or local upload volume)
 - Cloudflare R2 bucket `englishine-media` when `STORAGE_DRIVER=r2` (private, no public access)
 
@@ -26,7 +26,13 @@ Recommended topology (preserves the proven local cookie/auth behavior):
 3. Leave `VITE_API_URL` unset when building the frontend so the SPA calls same-origin `/api/v1`.
 4. Set `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `TRUST_PROXY=true`.
 
-Do not put this API on a serverless host. Video Range streaming and large multipart uploads need a long-running Fastify process.
+## Vercel (Fastify, Node 22)
+
+Vercel detects Fastify from `backend/src/server.ts` when the Vercel project **Root Directory** is `backend`. Do not set a custom build command. `listen()` remains in `src/server.ts`; Vercel uses that call as the Function entry. Set Node 22 from `engines.node` / `.nvmrc`.
+
+Required Vercel project env (same names as `.env.production.example`; never commit values): `NODE_ENV=production`, `DATABASE_URL`, `DIRECT_URL` (needed at install for `prisma generate`), `JWT_SECRET`, `COOKIE_SECURE=true`, `TRUST_PROXY=true`, `CORS_ORIGINS`, `STORAGE_DRIVER=r2`, and the `R2_*` keys. `VERCEL=1` is set by the platform.
+
+Vercel Function **request and non-streamed response bodies are capped at 4.5 MB**. Authenticated Range/206 video and PDF **streaming** can go through Fastify as Node streams. When `STORAGE_DRIVER=r2`, admin MP4/PDF uploads use a short-lived presigned PUT to private R2, then Fastify `HeadObject` finalize. The file body never enters the Vercel Function. Multipart `/admin/lessons/:id/videos|resources` remains for `STORAGE_DRIVER=local`. `STORAGE_DRIVER=local` is not viable on Vercel (ephemeral disk).
 
 ## Media storage (critical)
 
@@ -54,6 +60,22 @@ Objects are stored in the private Cloudflare R2 bucket (default name `englishine
 - `R2_ENDPOINT` (`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`)
 
 Keep the bucket private. Range video playback and PDF download go through `GET /api/v1/media/videos/:id` and `GET /api/v1/media/resources/:id` after authentication and enrollment checks. Back up the R2 bucket with PostgreSQL.
+
+Direct browser PUT requires a **bucket CORS** rule on `englishine-media` (bucket stays private; this is not public access). Use the production SPA origin from `CORS_ORIGINS` (example `https://www.example.com`):
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://www.example.com"],
+    "AllowedMethods": ["PUT", "HEAD"],
+    "AllowedHeaders": ["Content-Type", "Content-Length"],
+    "ExposeHeaders": ["ETag", "Content-Length", "Content-Type"],
+    "MaxAgeSeconds": 86400
+  }
+]
+```
+
+Do not add `*` as an origin. Do not enable public bucket access. R2 S3 credentials stay on Fastify only.
 
 Local `./storage/uploads` is gitignored and is **not** production R2 storage.
 

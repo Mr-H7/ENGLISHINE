@@ -1,8 +1,10 @@
 import type { PrismaClient, SystemRole } from '../generated/prisma/client.js';
+import type { StorageService } from '../services/storage.service.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
     prisma: PrismaClient;
+    storage: StorageService;
   }
 }
 

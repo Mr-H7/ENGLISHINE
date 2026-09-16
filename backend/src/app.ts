@@ -10,9 +10,10 @@ import {
   securityPlugin,
 } from './plugins/index.js';
 import { apiRoutes } from './routes/index.js';
+import { StorageService } from './services/storage.service.js';
 import { registerErrorHandlers } from './utils/error-handler.js';
 
-export async function buildApp(): Promise<FastifyInstance> {
+export async function buildApp(options?: { storage?: StorageService }): Promise<FastifyInstance> {
   const app = Fastify({
     logger: loggerOptions,
     trustProxy: env.TRUST_PROXY,
@@ -33,6 +34,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(jwtPlugin);
   await app.register(multipartPlugin);
   await app.register(prismaPlugin);
+  app.decorate('storage', options?.storage ?? new StorageService());
   await app.register(apiRoutes, { prefix: '/api/v1' });
 
   return app;

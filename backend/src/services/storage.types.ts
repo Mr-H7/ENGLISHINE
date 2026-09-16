@@ -9,6 +9,7 @@ export interface StoredUpload {
   mimeType: string;
   byteSize: bigint;
   checksum: string;
+  storageProvider?: string;
 }
 
 export interface StoredObject {

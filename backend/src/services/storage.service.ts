@@ -1,4 +1,5 @@
 import { env } from '../config/env.js';
+import { AppError } from '../utils/app-error.js';
 import { LocalStorageDriver } from './storage.local.js';
 import { R2StorageDriver } from './storage.r2.js';
 import type { StorageDriver, StoredObject, StoredUpload, UploadKind } from './storage.types.js';
@@ -18,8 +19,33 @@ export class StorageService {
     return this.local;
   }
 
+  supportsDirectUpload(): boolean {
+    return env.STORAGE_DRIVER === 'r2';
+  }
+
   save(file: Parameters<StorageDriver['save']>[0], kind: UploadKind): Promise<StoredUpload> {
     return this.driver(env.STORAGE_DRIVER).save(file, kind);
+  }
+
+  presignPut(
+    storageKey: string,
+    mimeType: string,
+  ): Promise<{ uploadUrl: string; headers: Record<string, string>; expiresIn: number }> {
+    const selected = this.driver('r2');
+    if (!(selected instanceof R2StorageDriver)) {
+      throw new AppError(409, 'Direct upload requires R2 storage', 'DIRECT_UPLOAD_UNAVAILABLE');
+    }
+    return selected.presignPut(storageKey, mimeType);
+  }
+
+  headObject(
+    storageKey: string,
+  ): Promise<{ size: number; mimeType: string | null; checksum: string | null }> {
+    const selected = this.driver('r2');
+    if (!(selected instanceof R2StorageDriver)) {
+      throw new AppError(409, 'Direct upload requires R2 storage', 'DIRECT_UPLOAD_UNAVAILABLE');
+    }
+    return selected.headObject(storageKey);
   }
 
   stat(storageKey: string, provider?: string): Promise<{ size: number }> {

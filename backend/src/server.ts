@@ -56,9 +56,12 @@ if (env.NODE_ENV === 'production') {
   app.log.info({ storageDriver: env.STORAGE_DRIVER }, 'Media storage driver selected');
 }
 
+const port = Number.parseInt(process.env.PORT ?? String(env.PORT), 10);
+const host = process.env.VERCEL === '1' ? '0.0.0.0' : env.HOST;
+
 try {
-  await app.listen({ host: env.HOST, port: env.PORT });
-  app.log.info({ host: env.HOST, port: env.PORT }, 'Englishine API is listening');
+  await app.listen({ host, port });
+  app.log.info({ host, port }, 'Englishine API is listening');
 } catch (error) {
   app.log.fatal({ err: error }, 'Failed to start Englishine API');
   process.exitCode = 1;

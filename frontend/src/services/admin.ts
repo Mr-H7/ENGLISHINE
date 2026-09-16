@@ -81,6 +81,48 @@ export interface AdminExam {
 const data = <T>(path: string, init?: RequestInit) =>
   apiRequest<{ data: T }>(path, init).then((response) => response.data);
 
+interface DirectUploadTicket {
+  authorization: string;
+  uploadUrl: string;
+  headers: Record<string, string>;
+  expiresIn: number;
+  expiresAt: string;
+  method: 'PUT';
+}
+
+let cachedDirectUpload: boolean | null = null;
+
+async function isDirectUploadEnabled(): Promise<boolean> {
+  if (cachedDirectUpload !== null) return cachedDirectUpload;
+  try {
+    const mode = await data<{ directUpload: boolean }>('/admin/media/upload-mode');
+    cachedDirectUpload = Boolean(mode.directUpload);
+  } catch {
+    cachedDirectUpload = false;
+  }
+  return cachedDirectUpload;
+}
+
+function putToR2(uploadUrl: string, file: File, headers: Record<string, string>): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', uploadUrl);
+    xhr.withCredentials = false;
+    for (const [name, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(name, value);
+    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+      reject(new Error('تعذر رفع الملف إلى التخزين.'));
+    };
+    xhr.onerror = () => reject(new Error('تعذر رفع الملف إلى التخزين.'));
+    xhr.send(file);
+  });
+}
+
 export const adminApi = {
   grades: () => data<StageOption[]>('/admin/grades'),
   students: () =>
@@ -152,6 +194,27 @@ export const adminApi = {
     file: File,
     input: { title: string; type: string; accessLevel: string; status: string; position: number },
   ) => {
+    if (await isDirectUploadEnabled()) {
+      const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
+        method: 'POST',
+        body: JSON.stringify({
+          kind: 'video',
+          mimeType: file.type || 'video/mp4',
+          byteSize: file.size,
+          originalName: file.name,
+          title: input.title,
+          type: input.type,
+          position: input.position,
+          status: input.status,
+          accessLevel: input.accessLevel,
+        }),
+      });
+      await putToR2(session.uploadUrl, file, session.headers);
+      return data(`/admin/uploads/finalize`, {
+        method: 'POST',
+        body: JSON.stringify({ authorization: session.authorization }),
+      });
+    }
     const query = new URLSearchParams({
       title: input.title,
       type: input.type,
@@ -167,6 +230,26 @@ export const adminApi = {
     });
   },
   uploadResource: async (lessonId: string, file: File, title: string) => {
+    if (await isDirectUploadEnabled()) {
+      const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
+        method: 'POST',
+        body: JSON.stringify({
+          kind: 'material',
+          mimeType: file.type || 'application/pdf',
+          byteSize: file.size,
+          originalName: file.name,
+          title,
+          type: 'PDF',
+          position: 0,
+          isDownload: true,
+        }),
+      });
+      await putToR2(session.uploadUrl, file, session.headers);
+      return data(`/admin/uploads/finalize`, {
+        method: 'POST',
+        body: JSON.stringify({ authorization: session.authorization }),
+      });
+    }
     const query = new URLSearchParams({
       title,
       type: 'PDF',

@@ -42,7 +42,11 @@ export class MediaService {
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
     return this.prisma.$transaction(async (tx) => {
       const asset = await tx.fileAsset.create({
-        data: { storageProvider: env.STORAGE_DRIVER, isPublic: false, ...upload },
+        data: {
+          isPublic: false,
+          ...upload,
+          storageProvider: upload.storageProvider ?? env.STORAGE_DRIVER,
+        },
       });
       return tx.video.create({
         data: {
@@ -64,7 +68,11 @@ export class MediaService {
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
     return this.prisma.$transaction(async (tx) => {
       const asset = await tx.fileAsset.create({
-        data: { storageProvider: env.STORAGE_DRIVER, isPublic: false, ...upload },
+        data: {
+          isPublic: false,
+          ...upload,
+          storageProvider: upload.storageProvider ?? env.STORAGE_DRIVER,
+        },
       });
       return tx.lessonResource.create({
         data: { lessonId, assetId: asset.id, ...input },

@@ -43,7 +43,10 @@ const envSchema = z
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
-    TRUST_PROXY: booleanFromString,
+    TRUST_PROXY: z
+      .enum(['true', 'false'])
+      .default(process.env.VERCEL === '1' ? 'true' : 'false')
+      .transform((value) => value === 'true'),
     DATABASE_URL: z.string().trim().min(1),
     JWT_SECRET: z.string().min(32),
     JWT_EXPIRES_IN: z.string().trim().min(1).default('15m'),
@@ -73,6 +76,13 @@ const envSchema = z
         code: 'custom',
         path: ['CORS_ORIGINS'],
         message: 'Wildcard CORS origins are not allowed in production.',
+      });
+    }
+    if (value.NODE_ENV === 'production' && process.env.VERCEL === '1' && !value.TRUST_PROXY) {
+      context.addIssue({
+        code: 'custom',
+        path: ['TRUST_PROXY'],
+        message: 'TRUST_PROXY must be true on Vercel so secure cookies and client IPs are correct.',
       });
     }
     if (value.NODE_ENV === 'production' && !value.COOKIE_SECURE) {
