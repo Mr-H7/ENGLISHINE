@@ -2,4 +2,5 @@ dist/
 node_modules/
 src/generated/prisma/
 src/englishine-app.mjs
+src/runtime-deps/
 package-lock.json

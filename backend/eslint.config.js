@@ -12,6 +12,7 @@ export default tseslint.config(
       'scripts/**/*.mjs',
       'src/server.mjs',
       'src/englishine-app.mjs',
+      'src/runtime-deps/**',
     ],
   },
   eslint.configs.recommended,

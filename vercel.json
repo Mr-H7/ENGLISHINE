@@ -2,7 +2,13 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "frontend": {
-      "root": "frontend/"
+      "root": "frontend/",
+      "rewrites": [
+        {
+          "source": "/(.*)",
+          "destination": "/index.html"
+        }
+      ]
     },
     "backend": {
       "root": "backend/",
@@ -11,7 +17,7 @@
       "entrypoint": "src/server.mjs",
       "functions": {
         "src/server.mjs": {
-          "includeFiles": "../node_modules/{argon2,node-gyp-build,@phc/format,pg}/**"
+          "includeFiles": "{src/runtime-deps/**,runtime-deps/**}"
         }
       }
     }
