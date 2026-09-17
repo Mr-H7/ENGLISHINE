@@ -7,10 +7,11 @@
     "backend": {
       "root": "backend/",
       "framework": "fastify",
-      "entrypoint": "src/server.ts",
+      "buildCommand": "npm run bundle:vercel",
+      "entrypoint": "src/server.cjs",
       "functions": {
-        "src/server.ts": {
-          "includeFiles": "package.json"
+        "src/server.cjs": {
+          "includeFiles": "englishine-app.mjs"
         }
       }
     }

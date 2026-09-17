@@ -10,6 +10,8 @@ export default tseslint.config(
       'eslint.config.js',
       'prisma.config.ts',
       'scripts/**/*.mjs',
+      'src/server.cjs',
+      'src/englishine-app.mjs',
     ],
   },
   eslint.configs.recommended,
