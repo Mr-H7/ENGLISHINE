@@ -7,7 +7,7 @@ const backendRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 await build({
   absWorkingDir: backendRoot,
   entryPoints: ['src/vercel-server.ts'],
-  outfile: 'src/server.mjs',
+  outfile: 'src/englishine-app.mjs',
   bundle: true,
   platform: 'node',
   target: 'node22',

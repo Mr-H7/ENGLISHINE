@@ -7,7 +7,7 @@ dist/
 coverage/
 *.log
 src/generated/prisma/
-src/server.mjs
+src/englishine-app.mjs
 storage/
 .qa-session.json
 .qa-r2-run.json
