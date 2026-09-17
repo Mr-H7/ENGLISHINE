@@ -11,6 +11,7 @@ export default tseslint.config(
       'prisma.config.ts',
       'scripts/**/*.mjs',
       'src/server.mjs',
+      'src/include-argon2-native.mjs',
       'src/englishine-app.mjs',
       'src/runtime-deps/**',
     ],

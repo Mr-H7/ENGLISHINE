@@ -1,5 +1,6 @@
 import { build } from 'esbuild';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,6 +29,27 @@ rmSync(join(backendRoot, 'src', 'runtime-deps'), { recursive: true, force: true 
 mkdirSync(runtimeDeps, { recursive: true });
 copyPackageTree('argon2');
 copyPackageTree('pg');
+
+const linuxGlibc = join(runtimeDeps, 'argon2', 'prebuilds', 'linux-x64', 'argon2.glibc.node');
+if (!existsSync(linuxGlibc)) {
+  throw new Error(`Missing staged Linux x64 glibc argon2 prebuild: ${linuxGlibc}`);
+}
+const linuxGlibcBytes = readFileSync(linuxGlibc);
+if (linuxGlibcBytes.subarray(0, 4).toString('hex') !== '7f454c46') {
+  throw new Error(`Staged argon2 Linux prebuild is not an ELF binary: ${linuxGlibc}`);
+}
+const gyp = createRequire(import.meta.url)('node-gyp-build/node-gyp-build.js');
+const linuxTags = gyp.parseTags('argon2.glibc.node');
+if (!gyp.matchTags('node', '127')(linuxTags) || linuxTags.libc !== 'glibc') {
+  throw new Error(`node-gyp-build would reject argon2.glibc.node for Node ABI 127 glibc: ${JSON.stringify(linuxTags)}`);
+}
+console.log(
+  'STAGED_ARGON2_NATIVE',
+  linuxGlibc,
+  'bytes=' + String(statSync(linuxGlibc).size),
+  'elf=linux',
+  'node-gyp-build-abi127=' + String(Boolean(gyp.matchTags('node', '127')(linuxTags))),
+);
 
 const argon2Entry = join(runtimeDeps, 'argon2', 'argon2.cjs');
 const pgEntry = join(runtimeDeps, 'pg', 'esm', 'index.mjs');
