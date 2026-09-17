@@ -8,12 +8,7 @@
       "root": "backend/",
       "framework": "fastify",
       "buildCommand": "npm run bundle:vercel",
-      "entrypoint": "src/server.cjs",
-      "functions": {
-        "src/server.cjs": {
-          "includeFiles": "englishine-app.mjs"
-        }
-      }
+      "entrypoint": "src/server.mjs"
     }
   },
   "rewrites": [

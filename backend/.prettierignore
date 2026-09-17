@@ -1,5 +1,5 @@
 dist/
 node_modules/
 src/generated/prisma/
-src/englishine-app.mjs
+src/server.mjs
 package-lock.json

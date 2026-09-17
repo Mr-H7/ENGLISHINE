@@ -1,8 +1,9 @@
 import { isAbsolute } from 'node:path';
+import type { FastifyInstance } from 'fastify';
 import { buildApp } from './create-app.js';
 import { env } from './config/env.js';
 
-export async function startEnglishineServer(): Promise<void> {
+export async function startEnglishineServer(): Promise<FastifyInstance> {
   const app = await buildApp();
   let isShuttingDown = false;
 
@@ -67,4 +68,6 @@ export async function startEnglishineServer(): Promise<void> {
     app.log.fatal({ err: error }, 'Failed to start Englishine API');
     process.exitCode = 1;
   }
+
+  return app;
 }
