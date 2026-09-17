@@ -28,7 +28,6 @@ function copyPackageTree(name, seen = new Set()) {
 rmSync(join(backendRoot, 'src', 'runtime-deps'), { recursive: true, force: true });
 mkdirSync(runtimeDeps, { recursive: true });
 copyPackageTree('argon2');
-copyPackageTree('pg');
 
 const linuxGlibc = join(runtimeDeps, 'argon2', 'prebuilds', 'linux-x64', 'argon2.glibc.node');
 if (!existsSync(linuxGlibc)) {
@@ -52,7 +51,6 @@ console.log(
 );
 
 const argon2Entry = join(runtimeDeps, 'argon2', 'argon2.cjs');
-const pgEntry = join(runtimeDeps, 'pg', 'esm', 'index.mjs');
 
 await build({
   absWorkingDir: backendRoot,
@@ -63,14 +61,30 @@ await build({
   target: 'node22',
   format: 'esm',
   legalComments: 'none',
-  external: ['pg-native'],
   plugins: [
+    {
+      name: 'stub-optional-pg-native',
+      setup(pluginBuild) {
+        pluginBuild.onResolve({ filter: /^pg-native$/ }, () => ({
+          path: 'optional-pg-driver',
+          namespace: 'optional-empty',
+        }));
+        pluginBuild.onResolve({ filter: /^\.\/native(?:\.js)?$/ }, (args) => {
+          const importer = args.importer.split('\\').join('/');
+          if (!importer.includes('/pg/lib/')) return;
+          return { path: 'optional-pg-driver', namespace: 'optional-empty' };
+        });
+        pluginBuild.onLoad({ filter: /.*/, namespace: 'optional-empty' }, () => ({
+          contents: 'module.exports = null;',
+          loader: 'js',
+        }));
+      },
+    },
     {
       name: 'vercel-runtime-deps',
       setup(pluginBuild) {
-        pluginBuild.onResolve({ filter: /^(argon2|pg)$/ }, (args) => {
-          const abs = args.path === 'argon2' ? argon2Entry : pgEntry;
-          const rel = `./${relative(join(backendRoot, 'src'), abs).split('\\').join('/')}`;
+        pluginBuild.onResolve({ filter: /^argon2$/ }, () => {
+          const rel = `./${relative(join(backendRoot, 'src'), argon2Entry).split('\\').join('/')}`;
           return { path: rel, external: true };
         });
       },
@@ -81,3 +95,8 @@ await build({
   },
   logLevel: 'info',
 });
+
+const bundled = readFileSync(join(backendRoot, 'src', 'englishine-app.mjs'), 'utf8');
+if (bundled.includes('pg-native')) {
+  throw new Error('englishine-app.mjs still contains pg-native; optional native pg driver leaked into the bundle');
+}
