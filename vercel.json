@@ -9,27 +9,6 @@
           "destination": "/index.html"
         }
       ]
-    },
-    "backend": {
-      "root": "backend/",
-      "framework": "fastify",
-      "buildCommand": "npm run bundle:vercel",
-      "entrypoint": "src/server.mjs",
-      "functions": {
-        "src/server.mjs": {
-          "includeFiles": "{src/runtime-deps/**,runtime-deps/**}"
-        }
-      }
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": { "service": "backend" }
-    },
-    {
-      "source": "/(.*)",
-      "destination": { "service": "frontend" }
-    }
-  ]
+  }
 }

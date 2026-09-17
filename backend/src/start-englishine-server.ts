@@ -59,7 +59,7 @@ export async function startEnglishineServer(): Promise<FastifyInstance> {
   }
 
   const port = Number.parseInt(process.env.PORT ?? String(env.PORT), 10);
-  const host = process.env.VERCEL === '1' ? '0.0.0.0' : env.HOST;
+  const host = env.HOST;
 
   try {
     await app.listen({ host, port });

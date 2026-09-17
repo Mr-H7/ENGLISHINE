@@ -15,28 +15,37 @@ Do not use `prisma migrate dev`, `prisma migrate reset`, or `prisma db push` on 
 - PostgreSQL 14+ (Prisma migration lock is PostgreSQL-only)
 - TLS-terminating reverse proxy (nginx, Caddy, or equivalent) on 443
 - Persistent block storage for uploads **only when** `STORAGE_DRIVER=local`
-- Process supervisor (systemd, PM2, or the host's process manager), **or** one Vercel project with `vercel.json` services (`frontend/` at `/`, `backend/` at `/api`)
+- Vercel for the SPA (`frontend/` via repo-root `vercel.json`)
+- Railway Node 22 for Fastify (`backend/` Root Directory, `backend/railway.toml`)
 - Off-host backups for PostgreSQL **and** media (R2 bucket or local upload volume)
 - Cloudflare R2 bucket `englishine-media` when `STORAGE_DRIVER=r2` (private, no public access)
 
-Recommended topology (preserves the proven local cookie/auth behavior):
+Recommended topology (preserves cookie/auth once `/api` is proxied):
 
-1. Serve the SPA and API on **one HTTPS origin**.
-2. Reverse-proxy `/api/` to Fastify on `127.0.0.1:3001` **without rewriting the path**.
-3. Leave `VITE_API_URL` unset when building the frontend so the SPA calls same-origin `/api/v1`.
-4. Set `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `TRUST_PROXY=true`.
+1. Serve the SPA from Vercel and the API from Railway.
+2. Leave `VITE_API_URL` unset so the SPA calls same-origin `/api/v1`.
+3. A later Vercel rewrite must forward `/api/` to Railway **without rewriting the path**. Fastify still listens for `/api/v1/...`. Until that rewrite exists, production `/api` requests will not reach Fastify.
+4. Set `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `TRUST_PROXY=true`. Same-origin does **not** need `COOKIE_SAME_SITE=none`.
 
-## Vercel (Vite + Fastify services, Node 22)
+Local Vite still proxies `/api` to `127.0.0.1:3001`.
 
-One Vercel project deploys both services from repo-root `vercel.json`. Do **not** set the project Root Directory to `backend` or `frontend`. Leave `VITE_API_URL` unset so the SPA calls same-origin `/api/v1`.
+## Vercel (frontend only)
 
-Top-level rewrites send `/api/*` to Fastify **without stripping the path**. Fastify still listens for `/api/v1/...`. Do not add a `request.path` transform that would produce `/api/api/v1` or drop `/api`.
+Repo-root `vercel.json` deploys the Vite SPA from `frontend/` with an `index.html` fallback. Do **not** set the Vercel project Root Directory to `backend`. Unset API secrets (`DATABASE_URL`, `JWT_SECRET`, `R2_*`, and the rest) from the Vercel project; they belong on Railway.
 
-`listen()` remains in `backend/src/server.ts` (`entrypoint`). Set Node 22 from `engines.node` / `.nvmrc`.
+Leave `VITE_API_URL` unset at build time. Do not add a Fastify / Functions backend on Vercel.
 
-Required Vercel env (same names as `.env.production.example`; never commit values). Scope API secrets to the **backend** service: `NODE_ENV=production`, `DATABASE_URL`, `DIRECT_URL` (needed at install for `prisma generate`), `JWT_SECRET`, `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `TRUST_PROXY=true`, `CORS_ORIGINS` (the public HTTPS origin, e.g. `https://englishine.vercel.app`), `STORAGE_DRIVER=r2`, and the `R2_*` keys. `VERCEL=1` is set by the platform. Same-origin does **not** need `COOKIE_SAME_SITE=none`. Local Vite still proxies `/api` to `127.0.0.1:3001`.
+## Railway (Fastify API, Node 22)
 
-Vercel Function **request and non-streamed response bodies are capped at 4.5 MB**. Authenticated Range/206 video and PDF **streaming** can go through Fastify as Node streams. When `STORAGE_DRIVER=r2`, admin MP4/PDF uploads use a short-lived presigned PUT to private R2, then Fastify `HeadObject` finalize. The file body never enters the Vercel Function. Multipart `/admin/lessons/:id/videos|resources` remains for `STORAGE_DRIVER=local`. `STORAGE_DRIVER=local` is not viable on Vercel (ephemeral disk).
+Create a Railway service with Root Directory `backend`. `backend/railway.toml` runs `npm run build` then `npm start` (`node dist/server.js`). Node 22 comes from `backend/.nvmrc` and `engines.node`. Railway injects `PORT`; bind `HOST=0.0.0.0`.
+
+Health check: `GET /api/v1/health/ready`.
+
+Do **not** put `prisma migrate deploy` or `prisma db seed` in the Railway start command. Migrations stay a one-time operator step (see PostgreSQL setup).
+
+Required Railway env (same names as `.env.production.example`; never commit values): `NODE_ENV=production`, `HOST=0.0.0.0`, `TRUST_PROXY=true`, `DATABASE_URL`, `DIRECT_URL` (Prisma CLI / `prisma generate` via `prisma.config.ts`), `JWT_SECRET`, `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=lax`, `CORS_ORIGINS` (the exact Vercel SPA origin, e.g. `https://englishine.vercel.app`), `STORAGE_DRIVER=r2`, and the `R2_*` keys.
+
+When `STORAGE_DRIVER=r2`, admin MP4/PDF uploads use a short-lived presigned PUT to private R2, then Fastify `HeadObject` finalize. Multipart `/admin/lessons/:id/videos|resources` remains for `STORAGE_DRIVER=local`.
 
 ## Media storage (critical)
 
@@ -90,9 +99,9 @@ Copy `backend/.env.production.example` into the host secret store. Never commit 
 | Variable | Production |
 | --- | --- |
 | `NODE_ENV` | `production` |
-| `HOST` | `127.0.0.1` when the proxy is on the same machine |
-| `PORT` | `3001` (or the port the proxy targets) |
-| `TRUST_PROXY` | `true` behind nginx/Caddy |
+| `HOST` | `0.0.0.0` on Railway |
+| `PORT` | Injected by Railway (`process.env.PORT`). Local default `3001` |
+| `TRUST_PROXY` | `true` behind Railway/nginx/Caddy |
 | `DATABASE_URL` | Production PostgreSQL URL (app runtime) |
 | `DIRECT_URL` | Production PostgreSQL URL (Prisma CLI / `migrate deploy`) |
 | `JWT_SECRET` | Unique random string, ≥32 characters. Not the example placeholder. |
@@ -110,7 +119,7 @@ Copy `backend/.env.production.example` into the host secret store. Never commit 
 
 Frontend build:
 
-- Leave `VITE_API_URL` unset for same-origin `/api/v1`.
+- Leave `VITE_API_URL` unset for same-origin `/api/v1` (Vercel rewrite to Railway comes later).
 - Rebuild the SPA if you change `VITE_API_URL` (it is compiled in).
 
 `backend/.env` and `frontend/.env` are gitignored.
@@ -151,24 +160,23 @@ Then unset `BOOTSTRAP_ADMIN_PASSWORD`. Confirm login at `https://<origin>/login`
 
 ## Backend deployment procedure
 
-On the API host, in `backend/`:
+Railway (Root Directory `backend/`):
 
 ```bash
 npm ci
-npx prisma migrate deploy
 npm run build
 npm start
 ```
 
-`npm start` runs `node dist/server.js`. `npm run build` runs `prisma generate` then `tsc`.
+`npm start` runs `node dist/server.js`. `npm run build` runs `prisma generate` then `tsc`. Railway uses `backend/railway.toml` for those commands.
 
-Do not start with `npm run dev` or `tsx watch` in production.
+Do not start with `npm run dev` or `tsx watch` in production. Do not add `prisma migrate deploy` to the Railway start command.
 
-Point the process manager at `backend/` with the production environment and `Restart=on-failure`. Fastify listens on `HOST:PORT` and shuts down on `SIGINT`/`SIGTERM`.
+Fastify listens on `HOST` (`0.0.0.0`) and `PORT` (Railway-injected) and shuts down on `SIGINT`/`SIGTERM`.
 
 ## Frontend deployment procedure
 
-On a CI job or the same host, in `frontend/`:
+Vercel builds `frontend/` from repo-root `vercel.json`. On a CI job or locally:
 
 ```bash
 npm ci
