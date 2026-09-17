@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { after, describe, test } from 'node:test';
 import { Readable } from 'node:stream';
 import { env } from '../src/config/env.js';
-import { buildApp } from '../src/app.js';
+import { buildApp } from '../src/create-app.js';
 import {
   AccessLevel,
   ContentStatus,

@@ -1,5 +1,5 @@
 import { isAbsolute } from 'node:path';
-import { buildApp } from './app.js';
+import { buildApp } from './create-app.js';
 import { env } from './config/env.js';
 
 const app = await buildApp();

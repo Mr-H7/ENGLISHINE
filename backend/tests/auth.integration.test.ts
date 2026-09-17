@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import type { LightMyRequestResponse } from 'fastify';
-import { buildApp } from '../src/app.js';
+import { buildApp } from '../src/create-app.js';
 import type { SystemRole } from '../src/generated/prisma/client.js';
 
 const app = await buildApp();

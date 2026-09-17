@@ -6,7 +6,13 @@
     },
     "backend": {
       "root": "backend/",
-      "entrypoint": "src/server.ts"
+      "framework": "fastify",
+      "entrypoint": "src/server.ts",
+      "functions": {
+        "src/server.ts": {
+          "includeFiles": "package.json"
+        }
+      }
     }
   },
   "rewrites": [

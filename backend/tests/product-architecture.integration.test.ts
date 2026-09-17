@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { after, test } from 'node:test';
-import { buildApp } from '../src/app.js';
+import { buildApp } from '../src/create-app.js';
 import {
   AccessLevel,
   ContentStatus,
