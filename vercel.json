@@ -10,5 +10,17 @@
         }
       ]
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://site--englishine-api--kxy9p9f6d7sc.code.run/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
 }
