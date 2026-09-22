@@ -36,7 +36,9 @@ body {
 }
 .ui-drawer {
   position: fixed;
-  inset: 0 0 0 auto;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inset-inline-start: auto;
   margin: 0;
   inline-size: min(22rem, calc(100% - 2rem));
   block-size: 100%;
@@ -46,7 +48,8 @@ body {
   background: var(--color-surface);
   color: var(--color-copy);
   padding: 1rem;
-  transform: translateX(0);
+  overflow-y: auto;
+  transform: none;
 }
 .ui-drawer::backdrop {
   background: rgb(3 13 32 / 0.78);

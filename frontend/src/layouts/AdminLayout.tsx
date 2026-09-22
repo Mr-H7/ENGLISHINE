@@ -6,28 +6,29 @@ import { LogoutButton } from '@/components/auth/LogoutButton';
 import { PageTransition } from '@/components/PageTransition';
 import { ScrollManager } from '@/components/ScrollManager';
 import { Navbar, Sidebar } from '@/components/shell/ShellNavigation';
+import { ButtonLink } from '@/components/ui';
 import { adminNavigation } from '@/router/manifest';
 
 export function Component() {
-  const topNavigation = [
-    { href: '/admin/', label: 'نظرة عامة' },
-    { href: '/admin/profile/', label: 'الملف الشخصي' },
-    { href: '/', label: 'عرض الموقع' },
-  ];
   return (
     <AuthGuard roles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
-      <div className="ui-app-shell" data-layout="admin">
+      <div className="ui-app-shell" data-layout="admin" dir="rtl">
         <style>{adminStyles}</style>
         <a className="ui-skip" href="#main-content">
           انتقل للمحتوى
         </a>
         <ScrollManager />
         <Navbar
-          items={topNavigation}
+          items={adminNavigation}
           actions={
-            <LogoutButton className="ui-button ui-button-secondary">
-              تسجيل الخروج
-            </LogoutButton>
+            <div className="admin-nav-actions">
+              <ButtonLink to="/" className="ui-button-secondary">
+                عرض الموقع
+              </ButtonLink>
+              <LogoutButton className="ui-button ui-button-secondary">
+                تسجيل الخروج
+              </LogoutButton>
+            </div>
           }
         />
         <Container className="ui-workspace">
