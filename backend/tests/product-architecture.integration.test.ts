@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { after, test } from 'node:test';
@@ -9,6 +10,7 @@ import {
   CourseStatus,
   EnrollmentSource,
   EnrollmentStatus,
+  SystemRole,
 } from '../src/generated/prisma/client.js';
 
 const app = await buildApp();
@@ -20,15 +22,23 @@ let userId = '';
 let courseId = '';
 const assetIds: string[] = [];
 const fixturePaths: string[] = [];
+let secondUserId = '';
 
 after(async () => {
   if (courseId) {
     await app.prisma.courseEnrollment.deleteMany({ where: { courseId } });
+    await app.prisma.activationCodeRedemption.deleteMany({
+      where: { activationCode: { OR: [{ unit: { courseId } }, { lesson: { unit: { courseId } } }] } },
+    });
+    await app.prisma.activationCode.deleteMany({
+      where: { OR: [{ unit: { courseId } }, { lesson: { unit: { courseId } } }] },
+    });
     await app.prisma.course.deleteMany({ where: { id: courseId } });
   }
   if (assetIds.length) await app.prisma.fileAsset.deleteMany({ where: { id: { in: assetIds } } });
   await Promise.all(fixturePaths.map((path) => rm(path, { force: true })));
   if (userId) await app.prisma.user.deleteMany({ where: { id: userId } });
+  if (secondUserId) await app.prisma.user.deleteMany({ where: { id: secondUserId } });
   await app.close();
 });
 
@@ -213,4 +223,104 @@ void test('grade personalization and server-side content entitlements', async ()
     headers,
   });
   assert.equal(allowedResource.statusCode, 200);
+
+  const secondRegistration = await app.inject({
+    method: 'POST', url: '/api/v1/auth/register',
+    headers: { 'content-type': 'application/json', 'x-device-id': crypto.randomUUID() },
+    payload: { fullName: 'Scoped access student', email: `scoped-${crypto.randomUUID()}@example.test`, password },
+  });
+  assert.equal(secondRegistration.statusCode, 201);
+  const secondAuth = secondRegistration.json<{ accessToken: string; user: { id: string } }>();
+  secondUserId = secondAuth.user.id;
+  const secondHeaders = { authorization: `Bearer ${secondAuth.accessToken}` };
+  const otherLesson = await app.prisma.lesson.create({
+    data: { unitId: course.units[0]!.id, title: 'Other paid lesson', position: 3,
+      status: ContentStatus.PUBLISHED, accessLevel: AccessLevel.ENROLLED },
+  });
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/student/lessons/${paidLesson.id}`, headers: secondHeaders })).statusCode, 403);
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/media/videos/${paidVideo.id}`, headers: secondHeaders })).statusCode, 403);
+
+  const freeKey = `tests/${crypto.randomUUID()}.mp4`;
+  const freePath = resolve('storage/uploads', freeKey);
+  await writeFile(freePath, 'englishine-explicit-free-video');
+  fixturePaths.push(freePath);
+  const freeAsset = await app.prisma.fileAsset.create({ data: { storageProvider: 'local',
+    storageKey: freeKey, originalName: 'free.mp4', mimeType: 'video/mp4', byteSize: 30n } });
+  assetIds.push(freeAsset.id);
+  const freeInPaidLesson = await app.prisma.video.create({ data: {
+    lessonId: paidLesson.id, fileAssetId: freeAsset.id, title: 'Explicit free video',
+    type: 'EXPLANATION', position: 4, status: ContentStatus.PUBLISHED, accessLevel: AccessLevel.FREE,
+  } });
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/media/videos/${freeInPaidLesson.id}`, headers: secondHeaders })).statusCode, 200);
+
+  const adminRole = await app.prisma.role.findUniqueOrThrow({ where: { key: SystemRole.ADMIN } });
+  await app.prisma.userRole.create({ data: { userId, roleId: adminRole.id } });
+  const lessonCodeResponse = await app.inject({ method: 'POST', url: '/api/v1/admin/activation-codes',
+    headers: { ...headers, 'content-type': 'application/json' },
+    payload: { unlockType: 'LESSON', targetId: paidLesson.id, maxUses: 1 },
+  });
+  assert.equal(lessonCodeResponse.statusCode, 201);
+  const lessonCode = lessonCodeResponse.json<{ data: { id: string; code: string } }>().data;
+  const codeRecord = await app.prisma.activationCode.findUniqueOrThrow({ where: { id: lessonCode.id } });
+  assert.equal(codeRecord.codeHash, createHash('sha256').update(lessonCode.code).digest('hex'));
+  assert.ok(!JSON.stringify(codeRecord).includes(lessonCode.code));
+  const redeemLesson = await app.inject({ method: 'POST', url: '/api/v1/student/activation',
+    headers: { ...secondHeaders, 'content-type': 'application/json' }, payload: { code: lessonCode.code } });
+  assert.equal(redeemLesson.statusCode, 200);
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/student/lessons/${paidLesson.id}`, headers: secondHeaders })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/media/videos/${paidVideo.id}`, headers: secondHeaders })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/student/lessons/${otherLesson.id}`, headers: secondHeaders })).statusCode, 403);
+  const activatedLessons = await app.inject({ method: 'GET', url: '/api/v1/student/activations', headers: secondHeaders });
+  assert.equal(activatedLessons.statusCode, 200);
+  assert.deepEqual(activatedLessons.json<{ data: Array<{ lessons: Array<{ id: string }> }> }>().data[0]?.lessons.map((item) => item.id), [paidLesson.id]);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/activation-codes/${lessonCode.id}`, headers })).statusCode, 409);
+
+  const unitCodeResponse = await app.inject({ method: 'POST', url: '/api/v1/admin/activation-codes',
+    headers: { ...headers, 'content-type': 'application/json' },
+    payload: { unlockType: 'UNIT', targetId: course.units[0]!.id, maxUses: 1 },
+  });
+  assert.equal(unitCodeResponse.statusCode, 201);
+  const unitCode = unitCodeResponse.json<{ data: { id: string; code: string } }>().data;
+  assert.equal((await app.inject({ method: 'POST', url: '/api/v1/student/activation',
+    headers: { ...secondHeaders, 'content-type': 'application/json' }, payload: { code: unitCode.code } })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/student/lessons/${otherLesson.id}`, headers: secondHeaders })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'POST', url: '/api/v1/student/activation',
+    headers: { ...secondHeaders, 'content-type': 'application/json' }, payload: { code: unitCode.code } })).statusCode, 409);
+
+  const homework = await app.inject({ method: 'POST', url: '/api/v1/admin/homework',
+    headers: { ...headers, 'content-type': 'application/json' },
+    payload: { lessonId: otherLesson.id, title: 'Scoped homework', instructions: 'Original instructions', status: 'PUBLISHED' },
+  });
+  assert.equal(homework.statusCode, 201);
+  const homeworkId = homework.json<{ data: { id: string } }>().data.id;
+  const homeworkUpdate = await app.inject({ method: 'PATCH', url: `/api/v1/admin/homework/${homeworkId}`,
+    headers: { ...headers, 'content-type': 'application/json' },
+    payload: { title: 'Edited homework', instructions: 'Edited instructions' },
+  });
+  assert.equal(homeworkUpdate.statusCode, 200);
+  const listedHomework = await app.inject({ method: 'GET', url: '/api/v1/student/homework', headers: secondHeaders });
+  assert.equal(listedHomework.statusCode, 200);
+  assert.ok(listedHomework.json<{ data: Array<{ id: string; instructions: string }> }>().data.some((item) =>
+    item.id === homeworkId && item.instructions === 'Edited instructions'));
+  assert.equal((await app.inject({ method: 'GET', url: `/api/v1/student/homework/${homeworkId}`, headers: secondHeaders })).statusCode, 200);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/homework/${homeworkId}`, headers })).statusCode, 204);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/units/${course.units[0]!.id}`, headers })).statusCode, 409);
+  const unitEdit = await app.inject({ method: 'PATCH', url: `/api/v1/admin/units/${course.units[0]!.id}`,
+    headers: { ...headers, 'content-type': 'application/json' }, payload: { title: 'Edited unit title' } });
+  assert.equal(unitEdit.statusCode, 200);
+  assert.equal(unitEdit.json<{ data: { id: string; title: string } }>().data.id, course.units[0]!.id);
+  const lessonEdit = await app.inject({ method: 'PATCH', url: `/api/v1/admin/lessons/${paidLesson.id}`,
+    headers: { ...headers, 'content-type': 'application/json' }, payload: { title: 'Edited lesson title' } });
+  assert.equal(lessonEdit.statusCode, 200);
+  assert.equal(lessonEdit.json<{ data: { id: string; title: string } }>().data.id, paidLesson.id);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/videos/${paidVideo.id}`, headers })).statusCode, 204);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/resources/${paidResource.id}`, headers })).statusCode, 204);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/lessons/${otherLesson.id}`, headers })).statusCode, 204);
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/lessons/${paidLesson.id}`, headers })).statusCode, 409);
+  const unusedResponse = await app.inject({ method: 'POST', url: '/api/v1/admin/activation-codes',
+    headers: { ...headers, 'content-type': 'application/json' },
+    payload: { unlockType: 'LESSON', targetId: freeLesson.id, maxUses: 1 } });
+  assert.equal(unusedResponse.statusCode, 201);
+  const unusedId = unusedResponse.json<{ data: { id: string } }>().data.id;
+  assert.equal((await app.inject({ method: 'DELETE', url: `/api/v1/admin/activation-codes/${unusedId}`, headers })).statusCode, 204);
 });

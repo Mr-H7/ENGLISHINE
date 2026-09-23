@@ -42,6 +42,7 @@ const staffRoles = [SystemRole.SUPER_ADMIN, SystemRole.ADMIN, SystemRole.TEACHER
 const authorizeUploadSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('video'),
+    replaceId: uuidSchema.optional(),
     mimeType: z.string().trim().min(1).max(180),
     byteSize: z.number().int().positive(),
     originalName: z.string().trim().min(1).max(255),
@@ -54,6 +55,7 @@ const authorizeUploadSchema = z.discriminatedUnion('kind', [
   }),
   z.object({
     kind: z.literal('material'),
+    replaceId: uuidSchema.optional(),
     mimeType: z.string().trim().min(1).max(180),
     byteSize: z.number().int().positive(),
     originalName: z.string().trim().min(1).max(255),
@@ -134,6 +136,34 @@ export const mediaRoutes: FastifyPluginCallback = (app, _options, done) => {
   app.patch('/admin/videos/:id', { onRequest: authorize(...staffRoles) }, async (request) => {
     const { id } = z.object({ id: uuidSchema }).parse(request.params);
     return { data: await media.updateVideo(id, videoBodySchema.partial().parse(request.body)) };
+  });
+
+  app.patch('/admin/resources/:id', { onRequest: authorize(...staffRoles) }, async (request) => {
+    const { id } = z.object({ id: uuidSchema }).parse(request.params);
+    const input = z.object({
+      title: z.string().trim().min(2).max(180).optional(),
+      type: z.enum(ResourceType).optional(),
+      position: z.number().int().nonnegative().optional(),
+      isDownload: z.boolean().optional(),
+    }).parse(request.body);
+    return { data: await media.updateResource(id, input) };
+  });
+
+  app.post('/admin/videos/:id/file', { onRequest: authorize(...staffRoles) }, async (request) => {
+    const { id } = z.object({ id: uuidSchema }).parse(request.params);
+    const file = await request.file();
+    if (!file) throw new AppError(400, 'A video file is required', 'FILE_REQUIRED');
+    const upload = await storage.save(file, 'video');
+    try { return { data: await media.replaceVideo(id, upload) }; }
+    catch (error) { const attached = await app.prisma.fileAsset.findUnique({ where: { storageKey: upload.storageKey }, select: { id: true } }); if (!attached) await storage.remove(upload.storageKey, upload.storageProvider).catch(() => undefined); throw error; }
+  });
+  app.post('/admin/resources/:id/file', { onRequest: authorize(...staffRoles) }, async (request) => {
+    const { id } = z.object({ id: uuidSchema }).parse(request.params);
+    const file = await request.file();
+    if (!file) throw new AppError(400, 'A PDF file is required', 'FILE_REQUIRED');
+    const upload = await storage.save(file, 'material');
+    try { return { data: await media.replaceResource(id, upload) }; }
+    catch (error) { const attached = await app.prisma.fileAsset.findUnique({ where: { storageKey: upload.storageKey }, select: { id: true } }); if (!attached) await storage.remove(upload.storageKey, upload.storageProvider).catch(() => undefined); throw error; }
   });
 
   app.delete('/admin/videos/:id', { onRequest: authorize(...staffRoles) }, async (request, reply) => {

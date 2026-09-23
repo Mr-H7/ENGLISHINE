@@ -29,23 +29,29 @@ export interface AdminCourse {
 export interface AdminLesson {
   id: string;
   title: string;
+  description: string | null;
   position: number;
   status: string;
   accessLevel: string;
   estimatedMinutes: number | null;
-  videos?: Array<{ id: string; title: string; type: string; accessLevel: string; status: string }>;
-  resources?: Array<{ id: string; title: string; type: string }>;
+  videos?: Array<{ id: string; title: string; type: string; accessLevel: string; status: string; position: number }>;
+  resources?: Array<{ id: string; title: string; type: string; position: number; isDownload: boolean }>;
 }
 
 export interface AdminCourseDetails extends AdminCourse {
+  description: string | null;
   units: Array<{
     id: string;
     title: string;
+    description: string | null;
     position: number;
     status: string;
+    accessLevel: string;
+    coverAssetId: string | null;
     lessons: Array<{
       id: string;
       title: string;
+      description: string | null;
       position: number;
       status: string;
       accessLevel: string;
@@ -65,10 +71,25 @@ export interface AdminStudent {
 export interface AdminHomework {
   id: string;
   title: string;
+  instructions: string | null;
+  coverAssetId: string | null;
   status: string;
   dueAt: string | null;
   lesson: { id: string; title: string };
   _count: { questions: number; submissions: number };
+}
+
+export interface AdminActivationCode {
+  id: string;
+  label: string | null;
+  unlockType: 'UNIT' | 'LESSON';
+  unitId: string | null;
+  lessonId: string | null;
+  status: string;
+  maxUses: number;
+  usedCount: number;
+  expiresAt: string | null;
+  redemptions: Array<{ id: string; redeemedAt: string; student: { id: string; fullName: string } }>;
 }
 
 export interface AdminExam {
@@ -174,6 +195,8 @@ export const adminApi = {
   updateCourse: (
     id: string,
     input: Partial<{
+      shortDescription: string;
+      description: string;
       title: string;
       status: AdminCourse['status'];
       accessLevel: AdminCourse['accessLevel'];
@@ -184,12 +207,12 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }),
-  createUnit: (courseId: string, input: { title: string; position: number; status?: string }) =>
+  createUnit: (courseId: string, input: { title: string; position: number; status?: string; accessLevel?: string }) =>
     data(`/admin/courses/${courseId}/units`, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
-  updateUnit: (id: string, input: { status?: string; title?: string }) =>
+  updateUnit: (id: string, input: { status?: string; title?: string; accessLevel?: string; description?: string; position?: number }) =>
     data(`/admin/units/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
   createLesson: (
     unitId: string,
@@ -200,7 +223,7 @@ export const adminApi = {
       body: JSON.stringify(input),
     }),
   lesson: (id: string) => data<AdminLesson>(`/admin/lessons/${id}`),
-  updateLesson: (id: string, input: { status?: string; accessLevel?: string; title?: string }) =>
+  updateLesson: (id: string, input: { status?: string; accessLevel?: string; title?: string; description?: string; position?: number }) =>
     data(`/admin/lessons/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
   enroll: (studentId: string, courseId: string) =>
     data('/admin/enrollments', {
@@ -208,7 +231,7 @@ export const adminApi = {
       body: JSON.stringify({ studentId, courseId, status: 'ACTIVE', source: 'MANUAL' }),
     }),
   homework: () => data<AdminHomework[]>('/admin/homework'),
-  createHomework: (input: { lessonId: string; title: string; status?: string }) =>
+  createHomework: (input: { lessonId: string; title: string; instructions?: string; status?: string }) =>
     data('/admin/homework', { method: 'POST', body: JSON.stringify(input) }),
   exams: () => data<AdminExam[]>('/admin/exams'),
   createExam: (input: { courseId: string; title: string; status?: string }) =>
@@ -218,6 +241,7 @@ export const adminApi = {
     file: File,
     input: { title: string; type: string; accessLevel: string; status: string; position: number },
     onProgress?: UploadProgressHandler,
+    replaceId?: string,
   ) => {
     if (await isDirectUploadEnabled()) {
       try {
@@ -226,6 +250,7 @@ export const adminApi = {
           method: 'POST',
           body: JSON.stringify({
             kind: 'video',
+            ...(replaceId ? { replaceId } : {}),
             mimeType: file.type || 'video/mp4',
             byteSize: file.size,
             originalName: file.name,
@@ -262,7 +287,7 @@ export const adminApi = {
     });
     const body = new FormData();
     body.append('file', file);
-    return data(`/admin/lessons/${lessonId}/videos?${query.toString()}`, {
+    return data(replaceId ? `/admin/videos/${replaceId}/file` : `/admin/lessons/${lessonId}/videos?${query.toString()}`, {
       method: 'POST',
       body,
     });
@@ -272,6 +297,7 @@ export const adminApi = {
     file: File,
     title: string,
     onProgress?: UploadProgressHandler,
+    replaceId?: string,
   ) => {
     if (await isDirectUploadEnabled()) {
       try {
@@ -280,6 +306,7 @@ export const adminApi = {
           method: 'POST',
           body: JSON.stringify({
             kind: 'material',
+            ...(replaceId ? { replaceId } : {}),
             mimeType: file.type || 'application/pdf',
             byteSize: file.size,
             originalName: file.name,
@@ -314,11 +341,35 @@ export const adminApi = {
     });
     const body = new FormData();
     body.append('file', file);
-    return data(`/admin/lessons/${lessonId}/resources?${query.toString()}`, {
+    return data(replaceId ? `/admin/resources/${replaceId}/file` : `/admin/lessons/${lessonId}/resources?${query.toString()}`, {
       method: 'POST',
       body,
     });
   },
-  updateVideo: (id: string, input: { accessLevel?: string; status?: string; title?: string }) =>
+  updateVideo: (id: string, input: { accessLevel?: string; status?: string; title?: string; type?: string; position?: number }) =>
     data(`/admin/videos/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  deleteUnit: (id: string) => apiRequest<void>(`/admin/units/${id}`, { method: 'DELETE' }),
+  deleteLesson: (id: string) => apiRequest<void>(`/admin/lessons/${id}`, { method: 'DELETE' }),
+  deleteVideo: (id: string) => apiRequest<void>(`/admin/videos/${id}`, { method: 'DELETE' }),
+  updateResource: (id: string, input: { title?: string; position?: number; isDownload?: boolean }) =>
+    data(`/admin/resources/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  deleteResource: (id: string) => apiRequest<void>(`/admin/resources/${id}`, { method: 'DELETE' }),
+  updateHomework: (id: string, input: { title?: string; instructions?: string; status?: string }) =>
+    data<AdminHomework>(`/admin/homework/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  deleteHomework: (id: string) => apiRequest<void>(`/admin/homework/${id}`, { method: 'DELETE' }),
+  uploadCover: (kind: 'unit' | 'homework', id: string, file: File) => {
+    const body = new FormData();
+    body.append('file', file);
+    return data<{ id: string }>(`/admin/covers/${kind}/${id}`, { method: 'POST', body });
+  },
+  removeCover: (kind: 'unit' | 'homework', id: string) =>
+    apiRequest<void>(`/admin/covers/${kind}/${id}`, { method: 'DELETE' }),
+  activationCodes: (target: { unitId?: string; lessonId?: string }) =>
+    data<AdminActivationCode[]>(`/admin/activation-codes?${new URLSearchParams(target).toString()}`),
+  createActivationCode: (input: { unlockType: 'UNIT' | 'LESSON'; targetId: string; label?: string; maxUses: number; expiresAt?: string }) =>
+    data<AdminActivationCode & { code: string }>('/admin/activation-codes', { method: 'POST', body: JSON.stringify(input) }),
+  disableActivationCode: (id: string) =>
+    data(`/admin/activation-codes/${id}/disable`, { method: 'PATCH' }),
+  deleteActivationCode: (id: string) =>
+    apiRequest<void>(`/admin/activation-codes/${id}`, { method: 'DELETE' }),
 };

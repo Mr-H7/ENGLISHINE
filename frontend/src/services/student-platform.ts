@@ -71,11 +71,20 @@ export interface MyCourseEnrollment {
   courseProgress: { progressPercent: number } | null;
 }
 
+export interface ActivatedContent {
+  id: string;
+  redeemedAt: string;
+  courseTitle: string;
+  unitTitle: string;
+  lessons: Array<{ id: string; title: string }>;
+}
+
 export interface StudentCourseEnrollment extends MyCourseEnrollment {
   course: MyCourseEnrollment['course'] & {
     units: Array<{
       id: string;
       title: string;
+      coverAssetId: string | null;
       position: number;
       lessons: Array<{
         id: string;
@@ -93,6 +102,8 @@ export interface StudentCourseEnrollment extends MyCourseEnrollment {
 export interface StudentHomework {
   id: string;
   title: string;
+  instructions: string | null;
+  coverAssetId: string | null;
   dueAt: string | null;
   maxScore: number | string | null;
   lesson: {
@@ -170,6 +181,7 @@ const data = <T>(path: string, init?: RequestInit) =>
 export const studentPlatformApi = {
   grades: () => data<StageOption[]>('/student/grades'),
   profile: () => data<StudentProfile>('/student/profile'),
+  activatedContent: () => data<ActivatedContent[]>('/student/activations'),
   updateGrade: (gradeId: string) =>
     data<StudentProfile>('/student/profile/grade', {
       method: 'PATCH',

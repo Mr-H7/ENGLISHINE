@@ -16,11 +16,11 @@ export function assertSafeStorageKey(storageKey: string): string {
   return key;
 }
 
-export function objectFolder(kind: 'video' | 'material'): string {
+export function objectFolder(kind: 'video' | 'material' | 'image'): string {
   return `${kind}s/${new Date().toISOString().slice(0, 7)}`;
 }
 
-export function createObjectKey(kind: 'video' | 'material', extension: string): string {
+export function createObjectKey(kind: 'video' | 'material' | 'image', extension: string): string {
   const ext = extension.startsWith('.') ? extension.toLowerCase() : `.${extension.toLowerCase()}`;
   if (!/^\.[a-z0-9]{2,8}$/.test(ext)) {
     throw new AppError(400, 'Invalid storage key', 'INVALID_STORAGE_KEY');

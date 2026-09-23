@@ -8,6 +8,7 @@ import {
   type PrismaClient,
 } from '../generated/prisma/client.js';
 import { AppError } from '../utils/app-error.js';
+import { hasScopedEntitlement } from './content-access.service.js';
 
 const freeAccess: AccessLevel[] = [AccessLevel.FREE, AccessLevel.PREVIEW];
 
@@ -226,21 +227,24 @@ export class StudentPlatformService {
       },
     });
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
-    const enrollment = await this.activeEnrollment(student.id, lesson.unit.course.id);
+    const entitled = await hasScopedEntitlement(
+      this.prisma, student.id, lesson.unit.course.id, lesson.unitId, lesson.id,
+    );
     const lessonIsFree =
       freeAccess.includes(lesson.accessLevel) ||
+      freeAccess.includes(lesson.unit.accessLevel) ||
       freeAccess.includes(lesson.unit.course.accessLevel);
     const hasFreeVideo = lesson.videos.some((video) => freeAccess.includes(video.accessLevel));
-    if (!lessonIsFree && !hasFreeVideo && !enrollment) {
+    if (!lessonIsFree && !hasFreeVideo && !entitled) {
       throw new AppError(403, 'Active course enrollment is required', 'ENROLLMENT_REQUIRED');
     }
     return {
       ...lesson,
-      entitled: Boolean(enrollment),
+      entitled,
       videos: lesson.videos
-        .filter((video) => lessonIsFree || enrollment || freeAccess.includes(video.accessLevel))
+        .filter((video) => entitled || freeAccess.includes(video.accessLevel))
         .map((video) => ({ ...video, streamPath: `/media/videos/${video.id}` })),
-      resources: lessonIsFree || enrollment ? lesson.resources : [],
+      resources: lessonIsFree || entitled ? lesson.resources : [],
     };
   }
 
@@ -260,22 +264,29 @@ export class StudentPlatformService {
             course: {
               deletedAt: null,
               status: CourseStatus.PUBLISHED,
-              enrollments: {
-                some: {
-                  studentId: student.id,
-                  status: EnrollmentStatus.ACTIVE,
-                  OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-                  AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
-                },
-              },
             },
           },
         },
+        OR: [
+          { lesson: { unit: { course: { enrollments: { some: {
+            studentId: student.id, status: EnrollmentStatus.ACTIVE,
+            OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+            AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
+          } } } } } },
+          { lesson: { activationCodes: { some: { unlockType: 'LESSON',
+            redemptions: { some: { studentId: student.id } },
+          } } } },
+          { lesson: { unit: { activationCodes: { some: { unlockType: 'UNIT',
+            redemptions: { some: { studentId: student.id } },
+          } } } } },
+        ],
       },
       orderBy: [{ dueAt: 'asc' }, { createdAt: 'desc' }],
       select: {
         id: true,
         title: true,
+        instructions: true,
+        coverAssetId: true,
         dueAt: true,
         maxScore: true,
         lesson: {
@@ -383,17 +394,4 @@ export class StudentPlatformService {
     return student;
   }
 
-  private async activeEnrollment(studentId: string, courseId: string) {
-    const now = new Date();
-    return this.prisma.courseEnrollment.findFirst({
-      where: {
-        studentId,
-        courseId,
-        status: EnrollmentStatus.ACTIVE,
-        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
-      },
-      select: { id: true, status: true, expiresAt: true },
-    });
-  }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata';
 import { AdminCoursesPage } from '@/pages/admin/AdminCoursesStudio';
+import { HomeworkEditor } from '@/components/admin/HomeworkEditor';
 import {
   adminApi,
   type AdminCourse,
@@ -182,6 +183,8 @@ export function AdminHomeworkPage() {
   const [courses, setCourses] = useState<AdminCourseDetails[]>([]);
   const [lessonId, setLessonId] = useState('');
   const [title, setTitle] = useState('');
+  const [instructions, setInstructions] = useState('');
+  const [editing, setEditing] = useState<AdminHomework | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -226,9 +229,10 @@ export function AdminHomeworkPage() {
           event.preventDefault();
           if (!lessonId || !title.trim()) return;
           void adminApi
-            .createHomework({ lessonId, title: title.trim(), status: 'PUBLISHED' })
+            .createHomework({ lessonId, title: title.trim(), instructions: instructions.trim(), status: 'PUBLISHED' })
             .then(() => {
               setTitle('');
+              setInstructions('');
               setStatus('تم إنشاء الواجب.');
               return reload();
             })
@@ -252,6 +256,10 @@ export function AdminHomeworkPage() {
           عنوان الواجب
           <input value={title} onChange={(event) => setTitle(event.target.value)} required />
         </label>
+        <label>
+          شرح الواجب
+          <textarea rows={4} value={instructions} onChange={(event) => setInstructions(event.target.value)} />
+        </label>
         <button className="ui-button" type="submit">
           إنشاء واجب منشور
         </button>
@@ -262,9 +270,11 @@ export function AdminHomeworkPage() {
             {items.map((item) => (
               <li key={item.id}>
                 <strong>{item.title}</strong>
+                <small>{item.instructions || 'بدون شرح بعد'}</small>
                 <small>
                   {item.lesson.title} · {item.status} · أسئلة: {item._count.questions}
                 </small>
+                <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditing(item)}>تعديل الواجب والغلاف</button>
               </li>
             ))}
           </ul>
@@ -272,6 +282,7 @@ export function AdminHomeworkPage() {
           <p>لا توجد واجبات بعد.</p>
         )}
       </section>
+      {editing ? <HomeworkEditor key={editing.id} item={editing} onClose={() => setEditing(null)} onChanged={reload} /> : null}
     </div>
   );
 }

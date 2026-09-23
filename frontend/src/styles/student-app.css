@@ -2050,3 +2050,7 @@
     gap: 6px;
   }
 }
+
+.learning-course-grid > .learning-chapter-list {
+  grid-column: 1 / -1;
+}

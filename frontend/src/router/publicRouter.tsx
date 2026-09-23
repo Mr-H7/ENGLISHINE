@@ -54,10 +54,10 @@ const authRoutes = [
     path: '/reset-password/',
     lazy: () => import('@/pages/auth/ResetPasswordPage'),
   },
-  { path: '/activation/', lazy: () => import('@/pages/auth/ActivationPage') },
+  { path: '/activation/', lazy: () => import('@/pages/auth/ActivationRedeemPage') },
   {
     path: '/account/activation/',
-    lazy: () => import('@/pages/auth/ActivationPage'),
+    lazy: () => import('@/pages/auth/ActivationRedeemPage'),
   },
 ];
 

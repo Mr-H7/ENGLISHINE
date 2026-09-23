@@ -1,5 +1,4 @@
 import {
-  EnrollmentStatus,
   HomeworkStatus,
   type QuestionType,
   ReviewStatus,
@@ -7,6 +6,7 @@ import {
   type PrismaClient,
 } from '../generated/prisma/client.js';
 import { AppError } from '../utils/app-error.js';
+import { hasScopedEntitlement } from './content-access.service.js';
 
 type InputPatch<T> = { [Key in keyof T]?: T[Key] | undefined };
 
@@ -75,17 +75,10 @@ export class HomeworkService {
     }
     const student = await this.prisma.studentProfile.findUnique({ where: { userId } });
     if (!student) throw new AppError(403, 'Student profile is required', 'STUDENT_PROFILE_REQUIRED');
-    const now = new Date();
-    const enrolled = await this.prisma.courseEnrollment.findFirst({
-      where: {
-        studentId: student.id,
-        courseId: homework.lesson.unit.courseId,
-        status: EnrollmentStatus.ACTIVE,
-        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
-      },
-    });
-    if (!enrolled) throw new AppError(403, 'Active course enrollment is required', 'ENROLLMENT_REQUIRED');
+    const enrolled = await hasScopedEntitlement(
+      this.prisma, student.id, homework.lesson.unit.courseId, homework.lesson.unitId, homework.lessonId,
+    );
+    if (!enrolled) throw new AppError(403, 'Homework activation or enrollment is required', 'ENROLLMENT_REQUIRED');
     return homework;
   }
 
@@ -173,18 +166,11 @@ export class HomeworkService {
     const student = await this.prisma.studentProfile.findUnique({ where: { userId } });
     if (!student)
       throw new AppError(403, 'Student profile is required', 'STUDENT_PROFILE_REQUIRED');
-    const now = new Date();
-    const enrolled = await this.prisma.courseEnrollment.findFirst({
-      where: {
-        studentId: student.id,
-        courseId: homework.lesson.unit.courseId,
-        status: EnrollmentStatus.ACTIVE,
-        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
-      },
-    });
-    if (!enrolled)
-      throw new AppError(403, 'Active course enrollment is required', 'ENROLLMENT_REQUIRED');
+    const entitled = await hasScopedEntitlement(
+      this.prisma, student.id, homework.lesson.unit.courseId, homework.lesson.unitId, homework.lessonId,
+    );
+    if (!entitled)
+      throw new AppError(403, 'Homework activation or enrollment is required', 'ENROLLMENT_REQUIRED');
     const questionIds = new Set(homework.questions.map((question) => question.id));
     if (answers.some((answer) => !questionIds.has(answer.questionId)))
       throw new AppError(400, 'An answer references an invalid question', 'INVALID_QUESTION');

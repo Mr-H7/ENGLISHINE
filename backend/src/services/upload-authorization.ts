@@ -10,6 +10,7 @@ export interface DirectUploadAuthorization {
   jti: string;
   sub: string;
   lessonId: string;
+  replaceId?: string;
   kind: UploadKind;
   storageKey: string;
   mimeType: string;

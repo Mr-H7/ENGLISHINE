@@ -2,7 +2,6 @@ import {
   AccessLevel,
   ContentStatus,
   CourseStatus,
-  EnrollmentStatus,
   type ResourceType,
   SubmissionStatus,
   SystemRole,
@@ -11,6 +10,8 @@ import {
 } from '../generated/prisma/client.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
+import { retireAssetIfUnreferenced } from './asset-lifecycle.service.js';
+import { hasScopedEntitlement } from './content-access.service.js';
 import type { StoredUpload, StorageService } from './storage.service.js';
 
 export interface VideoInput {
@@ -97,47 +98,65 @@ export class MediaService {
     });
   }
 
+  async updateResource(id: string, input: InputPatch<ResourceInput>) {
+    const resource = await this.prisma.lessonResource.findUnique({ where: { id } });
+    if (!resource) throw new AppError(404, 'Resource not found', 'RESOURCE_NOT_FOUND');
+    return this.prisma.lessonResource.update({
+      where: { id },
+      data: {
+        ...(input.title !== undefined && { title: input.title }),
+        ...(input.type !== undefined && { type: input.type }),
+        ...(input.position !== undefined && { position: input.position }),
+        ...(input.isDownload !== undefined && { isDownload: input.isDownload }),
+      },
+    });
+  }
+
+  async replaceVideo(id: string, upload: StoredUpload) {
+    const current = await this.prisma.video.findFirst({ where: { id, deletedAt: null } });
+    if (!current) throw new AppError(404, 'Video not found', 'VIDEO_NOT_FOUND');
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const asset = await tx.fileAsset.create({
+        data: { isPublic: false, ...upload, storageProvider: upload.storageProvider ?? env.STORAGE_DRIVER },
+      });
+      return tx.video.update({ where: { id }, data: { fileAssetId: asset.id } });
+    });
+    if (current.fileAssetId) await retireAssetIfUnreferenced(this.prisma, this.storage, current.fileAssetId);
+    return updated;
+  }
+
+  async replaceResource(id: string, upload: StoredUpload) {
+    const current = await this.prisma.lessonResource.findUnique({ where: { id } });
+    if (!current) throw new AppError(404, 'Resource not found', 'RESOURCE_NOT_FOUND');
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const asset = await tx.fileAsset.create({
+        data: { isPublic: false, ...upload, storageProvider: upload.storageProvider ?? env.STORAGE_DRIVER },
+      });
+      return tx.lessonResource.update({ where: { id }, data: { assetId: asset.id } });
+    });
+    await retireAssetIfUnreferenced(this.prisma, this.storage, current.assetId);
+    return updated;
+  }
+
   async removeVideo(id: string) {
     const video = await this.prisma.video.findFirst({
       where: { id, deletedAt: null },
-      include: { fileAsset: true },
+      include: { homeworkSolution: { select: { id: true } } },
     });
     if (!video) throw new AppError(404, 'Video not found', 'VIDEO_NOT_FOUND');
-    const storageKey = video.fileAsset?.storageKey;
-    const storageProvider = video.fileAsset?.storageProvider;
-    await this.prisma.$transaction([
-      this.prisma.video.update({
-        where: { id },
-        data: { deletedAt: new Date(), status: ContentStatus.ARCHIVED, fileAssetId: null },
-      }),
-      ...(video.fileAssetId
-        ? [
-            this.prisma.fileAsset.update({
-              where: { id: video.fileAssetId },
-              data: { deletedAt: new Date() },
-            }),
-          ]
-        : []),
-    ]);
-    await this.removeUnreferencedObject(storageKey, storageProvider);
+    if (video.homeworkSolution) throw new AppError(409, 'Remove the homework solution link before removing this video', 'VIDEO_HAS_DEPENDENCIES');
+    await this.prisma.video.update({
+      where: { id },
+      data: { deletedAt: new Date(), status: ContentStatus.ARCHIVED, fileAssetId: null },
+    });
+    if (video.fileAssetId) await retireAssetIfUnreferenced(this.prisma, this.storage, video.fileAssetId);
   }
 
   async removeResource(id: string) {
-    const resource = await this.prisma.lessonResource.findUnique({
-      where: { id },
-      include: { asset: true },
-    });
+    const resource = await this.prisma.lessonResource.findUnique({ where: { id } });
     if (!resource) throw new AppError(404, 'Resource not found', 'RESOURCE_NOT_FOUND');
-    const storageKey = resource.asset.storageKey;
-    const storageProvider = resource.asset.storageProvider;
-    await this.prisma.$transaction([
-      this.prisma.lessonResource.delete({ where: { id } }),
-      this.prisma.fileAsset.update({
-        where: { id: resource.assetId },
-        data: { deletedAt: new Date() },
-      }),
-    ]);
-    await this.removeUnreferencedObject(storageKey, storageProvider);
+    await this.prisma.lessonResource.delete({ where: { id } });
+    await retireAssetIfUnreferenced(this.prisma, this.storage, resource.assetId);
   }
 
   async getVideoAsset(videoId: string, userId: string, roles: SystemRole[]) {
@@ -165,15 +184,12 @@ export class MediaService {
     if (!video?.fileAsset) throw new AppError(404, 'Video file not found', 'VIDEO_NOT_FOUND');
     if (roles.some((role) => role !== SystemRole.STUDENT)) return video.fileAsset;
     const student = await this.studentForUser(userId);
-    const hasFreeAccess = [
-      video.accessLevel,
-      video.lesson.accessLevel,
-      video.lesson.unit.course.accessLevel,
-    ].some((level) => level === AccessLevel.FREE || level === AccessLevel.PREVIEW);
-    const enrollment = await this.activeEnrollment(student.id, video.lesson.unit.courseId);
-    if (
-      !enrollment && !hasFreeAccess
-    ) {
+    // A video's explicit access level wins; a free parent never exposes a paid child.
+    const hasFreeAccess = video.accessLevel === AccessLevel.FREE || video.accessLevel === AccessLevel.PREVIEW;
+    const entitled = hasFreeAccess || await hasScopedEntitlement(
+      this.prisma, student.id, video.lesson.unit.courseId, video.lesson.unitId, video.lessonId,
+    );
+    if (!entitled) {
       throw new AppError(403, 'Course enrollment is required', 'ENROLLMENT_REQUIRED');
     }
     if (video.homeworkSolution) {
@@ -219,11 +235,11 @@ export class MediaService {
     }
     if (roles.some((role) => role !== SystemRole.STUDENT)) return resource.asset;
     const student = await this.studentForUser(userId);
-    const hasFreeAccess = [resource.lesson.accessLevel, resource.lesson.unit.course.accessLevel]
+    const hasFreeAccess = [resource.lesson.accessLevel, resource.lesson.unit.accessLevel, resource.lesson.unit.course.accessLevel]
       .some((level) => level === AccessLevel.FREE || level === AccessLevel.PREVIEW);
-    if (!hasFreeAccess) {
-      await this.activeEnrollment(student.id, resource.lesson.unit.courseId, true);
-    }
+    if (!hasFreeAccess && !(await hasScopedEntitlement(
+      this.prisma, student.id, resource.lesson.unit.courseId, resource.lesson.unitId, resource.lessonId,
+    ))) throw new AppError(403, 'Content activation or enrollment is required', 'ENROLLMENT_REQUIRED');
     return resource.asset;
   }
 
@@ -234,32 +250,4 @@ export class MediaService {
     return student;
   }
 
-  private async activeEnrollment(studentId: string, courseId: string, required = false) {
-    const now = new Date();
-    const enrollment = await this.prisma.courseEnrollment.findFirst({
-      where: {
-        studentId,
-        courseId,
-        status: EnrollmentStatus.ACTIVE,
-        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
-      },
-    });
-    if (!enrollment && required) {
-      throw new AppError(403, 'Active course enrollment is required', 'ENROLLMENT_REQUIRED');
-    }
-    return enrollment;
-  }
-
-  private async removeUnreferencedObject(
-    storageKey: string | undefined,
-    provider?: string,
-  ): Promise<void> {
-    if (!storageKey) return;
-    const remaining = await this.prisma.fileAsset.count({
-      where: { storageKey, deletedAt: null },
-    });
-    if (remaining > 0) return;
-    await this.storage.remove(storageKey, provider);
-  }
 }

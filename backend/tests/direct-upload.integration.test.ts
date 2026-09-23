@@ -391,4 +391,26 @@ void describe('direct-to-R2 upload finalize', { concurrency: 1 }, () => {
     assert.ok(ranged.rawPayload.length > 0);
     assert.ok(Readable.from(ranged.rawPayload));
   });
+
+  void test('direct upload replaces an existing video without duplicating its record', async () => {
+    const before = await app.prisma.video.findUniqueOrThrow({ where: { id: rangeVideoId } });
+    const authorization = await app.inject({ method: 'POST',
+      url: `/api/v1/admin/lessons/${lessonId}/uploads/authorize`, headers: adminHeaders,
+      payload: { ...videoAuthorizePayload, replaceId: rangeVideoId, title: 'Replacement video' },
+    });
+    assert.equal(authorization.statusCode, 201);
+    const ticket = authorization.json<{ data: { authorization: string; storageKey: string } }>().data;
+    storage.objects.set(ticket.storageKey, {
+      size: videoAuthorizePayload.byteSize, mimeType: 'video/mp4', checksum: 'replacement-etag',
+    });
+    const finalized = await app.inject({ method: 'POST', url: '/api/v1/admin/uploads/finalize',
+      headers: adminHeaders, payload: { authorization: ticket.authorization } });
+    assert.equal(finalized.statusCode, 201);
+    const replaced = finalized.json<{ data: { id: string; fileAssetId: string } }>().data;
+    createdAssetIds.push(replaced.fileAssetId);
+    assert.equal(replaced.id, rangeVideoId);
+    assert.notEqual(replaced.fileAssetId, before.fileAssetId);
+    assert.ok((await app.prisma.fileAsset.findUniqueOrThrow({ where: { id: before.fileAssetId! } })).deletedAt);
+    assert.equal((await app.prisma.video.count({ where: { id: rangeVideoId, deletedAt: null } })), 1);
+  });
 });

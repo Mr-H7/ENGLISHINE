@@ -4,6 +4,7 @@ import { AppIcon } from '@/components/icons/AppIcon';
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata';
 import { useStudentPlatform } from '@/hooks/useStudentPlatform';
 import {
+  type ActivatedContent,
   studentPlatformApi,
   type ExploreCourse,
   type FreeContentItem,
@@ -83,12 +84,13 @@ function useCollection<T>(load: () => Promise<T[]>) {
 
 export function MyCoursesConnectedPage() {
   useDocumentMetadata({ title: 'كورساتي — Englishine', description: 'الكورسات المفعّلة لحساب الطالب.', openGraph: [], structuredData: [] });
+  const activations = useCollection<ActivatedContent>(studentPlatformApi.activatedContent);
   const state = useCollection<MyCourseEnrollment>(studentPlatformApi.myCourses);
   return (
     <div className="learning-page">
       <PageHeader eyebrow="مساحة التعلّم" title="كورساتي" description="الكورسات اللي تم تفعيلها لحسابك فقط، مع حالة التقدم والوصول." />
-      <DataState {...state} empty={!state.items.length} />
-      {state.items.length ? (
+      <DataState {...state} loading={state.loading || activations.loading} empty={!state.items.length && !activations.items.length} />
+      {state.items.length || activations.items.length ? (
         <div className="learning-course-grid">
           {state.items.map((item) => (
             <article className="learning-course-card student-catalog-card" key={item.id}>
@@ -102,6 +104,22 @@ export function MyCoursesConnectedPage() {
               </div>
             </article>
           ))}
+      {activations.error ? <p role="alert">{activations.error}</p> : null}
+      {activations.items.length ? <section className="learning-chapter-list" aria-label="محتوى مفعّل بكود">
+        <h2>محتوى مفعّل بكود</h2>
+        {activations.items.map((entry) => <article className="learning-course-card student-catalog-card" key={entry.id}>
+          <div className="learning-course-body">
+            <span className="student-kicker">{entry.courseTitle}</span>
+            <h3>{entry.unitTitle}</h3>
+            {entry.lessons.length ? <div className="learning-progress-list">
+              {entry.lessons.map((lesson) => <div key={lesson.id}>
+                <strong>{lesson.title}</strong>
+                <Link className="student-secondary-action" to={`/student/lesson/${lesson.id}/`}>فتح الدرس</Link>
+              </div>)}
+            </div> : <p>لا توجد دروس منشورة في هذه الوحدة بعد.</p>}
+          </div>
+        </article>)}
+      </section> : null}
         </div>
       ) : null}
     </div>
@@ -137,6 +155,7 @@ export function StudentCourseDetailsPage() {
         {state.enrollment.course.units.map((unit) => (
           <section className="learning-course-card student-catalog-card" key={unit.id}>
             <div className="learning-course-body">
+              {unit.coverAssetId ? <img className="learning-course-cover" src={mediaUrl(`/media/covers/unit/${unit.id}`)} alt={`غلاف ${unit.title}`} /> : null}
               <span className="student-kicker">الوحدة {unit.position}</span>
               <h2>{unit.title}</h2>
               {unit.lessons.length ? <div className="learning-progress-list">
@@ -241,6 +260,8 @@ export function StudentHomeworkPage() {
           return <article className="learning-course-card student-catalog-card" key={homework.id}>
             <div className="learning-course-body">
               <span className="student-kicker">{homework.lesson.unit.course.title}</span>
+              {homework.coverAssetId ? <img className="learning-course-cover" src={mediaUrl(`/media/covers/homework/${homework.id}`)} alt={`غلاف ${homework.title}`} /> : null}
+              {homework.instructions ? <p>{homework.instructions}</p> : null}
               <h2>{homework.title}</h2>
               <p>{homework.lesson.title} · {formatDate(homework.dueAt)}</p>
               <div className="learning-tags"><span>{submission ? 'تم التسليم' : 'لم يُسلّم'}</span>{submission?.score != null ? <span>الدرجة: {String(submission.score)}</span> : null}</div>

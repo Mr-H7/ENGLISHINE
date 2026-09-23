@@ -18,6 +18,7 @@ import {
 
 export interface DirectUploadRequest {
   kind: UploadKind;
+  replaceId?: string | undefined;
   mimeType: string;
   byteSize: number;
   originalName: string;
@@ -47,6 +48,12 @@ export class DirectUploadService {
     }
     const lesson = await this.prisma.lesson.findFirst({ where: { id: lessonId, deletedAt: null } });
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
+    if (input.replaceId) {
+      const existing = input.kind === 'video'
+        ? await this.prisma.video.findFirst({ where: { id: input.replaceId, lessonId, deletedAt: null } })
+        : await this.prisma.lessonResource.findFirst({ where: { id: input.replaceId, lessonId } });
+      if (!existing) throw new AppError(404, 'Media item not found in this lesson', 'MEDIA_NOT_FOUND');
+    }
     assertAllowedUpload(input.kind, input.mimeType, input.byteSize);
     const videoInput = input.kind === 'video' ? parseVideoInput(input) : undefined;
     const resourceInput = input.kind === 'material' ? parseResourceInput(input) : undefined;
@@ -56,6 +63,7 @@ export class DirectUploadService {
     const authorization = issueDirectUploadAuthorization({
       sub: userId,
       lessonId,
+      ...(input.replaceId ? { replaceId: input.replaceId } : {}),
       kind: input.kind,
       storageKey,
       mimeType: input.mimeType,
@@ -124,7 +132,9 @@ export class DirectUploadService {
       if (authorization.kind === 'video') {
         return {
           kind: 'video' as const,
-          record: await this.media.createVideo(authorization.lessonId, {
+          record: authorization.replaceId
+            ? await this.media.replaceVideo(authorization.replaceId, upload)
+            : await this.media.createVideo(authorization.lessonId, {
             title: authorization.title,
             type: authorization.type as VideoType,
             position: authorization.position,
@@ -136,7 +146,9 @@ export class DirectUploadService {
       }
       return {
         kind: 'material' as const,
-        record: await this.media.createResource(authorization.lessonId, {
+        record: authorization.replaceId
+          ? await this.media.replaceResource(authorization.replaceId, upload)
+          : await this.media.createResource(authorization.lessonId, {
           title: authorization.title,
           type: authorization.type as ResourceType,
           position: authorization.position,
@@ -144,7 +156,8 @@ export class DirectUploadService {
         }, upload),
       };
     } catch (error) {
-      await this.storage.remove(authorization.storageKey, 'r2').catch(() => undefined);
+      const attached = await this.prisma.fileAsset.findUnique({ where: { storageKey: authorization.storageKey }, select: { id: true } });
+      if (!attached) await this.storage.remove(authorization.storageKey, 'r2').catch(() => undefined);
       throw error;
     }
   }

@@ -307,17 +307,20 @@ model CourseTeacher {
 model CourseUnit {
   id              String           @id @default(uuid()) @db.Uuid
   courseId        String           @db.Uuid
+  coverAssetId    String?          @unique @db.Uuid
   academicTermId  String?          @db.Uuid
   title           String           @db.VarChar(180)
   description     String?
   position        Int
   status          ContentStatus    @default(DRAFT)
+  accessLevel     AccessLevel      @default(ENROLLED)
   availableFrom   DateTime?        @db.Timestamptz(3)
   deletedAt       DateTime?        @db.Timestamptz(3)
   createdAt       DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt       DateTime         @updatedAt @db.Timestamptz(3)
   activationCodes ActivationCode[]
   academicTerm    AcademicTerm?    @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
+  coverAsset      FileAsset?       @relation("UnitCover", fields: [coverAssetId], references: [id])
   course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons         Lesson[]
   productLinks    ProductUnit[]
@@ -404,6 +407,8 @@ model FileAsset {
   assignmentSubmissions AssignmentSubmission[]
   certificates          Certificate[]
   courseCover           Course?                @relation("CourseCover")
+  unitCover             CourseUnit?            @relation("UnitCover")
+  homeworkCover         Homework?              @relation("HomeworkCover")
   lessonResources       LessonResource[]
   videoFile             Video?                 @relation("VideoFile")
   videoThumbnails       Video[]                @relation("VideoThumbnail")
@@ -457,6 +462,7 @@ model CourseEnrollment {
 model Homework {
   id              String               @id @default(uuid()) @db.Uuid
   lessonId        String               @db.Uuid
+  coverAssetId    String?              @unique @db.Uuid
   solutionVideoId String?              @unique @db.Uuid
   title           String               @db.VarChar(180)
   instructions    String?
@@ -467,6 +473,7 @@ model Homework {
   createdAt       DateTime             @default(now()) @db.Timestamptz(3)
   updatedAt       DateTime             @updatedAt @db.Timestamptz(3)
   lesson          Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  coverAsset      FileAsset?           @relation("HomeworkCover", fields: [coverAssetId], references: [id])
   solutionVideo   Video?               @relation(fields: [solutionVideoId], references: [id])
   questions       HomeworkQuestion[]
   submissions     HomeworkSubmission[]

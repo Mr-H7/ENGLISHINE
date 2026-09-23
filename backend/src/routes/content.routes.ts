@@ -32,6 +32,7 @@ const unitSchema = z.object({
   academicTermId: uuidSchema.optional(),
   position: z.coerce.number().int().nonnegative(),
   status: z.enum(ContentStatus).optional(),
+  accessLevel: z.enum(AccessLevel).optional(),
   availableFrom: z.coerce.date().optional(),
 });
 

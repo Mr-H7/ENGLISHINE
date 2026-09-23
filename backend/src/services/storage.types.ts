@@ -1,7 +1,7 @@
 import type { Readable } from 'node:stream';
 import type { MultipartFile } from '@fastify/multipart';
 
-export type UploadKind = 'video' | 'material';
+export type UploadKind = 'video' | 'material' | 'image';
 
 export interface StoredUpload {
   storageKey: string;

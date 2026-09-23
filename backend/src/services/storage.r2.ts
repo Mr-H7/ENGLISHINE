@@ -24,6 +24,8 @@ import type { StorageDriver, StoredObject, StoredUpload, UploadKind } from './st
 
 const allowedVideoTypes = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 const allowedMaterialTypes = new Set(['application/pdf']);
+const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const maxImageBytes = 5 * 1024 * 1024;
 const stagingRoot = join(tmpdir(), 'englishine-r2-staging');
 const partSizeBytes = 16 * 1024 * 1024;
 
@@ -84,8 +86,8 @@ export class R2StorageDriver implements StorageDriver {
       }
       const detected = await fileTypeFromFile(stagingPath);
       const mimeType = detected?.mime ?? file.mimetype;
-      const allowed = kind === 'video' ? allowedVideoTypes : allowedMaterialTypes;
-      const sizeLimit = kind === 'video' ? env.UPLOAD_MAX_FILE_BYTES : env.MATERIAL_MAX_FILE_BYTES;
+      const allowed = kind === 'video' ? allowedVideoTypes : kind === 'image' ? allowedImageTypes : allowedMaterialTypes;
+      const sizeLimit = kind === 'video' ? env.UPLOAD_MAX_FILE_BYTES : kind === 'image' ? maxImageBytes : env.MATERIAL_MAX_FILE_BYTES;
       if (!allowed.has(mimeType)) {
         throw new AppError(415, `Unsupported ${kind} file type`, 'UNSUPPORTED_FILE_TYPE');
       }

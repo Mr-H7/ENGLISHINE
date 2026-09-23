@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useBlocker } from 'react-router';
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata';
+import { ContentStudioEditor, type StudioTarget } from '@/components/admin/ContentStudioActions';
 import {
   adminApi,
   type AdminCourse,
@@ -118,6 +119,7 @@ export function AdminCoursesPage() {
   const [videoAccess, setVideoAccess] = useState('ENROLLED');
   const [videoType, setVideoType] = useState('EXPLANATION');
   const [upload, setUpload] = useState<UploadProgressEvent | null>(null);
+  const [editor, setEditor] = useState<StudioTarget | null>(null);
 
   useDocumentMetadata({
     title: 'الكورسات والدروس — إدارة Englishine',
@@ -329,6 +331,7 @@ export function AdminCoursesPage() {
                     />
                   </span>
                 </div>
+                  <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditor({ kind: 'course', record: details })}>تعديل الدورة</button>
                 <div className="admin-live-actions">
                   <button
                     className="ui-button"
@@ -450,6 +453,7 @@ export function AdminCoursesPage() {
                     <p>اختر وحدة لعرض دروسها.</p>
                   ) : (
                     <>
+                        <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditor({ kind: 'unit', record: selectedUnit })}>تعديل الوحدة والوصول والغلاف</button>
                       <div className="admin-workspace-head">
                         <h3>{selectedUnit.title}</h3>
                         <button
@@ -561,6 +565,7 @@ export function AdminCoursesPage() {
                         />
                       </span>
                     </div>
+                      <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditor({ kind: 'lesson', record: lessonDetails })}>تعديل الدرس والتفعيل</button>
                     <div className="admin-live-actions">
                       <button
                         className="ui-button"
@@ -721,6 +726,7 @@ export function AdminCoursesPage() {
                     <div className="admin-live-lesson" key={video.id}>
                       <span>
                         فيديو: {video.title} · {accessLabel(video.accessLevel)}
+                      <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditor({ kind: 'video', record: video, lessonId: lessonDetails.id })}>تعديل الفيديو</button>
                       </span>
                       <button
                         className="ui-button ui-button-secondary"
@@ -739,6 +745,7 @@ export function AdminCoursesPage() {
                   ))}
                   {(lessonDetails.resources ?? []).map((resource) => (
                     <div className="admin-live-lesson" key={resource.id}>
+                      <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditor({ kind: 'resource', record: resource, lessonId: lessonDetails.id })}>تعديل الملف</button>
                       <span>مادة: {resource.title}</span>
                     </div>
                   ))}
@@ -748,6 +755,26 @@ export function AdminCoursesPage() {
           )}
         </section>
       </div>
+      {editor ? (
+        <ContentStudioEditor
+          key={`${editor.kind}-${editor.record.id}`}
+          target={editor}
+          stages={stages}
+          onClose={() => setEditor(null)}
+          onUploadProgress={setUpload}
+          onChanged={async () => {
+            if (details) await refreshCourse(details.id, selectedUnitId);
+            if (lessonDetails) setLessonDetails(await adminApi.lesson(lessonDetails.id));
+            await reloadCourses();
+          }}
+          onRemoved={async () => {
+            if (editor.kind === 'lesson' || editor.kind === 'video' || editor.kind === 'resource') setLessonDetails(null);
+            if (editor.kind === 'unit') setSelectedUnitId(null);
+            if (details) await refreshCourse(details.id, editor.kind === 'unit' ? null : selectedUnitId);
+            await reloadCourses();
+          }}
+        />
+      ) : null}
     </div>
   );
 }
