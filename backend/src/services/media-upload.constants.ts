@@ -2,7 +2,7 @@ import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
 import type { UploadKind } from './storage.types.js';
 
-export const DIRECT_UPLOAD_TTL_SECONDS = 300;
+export const DIRECT_UPLOAD_TTL_SECONDS = 3_600;
 
 export const allowedVideoTypes = new Set(['video/mp4', 'video/webm', 'video/quicktime']);
 export const allowedMaterialTypes = new Set(['application/pdf']);

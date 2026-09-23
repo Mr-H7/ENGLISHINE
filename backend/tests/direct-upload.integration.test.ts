@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import { createHmac } from 'node:crypto';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { after, describe, test } from 'node:test';
 import { Readable } from 'node:stream';
 import { env } from '../src/config/env.js';
+import { verifyDirectUploadAuthorization } from '../src/services/upload-authorization.js';
 import { buildApp } from '../src/create-app.js';
 import {
   AccessLevel,
@@ -244,7 +246,7 @@ void describe('direct-to-R2 upload authorization', { concurrency: 1 }, () => {
       };
     }>().data;
     assert.equal(payload.method, 'PUT');
-    assert.equal(payload.expiresIn, 300);
+    assert.equal(payload.expiresIn, 3_600);
     assert.match(payload.uploadUrl, /^https:\/\//);
     assert.match(payload.storageKey, /^videos\/\d{4}-\d{2}\/[0-9a-f-]{36}\.mp4$/);
     assert.equal(payload.headers['content-type'], 'video/mp4');
@@ -341,6 +343,33 @@ void describe('direct-to-R2 upload finalize', { concurrency: 1 }, () => {
     });
     assert.equal(second.statusCode, 409);
     assert.equal(second.json<{ error: { code: string } }>().error.code, 'UPLOAD_AUTHORIZATION_REUSED');
+  });
+
+  void test('expired upload authorization is not treated as a session 401', () => {
+    const payload = {
+      purpose: 'r2-direct-upload',
+      jti: crypto.randomUUID(),
+      sub: 'user-1',
+      lessonId: 'lesson-1',
+      kind: 'video',
+      storageKey: 'videos/2026-09/00000000-0000-0000-0000-000000000001.mp4',
+      mimeType: 'video/mp4',
+      byteSize: 12,
+      originalName: 'lesson.mp4',
+      title: 'lesson',
+      type: 'EXPLANATION',
+      position: 0,
+      exp: Math.floor(Date.now() / 1000) - 10,
+    };
+    const body = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+    const signature = createHmac('sha256', env.JWT_SECRET).update(body).digest('base64url');
+    assert.throws(
+      () => verifyDirectUploadAuthorization(`${body}.${signature}`, 'user-1'),
+      (error: unknown) =>
+        error instanceof AppError &&
+        error.statusCode === 409 &&
+        error.code === 'UPLOAD_AUTHORIZATION_EXPIRED',
+    );
   });
 
   void test('existing authenticated Range/206 behavior remains intact', async () => {

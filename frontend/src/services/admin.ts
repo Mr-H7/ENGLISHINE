@@ -1,4 +1,4 @@
-import { apiRequest } from '@/services/api';
+import { authApi, apiRequest, getAccessTokenExpiresAt } from '@/services/api';
 
 export interface GradeOption {
   id: string;
@@ -123,6 +123,12 @@ function putToR2(uploadUrl: string, file: File, headers: Record<string, string>)
   });
 }
 
+async function refreshAccessIfNeeded(): Promise<void> {
+  const expiresAt = getAccessTokenExpiresAt();
+  if (expiresAt && expiresAt - Date.now() > 120_000) return;
+  await authApi.refresh();
+}
+
 export const adminApi = {
   grades: () => data<StageOption[]>('/admin/grades'),
   students: () =>
@@ -210,6 +216,7 @@ export const adminApi = {
         }),
       });
       await putToR2(session.uploadUrl, file, session.headers);
+      await refreshAccessIfNeeded();
       return data(`/admin/uploads/finalize`, {
         method: 'POST',
         body: JSON.stringify({ authorization: session.authorization }),
@@ -245,6 +252,7 @@ export const adminApi = {
         }),
       });
       await putToR2(session.uploadUrl, file, session.headers);
+      await refreshAccessIfNeeded();
       return data(`/admin/uploads/finalize`, {
         method: 'POST',
         body: JSON.stringify({ authorization: session.authorization }),

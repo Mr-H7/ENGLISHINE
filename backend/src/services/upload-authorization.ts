@@ -76,7 +76,7 @@ export function verifyDirectUploadAuthorization(
     throw new AppError(403, 'Upload authorization does not match this session', 'UPLOAD_AUTHORIZATION_MISMATCH');
   }
   if (payload.exp * 1000 <= Date.now()) {
-    throw new AppError(401, 'Upload authorization has expired', 'UPLOAD_AUTHORIZATION_EXPIRED');
+    throw new AppError(409, 'Upload authorization has expired', 'UPLOAD_AUTHORIZATION_EXPIRED');
   }
   payload.storageKey = assertSafeStorageKey(payload.storageKey);
   return payload;

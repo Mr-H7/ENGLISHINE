@@ -151,10 +151,35 @@ void test('production authentication flow', async () => {
   assert.equal(invalidLogin.json<ErrorPayload>().error.code, 'INVALID_CREDENTIALS');
 
   const firstLogin = await login();
+  const expiredAccess = app.jwt.sign(
+    app.jwt.decode(firstLogin.payload.accessToken) as {
+      sub: string;
+      email: string;
+      roles: SystemRole[];
+      sessionId: string;
+    },
+    { expiresIn: '1ms' },
+  );
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  const refreshWithExpiredAccess = await app.inject({
+    method: 'POST',
+    url: '/api/v1/auth/refresh',
+    headers: {
+      ...sessionHeaders,
+      authorization: `Bearer ${expiredAccess}`,
+      cookie: firstLogin.cookie,
+    },
+  });
+  assert.equal(
+    refreshWithExpiredAccess.statusCode,
+    200,
+    'An expired access token must not block refresh',
+  );
+
   const firstRefresh = await app.inject({
     method: 'POST',
     url: '/api/v1/auth/refresh',
-    headers: { ...sessionHeaders, cookie: firstLogin.cookie },
+    headers: { ...sessionHeaders, cookie: refreshCookie(refreshWithExpiredAccess) },
   });
   assert.equal(firstRefresh.statusCode, 200);
   const secondCookie = refreshCookie(firstRefresh);

@@ -1,3 +1,8 @@
+import {
+  ApiClientError,
+  shouldRefreshOnUnauthorized,
+} from '@/services/auth-errors';
+
 function normalizeApiUrl(configured: string | undefined): string | undefined {
   const value = configured?.trim().replace(/\/$/, '');
   if (!value || typeof window === 'undefined') return value || undefined;
@@ -93,20 +98,47 @@ const authErrorMessages: Record<string, string> = {
 
 const connectionErrorMessage = 'تعذر الاتصال بالخادم. تحقق من الشبكة وحاول مرة أخرى.';
 
+async function readErrorPayload(response: Response): Promise<{
+  code?: string;
+  message?: string;
+} | null> {
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { code?: string; message?: string };
+  } | null;
+  return payload?.error ?? null;
+}
+
+function toClientError(error: { code?: string; message?: string } | null): ApiClientError {
+  const code = error?.code;
+  return new ApiClientError(
+    (code && authErrorMessages[code]) ?? error?.message ?? 'تعذر إكمال الطلب. حاول مرة أخرى.',
+    code,
+  );
+}
+
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as {
-      error?: { code?: string; message?: string };
-    } | null;
-    const code = payload?.error?.code;
-    throw new Error(
-      (code && authErrorMessages[code]) ??
-        payload?.error?.message ??
-        'تعذر إكمال الطلب. حاول مرة أخرى.',
-    );
+    throw toClientError(await readErrorPayload(response));
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+}
+
+function readAccessTokenExpiresAt(token: string | null): number | null {
+  if (!token) return null;
+  try {
+    const [, encoded] = token.split('.');
+    if (!encoded) return null;
+    const normalized = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    const payload = JSON.parse(atob(normalized)) as { exp?: number };
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+export function getAccessTokenExpiresAt(): number | null {
+  return readAccessTokenExpiresAt(accessToken);
 }
 
 async function request(
@@ -170,31 +202,36 @@ export const authApi = {
   },
 };
 
+async function recoverFromUnauthorized(response: Response): Promise<boolean> {
+  const preview = response.clone();
+  const error = await readErrorPayload(preview);
+  if (!shouldRefreshOnUnauthorized(error?.code)) {
+    return false;
+  }
+  try {
+    await refreshSession();
+    return true;
+  } catch {
+    accessToken = null;
+    return false;
+  }
+}
+
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
   let response = await request(path, init);
-  if (response.status === 401) {
-    try {
-      await refreshSession();
-      response = await request(path, init);
-    } catch {
-      accessToken = null;
-    }
+  if (response.status === 401 && (await recoverFromUnauthorized(response))) {
+    response = await request(path, init);
   }
   return parseResponse<T>(response);
 }
 
 export async function apiBlob(path: string): Promise<Blob> {
   let response = await request(path);
-  if (response.status === 401) {
-    try {
-      await refreshSession();
-      response = await request(path);
-    } catch {
-      accessToken = null;
-    }
+  if (response.status === 401 && (await recoverFromUnauthorized(response))) {
+    response = await request(path);
   }
   if (!response.ok) {
     await parseResponse<void>(response);

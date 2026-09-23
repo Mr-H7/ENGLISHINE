@@ -6,7 +6,8 @@ import {
   type ReactNode,
 } from 'react';
 import { SessionContext } from '@/contexts/session';
-import { authApi, type ApiUser } from '@/services/api';
+import { authApi, getAccessTokenExpiresAt, type ApiUser } from '@/services/api';
+import { isTerminalSessionError } from '@/services/auth-errors';
 import type { SessionState, StudentIdentity } from '@/services/contracts';
 
 function toIdentity(user: ApiUser): StudentIdentity {
@@ -42,13 +43,38 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (session.status !== 'authenticated') return undefined;
-    const timer = window.setInterval(() => {
-      void authApi.refresh().then(
-        ({ user }) => setSession({ status: 'authenticated', user: toIdentity(user) }),
-        () => setSession({ status: 'anonymous', user: null }),
-      );
-    }, 8 * 60 * 1000);
-    return () => window.clearInterval(timer);
+    let cancelled = false;
+    let timer = 0;
+    const scheduleRefresh = () => {
+      if (cancelled) return;
+      const expiresAt = getAccessTokenExpiresAt();
+      const delay = expiresAt
+        ? Math.max(15_000, expiresAt - Date.now() - 60_000)
+        : 12 * 60 * 1000;
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        void authApi.refresh().then(
+          ({ user }) => {
+            if (cancelled) return;
+            setSession({ status: 'authenticated', user: toIdentity(user) });
+            scheduleRefresh();
+          },
+          (error: unknown) => {
+            if (cancelled) return;
+            if (isTerminalSessionError(error)) {
+              setSession({ status: 'anonymous', user: null });
+              return;
+            }
+            timer = window.setTimeout(scheduleRefresh, 30_000);
+          },
+        );
+      }, delay);
+    };
+    scheduleRefresh();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [session.status]);
 
   const login = useCallback(
