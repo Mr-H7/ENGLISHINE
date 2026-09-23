@@ -103,7 +103,22 @@ async function isDirectUploadEnabled(): Promise<boolean> {
   return cachedDirectUpload;
 }
 
-function putToR2(uploadUrl: string, file: File, headers: Record<string, string>): Promise<void> {
+export type UploadPhase = 'idle' | 'preparing' | 'uploading' | 'finalizing' | 'complete' | 'failed';
+
+export interface UploadProgressEvent {
+  phase: UploadPhase;
+  loaded: number;
+  total: number;
+}
+
+export type UploadProgressHandler = (event: UploadProgressEvent) => void;
+
+function putToR2(
+  uploadUrl: string,
+  file: File,
+  headers: Record<string, string>,
+  onProgress?: (loaded: number, total: number) => void,
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('PUT', uploadUrl);
@@ -111,6 +126,9 @@ function putToR2(uploadUrl: string, file: File, headers: Record<string, string>)
     for (const [name, value] of Object.entries(headers)) {
       xhr.setRequestHeader(name, value);
     }
+    xhr.upload.onprogress = (event) => {
+      onProgress?.(event.loaded, event.total || file.size);
+    };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
@@ -199,28 +217,41 @@ export const adminApi = {
     lessonId: string,
     file: File,
     input: { title: string; type: string; accessLevel: string; status: string; position: number },
+    onProgress?: UploadProgressHandler,
   ) => {
     if (await isDirectUploadEnabled()) {
-      const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
-        method: 'POST',
-        body: JSON.stringify({
-          kind: 'video',
-          mimeType: file.type || 'video/mp4',
-          byteSize: file.size,
-          originalName: file.name,
-          title: input.title,
-          type: input.type,
-          position: input.position,
-          status: input.status,
-          accessLevel: input.accessLevel,
-        }),
-      });
-      await putToR2(session.uploadUrl, file, session.headers);
-      await refreshAccessIfNeeded();
-      return data(`/admin/uploads/finalize`, {
-        method: 'POST',
-        body: JSON.stringify({ authorization: session.authorization }),
-      });
+      try {
+        onProgress?.({ phase: 'preparing', loaded: 0, total: file.size });
+        const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
+          method: 'POST',
+          body: JSON.stringify({
+            kind: 'video',
+            mimeType: file.type || 'video/mp4',
+            byteSize: file.size,
+            originalName: file.name,
+            title: input.title,
+            type: input.type,
+            position: input.position,
+            status: input.status,
+            accessLevel: input.accessLevel,
+          }),
+        });
+        onProgress?.({ phase: 'uploading', loaded: 0, total: file.size });
+        await putToR2(session.uploadUrl, file, session.headers, (loaded, total) => {
+          onProgress?.({ phase: 'uploading', loaded, total });
+        });
+        onProgress?.({ phase: 'finalizing', loaded: file.size, total: file.size });
+        await refreshAccessIfNeeded();
+        const result = await data(`/admin/uploads/finalize`, {
+          method: 'POST',
+          body: JSON.stringify({ authorization: session.authorization }),
+        });
+        onProgress?.({ phase: 'complete', loaded: file.size, total: file.size });
+        return result;
+      } catch (error) {
+        onProgress?.({ phase: 'failed', loaded: 0, total: file.size });
+        throw error;
+      }
     }
     const query = new URLSearchParams({
       title: input.title,
@@ -236,27 +267,44 @@ export const adminApi = {
       body,
     });
   },
-  uploadResource: async (lessonId: string, file: File, title: string) => {
+  uploadResource: async (
+    lessonId: string,
+    file: File,
+    title: string,
+    onProgress?: UploadProgressHandler,
+  ) => {
     if (await isDirectUploadEnabled()) {
-      const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
-        method: 'POST',
-        body: JSON.stringify({
-          kind: 'material',
-          mimeType: file.type || 'application/pdf',
-          byteSize: file.size,
-          originalName: file.name,
-          title,
-          type: 'PDF',
-          position: 0,
-          isDownload: true,
-        }),
-      });
-      await putToR2(session.uploadUrl, file, session.headers);
-      await refreshAccessIfNeeded();
-      return data(`/admin/uploads/finalize`, {
-        method: 'POST',
-        body: JSON.stringify({ authorization: session.authorization }),
-      });
+      try {
+        onProgress?.({ phase: 'preparing', loaded: 0, total: file.size });
+        const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
+          method: 'POST',
+          body: JSON.stringify({
+            kind: 'material',
+            mimeType: file.type || 'application/pdf',
+            byteSize: file.size,
+            originalName: file.name,
+            title,
+            type: 'PDF',
+            position: 0,
+            isDownload: true,
+          }),
+        });
+        onProgress?.({ phase: 'uploading', loaded: 0, total: file.size });
+        await putToR2(session.uploadUrl, file, session.headers, (loaded, total) => {
+          onProgress?.({ phase: 'uploading', loaded, total });
+        });
+        onProgress?.({ phase: 'finalizing', loaded: file.size, total: file.size });
+        await refreshAccessIfNeeded();
+        const result = await data(`/admin/uploads/finalize`, {
+          method: 'POST',
+          body: JSON.stringify({ authorization: session.authorization }),
+        });
+        onProgress?.({ phase: 'complete', loaded: file.size, total: file.size });
+        return result;
+      } catch (error) {
+        onProgress?.({ phase: 'failed', loaded: 0, total: file.size });
+        throw error;
+      }
     }
     const query = new URLSearchParams({
       title,

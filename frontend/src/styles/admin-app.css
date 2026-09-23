@@ -761,3 +761,119 @@
     justify-self: stretch;
   }
 }
+.admin-studio {
+  gap: 1.1rem;
+}
+.admin-studio-grid {
+  display: grid;
+  grid-template-columns: minmax(15rem, 18.5rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.admin-course-rail h2,
+.admin-workspace h2,
+.admin-workspace h3,
+.admin-lesson-workspace h3,
+.admin-upload-panel h4 {
+  margin: 0 0 0.6rem;
+}
+.admin-select-row {
+  display: grid;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(178, 190, 214, 0.22);
+  border-radius: 10px;
+  background: rgba(8, 28, 62, 0.88);
+  color: #f7fafc;
+  text-align: start;
+}
+.admin-select-row[data-selected='true'] {
+  border-color: rgba(143, 196, 247, 0.7);
+  background: rgba(14, 76, 146, 0.38);
+}
+.admin-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.admin-status-badge {
+  display: inline-flex;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.admin-status-badge[data-tone='published'] {
+  background: rgba(86, 190, 145, 0.18);
+  color: #8bd7b2;
+}
+.admin-status-badge[data-tone='draft'] {
+  background: rgba(224, 177, 83, 0.16);
+  color: #e4c47f;
+}
+.admin-status-badge[data-tone='free'] {
+  background: rgba(143, 196, 247, 0.16);
+  color: #8fc4f7;
+}
+.admin-status-badge[data-tone='paid'] {
+  background: rgba(247, 250, 252, 0.08);
+  color: #e7eef8;
+}
+.admin-create-panel,
+.admin-upload-panel,
+.admin-lesson-workspace,
+.admin-leave-warning {
+  display: grid;
+  gap: 0.75rem;
+  margin-block-start: 0.85rem;
+  padding: 0.9rem;
+  border: 1px solid rgba(178, 190, 214, 0.18);
+  border-radius: 12px;
+  background: rgba(4, 18, 44, 0.55);
+}
+.admin-workspace-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.admin-workspace-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-block-start: 1rem;
+}
+.admin-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+.admin-upload-meter {
+  display: grid;
+  gap: 0.4rem;
+}
+.admin-upload-meter-copy {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: #e7eef8;
+}
+.admin-upload-meter progress {
+  width: 100%;
+  accent-color: #0e4c92;
+}
+.admin-upload-meter[data-phase='failed'] {
+  color: #ffc4c4;
+}
+.admin-leave-warning {
+  border-color: rgba(224, 177, 83, 0.4);
+}
+@media (max-width: 900px) {
+  .admin-studio-grid,
+  .admin-workspace-split,
+  .admin-upload-grid {
+    grid-template-columns: 1fr;
+  }
+}

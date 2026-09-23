@@ -14,6 +14,7 @@ import {
   type MyCourseEnrollment,
   type StudentLesson,
 } from '@/services/student-platform';
+import { LessonVideoPlayer } from '@/components/media/LessonVideoPlayer';
 import { mediaUrl } from '@/services/api';
 import { useSession } from '@/hooks/useSession';
 
@@ -337,16 +338,7 @@ export function StudentAccountPage() {
 }
 
 function ProtectedVideo({ path, title }: { path: string; title: string }) {
-  return (
-    <video
-      className="student-protected-video"
-      controls
-      playsInline
-      preload="metadata"
-      src={mediaUrl(path)}
-      title={title}
-    />
-  );
+  return <LessonVideoPlayer src={mediaUrl(path)} title={title} />;
 }
 
 function ProtectedResource({ id, title }: { id: string; title: string }) {
@@ -374,33 +366,50 @@ export function StudentLessonAccessPage() {
     return () => { active = false; };
   }, [lessonId]);
   const lesson = state.lesson;
+  useDocumentMetadata({
+    title: `${lesson?.title ?? 'الدرس'} — Englishine`,
+    description: lesson?.description ?? 'درس Englishine.',
+    openGraph: [],
+    structuredData: [],
+  });
   return (
-    <div className="learning-page">
-      <PageHeader eyebrow={lesson?.unit.course.title ?? 'محتوى محمي'} title={lesson?.title ?? 'الدرس'} description="يعرض Englishine المحتوى المجاني أو المحتوى المفعّل لحسابك فقط." />
+    <div className="learning-page student-lesson-page">
       {state.loading ? <DataState loading error={null} empty={false} /> : null}
       {state.error ? <div className="student-empty-wide" role="alert"><strong>لا يمكن فتح هذا المحتوى</strong><p>{state.error}</p><Link className="student-secondary-action" to="/student/explore/">استكشف الكورسات</Link></div> : null}
       {lesson ? (
         <div className="student-lesson-access">
-          <p>{lesson.description ?? lesson.unit.title}</p>
-          <div className="learning-tags">
-            <span>{lesson.entitled ? 'كورس مفعّل' : 'محتوى مجاني'}</span>
-            <span>{lesson.accessLevel === 'FREE' || lesson.accessLevel === 'PREVIEW' ? 'وصول مجاني' : 'محتوى مدفوع'}</span>
-          </div>
+          <nav className="student-lesson-crumb" aria-label="مسار الدرس">
+            <Link to="/student/courses/">كورساتي</Link>
+            <span aria-hidden="true">/</span>
+            <Link to={`/student/courses/${lesson.unit.course.id}/`}>{lesson.unit.course.title}</Link>
+            <span aria-hidden="true">/</span>
+            <span>{lesson.unit.title}</span>
+          </nav>
+          <header className="student-lesson-hero">
+            <h1>{lesson.title}</h1>
+            {lesson.description ? <p>{lesson.description}</p> : null}
+          </header>
           {lesson.videos.length ? lesson.videos.map((video) => (
-            <section className="student-account-card" key={video.id}>
-              <h2>{video.title}</h2>
-              <p>{video.type === 'FREE_REEL' ? 'ريل تعليمي' : 'فيديو'}</p>
+            <section className="student-lesson-player" key={video.id} aria-labelledby={`video-${video.id}`}>
+              <h2 id={`video-${video.id}`}>{video.title}</h2>
               <ProtectedVideo path={video.streamPath} title={video.title} />
             </section>
           )) : <p>لا يوجد فيديو منشور في هذا الدرس بعد.</p>}
           {lesson.resources.length ? (
-            <section className="student-account-card">
+            <section className="student-lesson-materials">
               <h2>المواد</h2>
-              {lesson.resources.map((resource) => (
-                <ProtectedResource key={resource.id} id={resource.id} title={resource.title} />
-              ))}
+              <div className="student-lesson-material-list">
+                {lesson.resources.map((resource) => (
+                  <ProtectedResource key={resource.id} id={resource.id} title={resource.title} />
+                ))}
+              </div>
             </section>
           ) : null}
+          <p className="student-lesson-back">
+            <Link className="student-secondary-action" to={`/student/courses/${lesson.unit.course.id}/`}>
+              العودة إلى الكورس
+            </Link>
+          </p>
         </div>
       ) : null}
     </div>
