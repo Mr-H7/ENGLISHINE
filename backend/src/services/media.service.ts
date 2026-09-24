@@ -12,6 +12,7 @@ import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
 import { retireAssetIfUnreferenced } from './asset-lifecycle.service.js';
 import { hasScopedEntitlement } from './content-access.service.js';
+import { ProgressionService } from './progression.service.js';
 import type { StoredUpload, StorageService } from './storage.service.js';
 
 export interface VideoInput {
@@ -192,6 +193,9 @@ export class MediaService {
     if (!entitled) {
       throw new AppError(403, 'Course enrollment is required', 'ENROLLMENT_REQUIRED');
     }
+    if (!hasFreeAccess) {
+      await new ProgressionService(this.prisma).assertCanAccessLesson(userId, video.lessonId);
+    }
     if (video.homeworkSolution) {
       const submitted = await this.prisma.homeworkSubmission.findFirst({
         where: {
@@ -240,6 +244,9 @@ export class MediaService {
     if (!hasFreeAccess && !(await hasScopedEntitlement(
       this.prisma, student.id, resource.lesson.unit.courseId, resource.lesson.unitId, resource.lessonId,
     ))) throw new AppError(403, 'Content activation or enrollment is required', 'ENROLLMENT_REQUIRED');
+    if (!hasFreeAccess) {
+      await new ProgressionService(this.prisma).assertCanAccessLesson(userId, resource.lessonId);
+    }
     return resource.asset;
   }
 

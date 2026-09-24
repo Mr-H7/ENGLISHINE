@@ -70,6 +70,15 @@ export const homeworkRoutes: FastifyPluginAsync = async (app) => {
           .code(201)
           .send({ data: await service.addQuestion(id, questionSchema.parse(request.body)) });
       });
+      admin.patch('/homework-questions/:questionId', async (request) => {
+        const { questionId } = z.object({ questionId: uuidSchema }).parse(request.params);
+        return { data: await service.updateQuestion(questionId, questionSchema.partial().parse(request.body)) };
+      });
+      admin.delete('/homework-questions/:questionId', async (request, reply) => {
+        const { questionId } = z.object({ questionId: uuidSchema }).parse(request.params);
+        await service.removeQuestion(questionId);
+        return reply.code(204).send();
+      });
       admin.patch('/homework-submissions/:id/review', async (request) => {
         const { id } = z.object({ id: uuidSchema }).parse(request.params);
         const input = z

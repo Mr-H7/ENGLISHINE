@@ -305,17 +305,19 @@ export function StudentProgressPage() {
       <PageHeader eyebrow="بيانات محفوظة" title="التقدم والنتائج" description="ملخص التقدم المسجل في قاعدة البيانات لكل كورس مفعّل." />
       <DataState {...state} empty={!state.items.length} />
       {state.items.length ? <div className="learning-course-grid">
-        {state.items.map((item) => {
-          const progress = item.courseProgress;
-          return <article className="learning-course-card student-catalog-card" key={item.id}>
+        {state.items.map((item) => (
+          <article className="learning-course-card student-catalog-card" key={item.course.id}>
             <div className="learning-course-body">
-              <span className="student-kicker">كورس مفعّل</span>
+              <span className="student-kicker">كورس</span>
               <h2>{item.course.title}</h2>
-              <p>{progress ? `${progress.completedLessons} من ${progress.totalLessons} دروس مكتملة` : 'لم يبدأ التقدم بعد.'}</p>
-              <div className="learning-tags"><span>{progress ? `${String(progress.progressPercent)}%` : '0%'}</span></div>
+              {item.units.map((unit) => (
+                <p key={unit.unitId}>
+                  وحدة · {unit.state} · {unit.progressPercent}%
+                </p>
+              ))}
             </div>
-          </article>;
-        })}
+          </article>
+        ))}
       </div> : null}
     </div>
   );
@@ -323,43 +325,25 @@ export function StudentProgressPage() {
 
 export function StudentAccountPage() {
   const session = useSession();
-  const { profile, stages, updateGrade } = useStudentPlatform();
-  const [selected, setSelected] = useState(profile?.grade?.id ?? '');
-  const [status, setStatus] = useState<string | null>(null);
+  const { profile } = useStudentPlatform();
   useDocumentMetadata({ title: 'حسابي — Englishine', description: 'بيانات حساب الطالب والصف الدراسي.', openGraph: [], structuredData: [] });
   const email = session.status === 'authenticated' ? session.user.email : '';
   return (
     <div className="learning-page">
-      <PageHeader eyebrow="حساب الطالب" title="بياناتي التعليمية" description="حدّث صفك فقط عند الانتقال إلى مرحلة أو صف جديد حتى تظل توصيات المحتوى دقيقة." />
+      <PageHeader eyebrow="حساب الطالب" title="بياناتي التعليمية" description="الصف الدراسي يُحدَّد عند إنشاء الحساب ويُعدَّل من الإدارة فقط." />
       <section className="student-account-card">
         <div><span>الاسم</span><strong>{profile?.fullName}</strong></div>
-        <div><span>البريد</span><strong>{email}</strong></div>
-        <div><span>الصف الحالي</span><strong>{profile?.grade?.nameAr ?? 'غير محدد'}</strong></div>
-        <form onSubmit={(event) => {
-          event.preventDefault();
-          if (!selected || selected === profile?.grade?.id) return;
-          setStatus(null);
-          void updateGrade(selected).then(() => setStatus('تم تحديث الصف الدراسي.')).catch((reason: unknown) => setStatus(reason instanceof Error ? reason.message : 'تعذر تحديث الصف.'));
-        }}>
-          <label htmlFor="account-grade">تحديث الصف الدراسي</label>
-          <select id="account-grade" value={selected} onChange={(event) => setSelected(event.target.value)}>
-            {stages.map((stage) => (
-              <optgroup key={stage.id} label={stage.nameAr}>
-                {stage.grades.map((grade) => <option key={grade.id} value={grade.id}>{grade.nameAr}</option>)}
-              </optgroup>
-            ))}
-          </select>
-          <p>تغيير الصف يغيّر توصيات الكورسات والمحتوى المجاني، لكنه لا يلغي أي تفعيل قائم.</p>
-          <button className="student-primary-action" type="submit" disabled={!selected || selected === profile?.grade?.id}>حفظ الصف</button>
-          {status ? <p role="status">{status}</p> : null}
-        </form>
+        <div><span>رقم الطالب</span><strong>{profile?.studentPhone ?? 'غير مسجل'}</strong></div>
+        <div><span>رقم ولي الأمر</span><strong>{profile?.parentPhone ?? 'غير مسجل'}</strong></div>
+        <div><span>البريد</span><strong>{email || 'غير مسجل'}</strong></div>
+        <div><span>الصف الحالي</span><strong>{profile?.grade?.nameAr ?? 'غير محدد — تواصل مع الإدارة'}</strong></div>
       </section>
     </div>
   );
 }
 
-function ProtectedVideo({ path, title }: { path: string; title: string }) {
-  return <LessonVideoPlayer src={mediaUrl(path)} title={title} />;
+function ProtectedVideo({ path, title, videoId }: { path: string; title: string; videoId: string }) {
+  return <LessonVideoPlayer src={mediaUrl(path)} title={title} videoId={videoId} />;
 }
 
 function ProtectedResource({ id, title }: { id: string; title: string }) {
@@ -413,7 +397,7 @@ export function StudentLessonAccessPage() {
           {lesson.videos.length ? lesson.videos.map((video) => (
             <section className="student-lesson-player" key={video.id} aria-labelledby={`video-${video.id}`}>
               <h2 id={`video-${video.id}`}>{video.title}</h2>
-              <ProtectedVideo path={video.streamPath} title={video.title} />
+              <ProtectedVideo path={video.streamPath} title={video.title} videoId={video.id} />
             </section>
           )) : <p>لا يوجد فيديو منشور في هذا الدرس بعد.</p>}
           {lesson.resources.length ? (

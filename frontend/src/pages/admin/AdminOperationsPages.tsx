@@ -61,7 +61,7 @@ export function AdminStudentsPage() {
   const grades = useMemo(() => stages.flatMap((stage) => stage.grades), [stages]);
   const selectedCourse = courses.find((course) => course.id === courseId);
   const filteredStudents = students.filter((student) => {
-    const haystack = `${student.fullName} ${student.user.email}`.toLowerCase();
+    const haystack = `${student.fullName} ${student.user.email ?? ''} ${student.user.phone ?? ''}`.toLowerCase();
     return haystack.includes(query.trim().toLowerCase());
   });
 

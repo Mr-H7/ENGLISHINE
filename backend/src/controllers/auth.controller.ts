@@ -5,16 +5,24 @@ import { AuthService, type DeviceContext } from '../services/auth.service.js';
 import { AppError } from '../utils/app-error.js';
 
 const registerSchema = z.object({
-  email: z.email().max(320),
+  email: z.email().max(320).optional(),
+  studentPhone: z.string().trim().min(8).max(32),
+  guardianPhone: z.string().trim().min(8).max(32),
   password: z.string().min(10).max(128),
   fullName: z.string().trim().min(2).max(160),
-  parentPhone: z.string().trim().min(7).max(32).optional(),
+  gradeId: z.string().uuid(),
 });
 
-const loginSchema = z.object({
-  email: z.email().max(320),
-  password: z.string().min(1).max(128),
-});
+const loginSchema = z
+  .object({
+    email: z.string().trim().min(3).max(320).optional(),
+    phone: z.string().trim().min(8).max(32).optional(),
+    identifier: z.string().trim().min(3).max(320).optional(),
+    password: z.string().min(1).max(128),
+  })
+  .refine((value) => Boolean(value.identifier || value.email || value.phone), {
+    message: 'Email or phone is required.',
+  });
 
 function deviceContext(request: FastifyRequest): DeviceContext {
   const header = request.headers['x-device-id'];

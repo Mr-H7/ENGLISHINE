@@ -31,7 +31,8 @@ export function AuthGuard({
     );
   }
   if (!roles.some((role) => session.user.roles.includes(role))) {
-    return <Navigate to="/" replace />;
+    const staff = session.user.roles.some((role) => role !== 'STUDENT');
+    return <Navigate to={staff ? '/admin/' : '/student/'} replace />;
   }
   return children;
 }

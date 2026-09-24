@@ -103,6 +103,8 @@ export class ContentService {
                 status: true,
                 accessLevel: true,
                 estimatedMinutes: true,
+                createdAt: true,
+                _count: { select: { videos: true, resources: true, homework: true } },
               },
             },
           },
@@ -163,6 +165,19 @@ export class ContentService {
   async deleteCourse(id: string) {
     const course = await this.prisma.course.findFirst({ where: { id, deletedAt: null } });
     if (!course) throw new AppError(404, 'Course not found', 'COURSE_NOT_FOUND');
+    const [units, enrollments, exams, codes] = await Promise.all([
+      this.prisma.courseUnit.count({ where: { courseId: id, deletedAt: null } }),
+      this.prisma.courseEnrollment.count({ where: { courseId: id } }),
+      this.prisma.exam.count({ where: { courseId: id, deletedAt: null } }),
+      this.prisma.activationCode.count({ where: { courseId: id } }),
+    ]);
+    if (units || enrollments || exams || codes) {
+      throw new AppError(
+        409,
+        'Remove units, enrollments, exams and activation codes before removing this course',
+        'COURSE_HAS_DEPENDENCIES',
+      );
+    }
     await this.prisma.course.update({
       where: { id },
       data: { deletedAt: new Date(), status: CourseStatus.ARCHIVED },
@@ -269,13 +284,21 @@ export class ContentService {
 
   async deleteLesson(id: string) {
     await this.getLesson(id);
-    const [videos, resources, homework, codes] = await Promise.all([
+    const [videos, resources, homework, codes, exams, progress] = await Promise.all([
       this.prisma.video.count({ where: { lessonId: id, deletedAt: null } }),
       this.prisma.lessonResource.count({ where: { lessonId: id } }),
       this.prisma.homework.count({ where: { lessonId: id, deletedAt: null } }),
       this.prisma.activationCode.count({ where: { lessonId: id } }),
+      this.prisma.exam.count({ where: { lessonId: id, deletedAt: null } }),
+      this.prisma.studentLessonProgress.count({ where: { lessonId: id } }),
     ]);
-    if (videos || resources || homework || codes) throw new AppError(409, 'Remove lesson media, homework and activation codes before removing this lesson', 'LESSON_HAS_DEPENDENCIES');
+    if (videos || resources || homework || codes || exams || progress) {
+      throw new AppError(
+        409,
+        'Remove lesson media, homework, tests, activation codes and progress before removing this lesson',
+        'LESSON_HAS_DEPENDENCIES',
+      );
+    }
     await this.prisma.lesson.update({
       where: { id },
       data: { deletedAt: new Date(), status: ContentStatus.ARCHIVED },

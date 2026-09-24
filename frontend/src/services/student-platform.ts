@@ -18,7 +18,9 @@ export interface StudentProfile {
   id: string;
   fullName: string;
   parentName: string | null;
+  studentPhone: string | null;
   parentPhone: string | null;
+  avatarAssetId: string | null;
   grade: (GradeOption & {
     stage: { id: string; code: string; nameAr: string };
   }) | null;
@@ -33,6 +35,13 @@ export interface ExploreCourse {
   grade: { id: string; nameAr: string } | null;
   teachers: Array<{ teacher: { fullName: string } }>;
   enrollments: Array<{ id: string; status: string; expiresAt: string | null }>;
+  units?: Array<{
+    id: string;
+    title: string;
+    position: number;
+    accessLevel: string;
+    coverAssetId: string | null;
+  }>;
 }
 
 export interface FreeContentItem {
@@ -109,7 +118,7 @@ export interface StudentHomework {
   lesson: {
     id: string;
     title: string;
-    unit: { course: { id: string; title: string } };
+    unit: { id?: string; title?: string; course: { id: string; title: string } };
   };
   submissions: Array<{
     id: string;
@@ -164,15 +173,14 @@ export interface StudentLesson {
 }
 
 export interface StudentCourseProgress {
-  id: string;
   course: { id: string; title: string };
-  courseProgress: {
-    status: string;
-    completedLessons: number;
-    totalLessons: number;
-    progressPercent: number | string;
-    completedAt: string | null;
-  } | null;
+  units: Array<{
+    unitId: string;
+    entitled: boolean;
+    state: string;
+    progressPercent: number;
+    requirements: Array<{ key: string; label: string; complete: boolean; current: boolean }>;
+  }>;
 }
 
 const data = <T>(path: string, init?: RequestInit) =>
@@ -182,11 +190,6 @@ export const studentPlatformApi = {
   grades: () => data<StageOption[]>('/student/grades'),
   profile: () => data<StudentProfile>('/student/profile'),
   activatedContent: () => data<ActivatedContent[]>('/student/activations'),
-  updateGrade: (gradeId: string) =>
-    data<StudentProfile>('/student/profile/grade', {
-      method: 'PATCH',
-      body: JSON.stringify({ gradeId }),
-    }),
   explore: () => data<ExploreCourse[]>('/student/explore'),
   freeContent: () => data<FreeContentItem[]>('/student/free-content'),
   myCourses: () => data<MyCourseEnrollment[]>('/student/courses'),
@@ -196,4 +199,9 @@ export const studentPlatformApi = {
   exams: () => data<StudentExam[]>('/student/exams'),
   progress: () => data<StudentCourseProgress[]>('/student/progress'),
   lesson: (lessonId: string) => data<StudentLesson>(`/student/lessons/${lessonId}`),
+  reportVideoProgress: (videoId: string, watchedSeconds: number, durationSeconds?: number) =>
+    data(`/student/progress/videos/${videoId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ watchedSeconds, durationSeconds }),
+    }),
 };

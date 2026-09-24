@@ -6,7 +6,7 @@ export interface StudentPlatformContextValue {
   stages: StageOption[];
   loading: boolean;
   error: string | null;
-  updateGrade(gradeId: string): Promise<void>;
+  updateGrade(_gradeId: string): Promise<void>;
   reload(): Promise<void>;
 }
 

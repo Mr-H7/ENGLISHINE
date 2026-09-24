@@ -43,6 +43,10 @@ export const enrollmentRoutes: FastifyPluginAsync = async (app) => {
         const result = await service.listStudents(query.page, query.pageSize, query.search);
         return { data: result.items, meta: paginationMeta(result.total, query) };
       });
+      admin.get('/students/:studentId', async (request) => {
+        const { studentId } = z.object({ studentId: uuidSchema }).parse(request.params);
+        return { data: await service.getStudent(studentId) };
+      });
       admin.patch('/students/:studentId/grade', async (request) => {
         const { studentId } = z.object({ studentId: uuidSchema }).parse(request.params);
         const { gradeId } = z.object({ gradeId: uuidSchema.nullable() }).parse(request.body);

@@ -34,7 +34,16 @@ export interface AdminLesson {
   status: string;
   accessLevel: string;
   estimatedMinutes: number | null;
-  videos?: Array<{ id: string; title: string; type: string; accessLevel: string; status: string; position: number }>;
+  videos?: Array<{
+    id: string;
+    title: string;
+    type: string;
+    accessLevel: string;
+    status: string;
+    position: number;
+    createdAt?: string;
+    fileAssetId?: string | null;
+  }>;
   resources?: Array<{ id: string; title: string; type: string; position: number; isDownload: boolean }>;
 }
 
@@ -64,7 +73,7 @@ export interface AdminStudent {
   id: string;
   fullName: string;
   grade: { id: string; nameAr: string } | null;
-  user: { email: string; status: string };
+  user: { email: string | null; phone?: string | null; status: string };
   _count: { enrollments: number };
 }
 
@@ -357,6 +366,25 @@ export const adminApi = {
   updateHomework: (id: string, input: { title?: string; instructions?: string; status?: string }) =>
     data<AdminHomework>(`/admin/homework/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
   deleteHomework: (id: string) => apiRequest<void>(`/admin/homework/${id}`, { method: 'DELETE' }),
+  homeworkDetails: (id: string) => data<AdminHomework & {
+    questions: Array<{
+      id: string;
+      type: string;
+      prompt: string;
+      position: number;
+      points: number | string | null;
+      correctText: string | null;
+      choices: Array<{ id: string; label: string; position: number; isCorrect: boolean }>;
+    }>;
+  }>(`/admin/homework/${id}`),
+  addHomeworkQuestion: (homeworkId: string, input: {
+    type: string; prompt: string; position: number; points?: number; correctText?: string;
+    choices?: Array<{ label: string; position: number; isCorrect?: boolean }>;
+  }) => data(`/admin/homework/${homeworkId}/questions`, { method: 'POST', body: JSON.stringify(input) }),
+  updateHomeworkQuestion: (questionId: string, input: Record<string, unknown>) =>
+    data(`/admin/homework-questions/${questionId}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  deleteHomeworkQuestion: (questionId: string) =>
+    apiRequest<void>(`/admin/homework-questions/${questionId}`, { method: 'DELETE' }),
   uploadCover: (kind: 'unit' | 'homework', id: string, file: File) => {
     const body = new FormData();
     body.append('file', file);

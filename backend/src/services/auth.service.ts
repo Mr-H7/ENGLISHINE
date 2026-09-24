@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { SystemRole, UserStatus, type PrismaClient } from '../generated/prisma/client.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
+import { looksLikeEmail, looksLikePhone, normalizeEgyptianPhone } from '../utils/phone.js';
 import {
   createDeviceHash,
   createOpaqueToken,
@@ -12,14 +13,18 @@ import {
 } from '../utils/crypto.js';
 
 export interface SignupInput {
-  email: string;
+  email?: string | undefined;
+  studentPhone: string;
+  guardianPhone: string;
   password: string;
   fullName: string;
-  parentPhone?: string | undefined;
+  gradeId: string;
 }
 
 export interface LoginInput {
-  email: string;
+  email?: string | undefined;
+  phone?: string | undefined;
+  identifier?: string | undefined;
   password: string;
 }
 
@@ -31,7 +36,8 @@ export interface DeviceContext {
 
 interface AuthUser {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   displayName: string;
   roles: SystemRole[];
 }
@@ -55,7 +61,8 @@ function normalizeEmail(email: string): string {
 }
 
 function displayName(user: {
-  email: string;
+  email: string | null;
+  phone: string | null;
   studentProfile: { fullName: string } | null;
   teacherProfile: { fullName: string } | null;
   adminProfile: { fullName: string } | null;
@@ -64,7 +71,9 @@ function displayName(user: {
     user.studentProfile?.fullName ??
     user.teacherProfile?.fullName ??
     user.adminProfile?.fullName ??
-    user.email
+    user.email ??
+    user.phone ??
+    'Englishine'
   );
 }
 
@@ -75,13 +84,25 @@ export class AuthService {
   ) {}
 
   public async signup(input: SignupInput, device: DeviceContext): Promise<AuthResult> {
-    const email = normalizeEmail(input.email);
-    const existing = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
-    if (existing)
-      throw new AppError('An account already exists for this email.', {
+    const email = input.email ? normalizeEmail(input.email) : null;
+    const studentPhone = normalizeEgyptianPhone(input.studentPhone);
+    const guardianPhone = normalizeEgyptianPhone(input.guardianPhone);
+    if (email) {
+      const existingEmail = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+      if (existingEmail)
+        throw new AppError('An account already exists for this email.', {
+          statusCode: 409,
+          code: 'EMAIL_EXISTS',
+        });
+    }
+    const existingPhone = await this.prisma.user.findUnique({ where: { phone: studentPhone }, select: { id: true } });
+    if (existingPhone)
+      throw new AppError('An account already exists for this phone number.', {
         statusCode: 409,
-        code: 'EMAIL_EXISTS',
+        code: 'PHONE_EXISTS',
       });
+    const grade = await this.prisma.grade.findFirst({ where: { id: input.gradeId, isActive: true } });
+    if (!grade) throw new AppError('Grade not found.', { statusCode: 404, code: 'GRADE_NOT_FOUND' });
 
     const studentRole = await this.prisma.role.findUnique({ where: { key: SystemRole.STUDENT } });
     if (!studentRole)
@@ -94,13 +115,16 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: {
         email,
+        phone: studentPhone,
         passwordHash,
         status: UserStatus.ACTIVE,
         roles: { create: { roleId: studentRole.id } },
         studentProfile: {
           create: {
             fullName: input.fullName.trim(),
-            parentPhone: input.parentPhone?.trim() || null,
+            studentPhone,
+            parentPhone: guardianPhone,
+            gradeId: grade.id,
           },
         },
       },
@@ -111,10 +135,23 @@ export class AuthService {
   }
 
   public async login(input: LoginInput, device: DeviceContext): Promise<AuthResult> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: normalizeEmail(input.email) },
-      include: userWithRoles,
-    });
+    const raw = (input.identifier ?? input.phone ?? input.email ?? '').trim();
+    if (!raw) {
+      throw new AppError('Invalid email or password.', { statusCode: 401, code: 'INVALID_CREDENTIALS' });
+    }
+    let user;
+    try {
+      user = looksLikeEmail(raw)
+        ? await this.prisma.user.findUnique({ where: { email: normalizeEmail(raw) }, include: userWithRoles })
+        : looksLikePhone(raw)
+          ? await this.prisma.user.findUnique({
+              where: { phone: normalizeEgyptianPhone(raw) },
+              include: userWithRoles,
+            })
+          : await this.prisma.user.findUnique({ where: { email: normalizeEmail(raw) }, include: userWithRoles });
+    } catch {
+      throw new AppError('Invalid email or password.', { statusCode: 401, code: 'INVALID_CREDENTIALS' });
+    }
 
     if (!user || !(await verifyPassword(user.passwordHash, input.password))) {
       throw new AppError('Invalid email or password.', {
@@ -316,12 +353,12 @@ export class AuthService {
   }
 
   private signAccessToken(
-    user: { id: string; email: string; roles: Array<{ role: { key: SystemRole } }> },
+    user: { id: string; email: string | null; roles: Array<{ role: { key: SystemRole } }> },
     sessionId: string,
   ): string {
     return this.app.jwt.sign({
       sub: user.id,
-      email: user.email,
+      email: user.email ?? '',
       roles: user.roles.map(({ role }) => role.key),
       sessionId,
     });
@@ -329,7 +366,8 @@ export class AuthService {
 
   private toAuthUser(user: {
     id: string;
-    email: string;
+    email: string | null;
+    phone: string | null;
     roles: Array<{ role: { key: SystemRole } }>;
     studentProfile: { fullName: string } | null;
     teacherProfile: { fullName: string } | null;
@@ -338,6 +376,7 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
+      phone: user.phone,
       displayName: displayName(user),
       roles: user.roles.map(({ role }) => role.key),
     };

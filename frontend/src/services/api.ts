@@ -35,7 +35,8 @@ export function mediaUrl(path: string): string {
 
 export interface ApiUser {
   id: string;
-  email: string;
+  email: string | null;
+  phone?: string | null;
   displayName: string;
   roles: Array<'SUPER_ADMIN' | 'ADMIN' | 'TEACHER' | 'STUDENT'>;
 }
@@ -72,7 +73,9 @@ function authHeaders(withBody: boolean): HeadersInit {
 
 const authErrorMessages: Record<string, string> = {
   EMAIL_EXISTS: 'يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل.',
-  INVALID_CREDENTIALS: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+  PHONE_EXISTS: 'يوجد حساب مسجل بهذا الرقم بالفعل.',
+  INVALID_PHONE: 'أدخل رقم هاتف مصري صحيح.',
+  INVALID_CREDENTIALS: 'بيانات الدخول غير صحيحة.',
   ACCOUNT_INACTIVE: 'هذا الحساب غير نشط حاليًا.',
   VALIDATION_ERROR: 'راجع البيانات المكتوبة وحاول مرة أخرى.',
   REFRESH_TOKEN_REQUIRED: 'انتهت الجلسة. سجل الدخول مرة أخرى.',
@@ -198,13 +201,15 @@ function refreshSession(): Promise<AuthResponse> {
 }
 
 export const authApi = {
-  login: (input: { email: string; password: string }) =>
+  login: (input: { email?: string; phone?: string; identifier?: string; password: string }) =>
     authRequest('/auth/login', input),
   signup: (input: {
     fullName: string;
-    email: string;
+    email?: string;
+    studentPhone: string;
+    guardianPhone: string;
+    gradeId: string;
     password: string;
-    parentPhone?: string;
   }) => authRequest('/auth/register', input),
   refresh: refreshSession,
   async logout() {

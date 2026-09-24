@@ -20,6 +20,7 @@ export function Component() {
         <ScrollManager />
         <Navbar
           items={adminNavigation}
+          brandTo="/admin/"
           actions={
             <div className="admin-nav-actions">
               <ButtonLink to="/" className="ui-button-secondary">

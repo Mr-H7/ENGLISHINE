@@ -79,6 +79,9 @@ void test('production authentication flow', async () => {
   const anonymous = await app.inject({ method: 'GET', url: '/api/v1/auth/me' });
   assert.equal(anonymous.statusCode, 401, 'Protected endpoint must reject anonymous requests');
 
+  const grade = await app.prisma.grade.findUniqueOrThrow({ where: { code: 'PREP_1' } });
+  const studentPhone = '01011112222';
+  const guardianPhone = '01111112222';
   const registration = await app.inject({
     method: 'POST',
     url: '/api/v1/auth/register',
@@ -87,6 +90,9 @@ void test('production authentication flow', async () => {
       fullName: 'طالب اختبار المصادقة',
       email,
       password,
+      studentPhone,
+      guardianPhone,
+      gradeId: grade.id,
     },
   });
   assert.equal(registration.statusCode, 201);
@@ -105,7 +111,14 @@ void test('production authentication flow', async () => {
     method: 'POST',
     url: '/api/v1/auth/register',
     headers: jsonHeaders,
-    payload: { fullName: 'طالب مكرر', email, password },
+    payload: {
+      fullName: 'طالب مكرر',
+      email,
+      password,
+      studentPhone: '01033334444',
+      guardianPhone: '01133334444',
+      gradeId: grade.id,
+    },
   });
   assert.equal(duplicate.statusCode, 409);
   assert.equal(duplicate.json<ErrorPayload>().error.code, 'EMAIL_EXISTS');

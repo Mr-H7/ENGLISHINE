@@ -8,6 +8,7 @@ import { uuidSchema } from '../utils/validation.js';
 
 const examSchema = z.object({
   courseId: uuidSchema,
+  unitId: uuidSchema.optional(),
   lessonId: uuidSchema.optional(),
   title: z.string().trim().min(2).max(180),
   instructions: z.string().trim().max(20_000).optional(),

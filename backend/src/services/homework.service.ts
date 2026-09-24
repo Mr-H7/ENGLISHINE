@@ -119,10 +119,62 @@ export class HomeworkService {
 
   async remove(id: string) {
     await this.get(id);
+    const submissions = await this.prisma.homeworkSubmission.count({ where: { homeworkId: id } });
+    if (submissions) {
+      throw new AppError(
+        409,
+        'Homework with student submissions cannot be deleted',
+        'HOMEWORK_HAS_SUBMISSIONS',
+      );
+    }
     await this.prisma.homework.update({
       where: { id },
       data: { deletedAt: new Date(), status: HomeworkStatus.ARCHIVED },
     });
+  }
+
+  async updateQuestion(questionId: string, input: InputPatch<QuestionInput>) {
+    const question = await this.prisma.homeworkQuestion.findUnique({ where: { id: questionId } });
+    if (!question) throw new AppError(404, 'Question not found', 'QUESTION_NOT_FOUND');
+    return this.prisma.$transaction(async (tx) => {
+      if (input.choices) {
+        await tx.homeworkChoice.deleteMany({ where: { questionId } });
+      }
+      return tx.homeworkQuestion.update({
+        where: { id: questionId },
+        data: {
+          ...(input.type !== undefined && { type: input.type }),
+          ...(input.prompt !== undefined && { prompt: input.prompt }),
+          ...(input.position !== undefined && { position: input.position }),
+          ...(input.points !== undefined && { points: input.points ?? null }),
+          ...(input.correctText !== undefined && { correctText: input.correctText ?? null }),
+          ...(input.explanation !== undefined && { explanation: input.explanation ?? null }),
+          ...(input.choices
+            ? {
+                choices: {
+                  create: input.choices.map((choice) => ({
+                    ...choice,
+                    isCorrect: choice.isCorrect ?? false,
+                  })),
+                },
+              }
+            : {}),
+        },
+        include: { choices: true },
+      });
+    });
+  }
+
+  async removeQuestion(questionId: string) {
+    const question = await this.prisma.homeworkQuestion.findUnique({
+      where: { id: questionId },
+      include: { answers: { select: { id: true } } },
+    });
+    if (!question) throw new AppError(404, 'Question not found', 'QUESTION_NOT_FOUND');
+    if (question.answers.length) {
+      throw new AppError(409, 'Question has student answers and cannot be deleted', 'QUESTION_HAS_ANSWERS');
+    }
+    await this.prisma.homeworkQuestion.delete({ where: { id: questionId } });
   }
 
   async addQuestion(homeworkId: string, input: QuestionInput) {

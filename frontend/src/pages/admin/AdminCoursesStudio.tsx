@@ -725,7 +725,8 @@ export function AdminCoursesPage() {
                   {(lessonDetails.videos ?? []).map((video) => (
                     <div className="admin-live-lesson" key={video.id}>
                       <span>
-                        فيديو: {video.title} · {accessLabel(video.accessLevel)}
+                        فيديو: {video.title} · {accessLabel(video.accessLevel)} · ترتيب {video.position}
+                        <small>المعرف: {video.id}{video.createdAt ? ` · ${new Date(video.createdAt).toLocaleString('ar-EG')}` : ''}</small>
                       <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditor({ kind: 'video', record: video, lessonId: lessonDetails.id })}>تعديل الفيديو</button>
                       </span>
                       <button

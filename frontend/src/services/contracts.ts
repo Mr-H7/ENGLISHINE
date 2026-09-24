@@ -1,7 +1,7 @@
 // Interfaces only. Never infer server authorization from browser state.
 export interface StudentIdentity {
   id: string;
-  email: string;
+  email: string | null;
   displayName: string;
   roles: Array<'SUPER_ADMIN' | 'ADMIN' | 'TEACHER' | 'STUDENT'>;
 }
@@ -13,12 +13,14 @@ export interface AuthService {
   signOut(): Promise<void>;
 }
 export type SessionContextValue = SessionState & {
-  login(input: { email: string; password: string }): Promise<StudentIdentity>;
+  login(input: { email?: string; phone?: string; identifier?: string; password: string }): Promise<StudentIdentity>;
   signup(input: {
     fullName: string;
-    email: string;
+    email?: string;
+    studentPhone: string;
+    guardianPhone: string;
+    gradeId: string;
     password: string;
-    parentPhone?: string;
   }): Promise<StudentIdentity>;
   signOut(): Promise<void>;
 };

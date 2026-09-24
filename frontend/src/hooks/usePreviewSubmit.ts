@@ -29,10 +29,11 @@ export function usePreviewSubmit(message: string) {
     setIsSubmitting(true);
     setHasError(false);
     try {
-      if (data.has('login-email')) {
+      if (data.has('login-email') || data.has('login-identifier')) {
         setStatus('جارٍ تسجيل الدخول…');
+        const identifier = String(data.get('login-identifier') ?? data.get('login-email') ?? '');
         const user = await session.login({
-          email: String(data.get('login-email') ?? ''),
+          identifier,
           password: String(data.get('login-password') ?? ''),
         });
         const staff = user.roles.some((role) => role !== 'STUDENT');
@@ -44,12 +45,14 @@ export function usePreviewSubmit(message: string) {
         );
         return;
       }
-      if (data.has('signup-email')) {
+      if (data.has('student-phone')) {
         setStatus('جارٍ إنشاء الحساب…');
         await session.signup({
           fullName: String(data.get('student-name') ?? ''),
-          email: String(data.get('signup-email') ?? ''),
-          parentPhone: String(data.get('parent-phone') ?? '') || undefined,
+          email: String(data.get('signup-email') ?? '') || undefined,
+          studentPhone: String(data.get('student-phone') ?? ''),
+          guardianPhone: String(data.get('guardian-phone') ?? ''),
+          gradeId: String(data.get('grade-id') ?? ''),
           password: String(data.get('signup-password') ?? ''),
         });
         navigate('/student/', { replace: true });

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { studentPlatformApi } from '@/services/student-platform';
+
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 
 function formatTime(seconds: number): string {
@@ -21,11 +23,12 @@ function Icon({ path, label }: { path: string; label: string }) {
   );
 }
 
-export function LessonVideoPlayer({ src, title }: { src: string; title: string }) {
+export function LessonVideoPlayer({ src, title, videoId }: { src: string; title: string; videoId?: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef(0);
   const hovered = useRef(false);
+  const lastProgressSent = useRef(0);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -88,7 +91,18 @@ export function LessonVideoPlayer({ src, title }: { src: string; title: string }
       setPlaying(false);
       setControlsOpen(true);
     };
-    const onTime = () => setCurrent(video.currentTime);
+    const onTime = () => {
+      setCurrent(video.currentTime);
+      if (!videoId) return;
+      const now = Date.now();
+      if (now - lastProgressSent.current < 5000) return;
+      lastProgressSent.current = now;
+      void studentPlatformApi.reportVideoProgress(
+        videoId,
+        Math.floor(video.currentTime),
+        Number.isFinite(video.duration) ? Math.floor(video.duration) : undefined,
+      ).catch(() => undefined);
+    };
     const onMeta = () => {
       setDuration(video.duration);
       setWaiting(false);
@@ -129,7 +143,7 @@ export function LessonVideoPlayer({ src, title }: { src: string; title: string }
       video.removeEventListener('error', onError);
       video.removeEventListener('volumechange', onVolume);
     };
-  }, [src, showControls]);
+  }, [src, showControls, videoId]);
 
   useEffect(() => {
     const onFull = () => setFullscreen(Boolean(document.fullscreenElement));

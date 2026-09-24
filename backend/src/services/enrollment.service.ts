@@ -8,6 +8,7 @@ import {
   type PrismaClient,
 } from '../generated/prisma/client.js';
 import { AppError } from '../utils/app-error.js';
+import { LearningProgressService } from './learning-progress.service.js';
 
 export class EnrollmentService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -39,11 +40,11 @@ export class EnrollmentService {
     return this.prisma.studentProfile.update({
       where: { id: studentId },
       data: { gradeId },
-      include: {
-        user: { select: { email: true, status: true } },
-        grade: true,
-        _count: { select: { enrollments: true } },
-      },
+        include: {
+          user: { select: { email: true, phone: true, status: true } },
+          grade: true,
+          _count: { select: { enrollments: true } },
+        },
     });
   }
 
@@ -52,7 +53,10 @@ export class EnrollmentService {
       ? {
           OR: [
             { fullName: { contains: search, mode: 'insensitive' as const } },
+            { studentPhone: { contains: search } },
+            { parentPhone: { contains: search } },
             { user: { email: { contains: search, mode: 'insensitive' as const } } },
+            { user: { phone: { contains: search } } },
           ],
         }
       : {};
@@ -60,7 +64,7 @@ export class EnrollmentService {
       this.prisma.studentProfile.findMany({
         where,
         include: {
-          user: { select: { email: true, status: true } },
+          user: { select: { email: true, phone: true, status: true } },
           grade: true,
           _count: { select: { enrollments: true } },
         },
@@ -71,6 +75,28 @@ export class EnrollmentService {
       this.prisma.studentProfile.count({ where }),
     ]);
     return { items, total };
+  }
+
+  async getStudent(studentId: string) {
+    const student = await this.prisma.studentProfile.findUnique({
+      where: { id: studentId },
+      include: {
+        user: { select: { email: true, phone: true, status: true, createdAt: true } },
+        grade: { select: { id: true, nameAr: true, nameEn: true } },
+        enrollments: {
+          include: { course: { select: { id: true, title: true } }, courseProgress: true },
+        },
+        activationRedemptions: {
+          include: {
+            activationCode: {
+              select: { id: true, unlockType: true, unitId: true, lessonId: true, label: true, status: true },
+            },
+          },
+        },
+      },
+    });
+    if (!student) throw new AppError(404, 'Student not found', 'STUDENT_NOT_FOUND');
+    return student;
   }
 
   async enroll(
@@ -227,37 +253,12 @@ export class EnrollmentService {
     watchedSeconds: number,
     durationSeconds?: number,
   ) {
-    const video = await this.prisma.video.findFirst({
-      where: { id: videoId, deletedAt: null },
-      include: { lesson: { include: { unit: true } } },
-    });
-    if (!video) throw new AppError(404, 'Video not found', 'VIDEO_NOT_FOUND');
-    const student = await this.studentForUser(userId);
-    const enrollment = await this.activeEnrollment(student.id, video.lesson.unit.courseId);
-    const duration = durationSeconds ?? video.durationSeconds ?? null;
-    const percent =
-      duration && duration > 0
-        ? Math.min(100, Math.round((watchedSeconds / duration) * 10_000) / 100)
-        : 0;
-    return this.prisma.videoWatchProgress.upsert({
-      where: { enrollmentId_videoId: { enrollmentId: enrollment.id, videoId } },
-      create: {
-        enrollmentId: enrollment.id,
-        videoId,
-        watchedSeconds,
-        durationSeconds: duration,
-        progressPercent: percent,
-        lastWatchedAt: new Date(),
-        completedAt: percent >= 90 ? new Date() : null,
-      },
-      update: {
-        watchedSeconds,
-        durationSeconds: duration,
-        progressPercent: percent,
-        lastWatchedAt: new Date(),
-        completedAt: percent >= 90 ? new Date() : null,
-      },
-    });
+    return new LearningProgressService(this.prisma).recordVideoProgress(
+      userId,
+      videoId,
+      watchedSeconds,
+      durationSeconds,
+    );
   }
 
   async assignRoles(actorRoles: SystemRole[], userId: string, roles: SystemRole[]) {

@@ -9,7 +9,8 @@ datasource db {
 
 model User {
   id                      String                   @id @default(uuid()) @db.Uuid
-  email                   String                   @unique @db.VarChar(320)
+  email                   String?                  @unique @db.VarChar(320)
+  phone                   String?                  @unique @db.VarChar(32)
   passwordHash            String                   @db.VarChar(255)
   status                  UserStatus               @default(PENDING)
   emailVerifiedAt         DateTime?                @db.Timestamptz(3)
@@ -43,6 +44,7 @@ model User {
 
   @@index([status, deletedAt])
   @@index([createdAt])
+  @@index([phone])
 }
 
 model Role {
@@ -159,8 +161,10 @@ model StudentProfile {
   id                    String                     @id @default(uuid()) @db.Uuid
   userId                String                     @unique @db.Uuid
   gradeId               String?                    @db.Uuid
+  avatarAssetId         String?                    @unique @db.Uuid
   fullName              String                     @db.VarChar(160)
   parentName            String?                    @db.VarChar(160)
+  studentPhone          String?                    @unique @db.VarChar(32)
   parentPhone           String?                    @db.VarChar(32)
   birthDate             DateTime?                  @db.Date
   createdAt             DateTime                   @default(now()) @db.Timestamptz(3)
@@ -173,8 +177,11 @@ model StudentProfile {
   examAttempts          ExamAttempt[]
   homeworkSubmissions   HomeworkSubmission[]
   liveAttendances       LiveSessionAttendance[]
+  avatarAsset           FileAsset?                 @relation("StudentAvatar", fields: [avatarAssetId], references: [id])
   grade                 Grade?                     @relation(fields: [gradeId], references: [id])
   user                  User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonProgress        StudentLessonProgress[]
+  videoProgress         StudentVideoProgress[]
 
   @@index([gradeId])
   @@index([fullName])
@@ -322,8 +329,10 @@ model CourseUnit {
   academicTerm    AcademicTerm?    @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
   coverAsset      FileAsset?       @relation("UnitCover", fields: [coverAssetId], references: [id])
   course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exams           Exam[]
   lessons         Lesson[]
   productLinks    ProductUnit[]
+  progressionRequirements ProgressionRequirement[]
 
   @@unique([courseId, position])
   @@index([courseId, status, position])
@@ -352,9 +361,11 @@ model Lesson {
   homework           Homework[]
   unit               CourseUnit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
   lessonProgress     LessonProgress[]
+  studentProgress    StudentLessonProgress[]
   resources          LessonResource[]
   productLinks       ProductLesson[]
   videos             Video[]
+  progressionRequirements ProgressionRequirement[]
 
   @@unique([unitId, position])
   @@index([unitId, status, position])
@@ -382,7 +393,8 @@ model Video {
   fileAsset           FileAsset?           @relation("VideoFile", fields: [fileAssetId], references: [id])
   lesson              Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   thumbnailAsset      FileAsset?           @relation("VideoThumbnail", fields: [thumbnailAssetId], references: [id])
-  watchProgress       VideoWatchProgress[]
+  watchProgress        VideoWatchProgress[]
+  studentWatchProgress StudentVideoProgress[]
 
   @@unique([lessonId, position])
   @@index([lessonId, status, position])
@@ -409,7 +421,9 @@ model FileAsset {
   courseCover           Course?                @relation("CourseCover")
   unitCover             CourseUnit?            @relation("UnitCover")
   homeworkCover         Homework?              @relation("HomeworkCover")
+  homeworkImportSources HomeworkImportJob[]
   lessonResources       LessonResource[]
+  studentAvatars        StudentProfile[]       @relation("StudentAvatar")
   videoFile             Video?                 @relation("VideoFile")
   videoThumbnails       Video[]                @relation("VideoThumbnail")
 
@@ -477,6 +491,7 @@ model Homework {
   solutionVideo   Video?               @relation(fields: [solutionVideoId], references: [id])
   questions       HomeworkQuestion[]
   submissions     HomeworkSubmission[]
+  importJobs      HomeworkImportJob[]
 
   @@index([lessonId, status])
   @@index([dueAt])
@@ -609,6 +624,7 @@ model AssignmentSubmission {
 model Exam {
   id                String         @id @default(uuid()) @db.Uuid
   courseId          String         @db.Uuid
+  unitId            String?        @db.Uuid
   lessonId          String?        @db.Uuid
   title             String         @db.VarChar(180)
   instructions      String?
@@ -623,12 +639,14 @@ model Exam {
   createdAt         DateTime       @default(now()) @db.Timestamptz(3)
   updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
   course            Course         @relation(fields: [courseId], references: [id])
+  unit              CourseUnit?    @relation(fields: [unitId], references: [id], onDelete: Cascade)
   lesson            Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   attempts          ExamAttempt[]
   sections          ExamSection[]
   statistic         ExamStatistic?
 
   @@index([courseId, status])
+  @@index([unitId])
   @@index([lessonId])
   @@index([opensAt, closesAt])
   @@index([deletedAt])
@@ -810,6 +828,76 @@ model CourseProgress {
 
   @@index([status, progressPercent])
   @@index([lastLessonId])
+}
+
+model StudentLessonProgress {
+  id             String         @id @default(uuid()) @db.Uuid
+  studentId      String         @db.Uuid
+  lessonId       String         @db.Uuid
+  status         ProgressStatus @default(NOT_STARTED)
+  startedAt      DateTime?      @db.Timestamptz(3)
+  completedAt    DateTime?      @db.Timestamptz(3)
+  lastAccessedAt DateTime?      @db.Timestamptz(3)
+  createdAt      DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @db.Timestamptz(3)
+  lesson         Lesson         @relation(fields: [lessonId], references: [id])
+  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId])
+  @@index([lessonId, status])
+}
+
+model StudentVideoProgress {
+  id              String         @id @default(uuid()) @db.Uuid
+  studentId       String         @db.Uuid
+  videoId         String         @db.Uuid
+  watchedSeconds  Int            @default(0)
+  durationSeconds Int?
+  progressPercent Decimal        @default(0) @db.Decimal(5, 2)
+  completedAt     DateTime?      @db.Timestamptz(3)
+  lastWatchedAt   DateTime?      @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @db.Timestamptz(3)
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  video           Video          @relation(fields: [videoId], references: [id])
+
+  @@unique([studentId, videoId])
+  @@index([videoId, completedAt])
+}
+
+model ProgressionRequirement {
+  id             String                     @id @default(uuid()) @db.Uuid
+  unitId         String?                    @db.Uuid
+  lessonId       String?                    @db.Uuid
+  type           ProgressionRequirementType
+  targetId       String?                    @db.Uuid
+  passingPercent Decimal?                   @db.Decimal(5, 2)
+  position       Int                        @default(0)
+  createdAt      DateTime                   @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime                   @updatedAt @db.Timestamptz(3)
+  lesson         Lesson?                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  unit           CourseUnit?                @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@index([unitId, position])
+  @@index([lessonId, position])
+}
+
+model HomeworkImportJob {
+  id             String          @id @default(uuid()) @db.Uuid
+  homeworkId     String?         @db.Uuid
+  createdById    String          @db.Uuid
+  sourceAssetId  String          @db.Uuid
+  status         ImportJobStatus @default(UPLOADED)
+  extractedDraft Json?
+  errorMessage   String?
+  reviewedAt     DateTime?       @db.Timestamptz(3)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
+  homework       Homework?       @relation(fields: [homeworkId], references: [id])
+  sourceAsset    FileAsset       @relation(fields: [sourceAssetId], references: [id])
+
+  @@index([homeworkId, status])
+  @@index([createdById, createdAt])
 }
 
 model Certificate {
@@ -1432,6 +1520,24 @@ enum ProgressStatus {
   NOT_STARTED
   IN_PROGRESS
   COMPLETED
+}
+
+enum ProgressionRequirementType {
+  PREVIOUS_UNIT_COMPLETE
+  VIDEO_COMPLETE
+  HOMEWORK_SUBMITTED
+  HOMEWORK_PASSED
+  EXAM_SUBMITTED
+  EXAM_PASSED
+  LESSON_COMPLETE
+}
+
+enum ImportJobStatus {
+  UPLOADED
+  EXTRACTING
+  DRAFT_READY
+  FAILED
+  CANCELLED
 }
 
 enum CertificateStatus {

@@ -15,6 +15,7 @@ import {
   EnrollmentStatus,
   SystemRole,
 } from '../src/generated/prisma/client.js';
+import { registerStudent } from './register-student.js';
 import { AppError } from '../src/utils/app-error.js';
 import { StorageService } from '../src/services/storage.service.js';
 
@@ -68,12 +69,7 @@ const createdAssetIds: string[] = [];
 const fixturePaths: string[] = [];
 
 async function register(email: string, name: string) {
-  const response = await app.inject({
-    method: 'POST',
-    url: '/api/v1/auth/register',
-    headers: deviceHeaders,
-    payload: { fullName: name, email, password },
-  });
+  const response = await registerStudent(app, { fullName: name, email, password, headers: deviceHeaders });
   assert.equal(response.statusCode, 201);
   return response.json<{ accessToken: string; user: { id: string } }>();
 }

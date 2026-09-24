@@ -12,6 +12,7 @@ import {
   EnrollmentStatus,
   SystemRole,
 } from '../src/generated/prisma/client.js';
+import { registerStudent } from './register-student.js';
 
 const app = await buildApp();
 await app.ready();
@@ -43,11 +44,10 @@ after(async () => {
 });
 
 void test('grade personalization and server-side content entitlements', async () => {
-  const registration = await app.inject({
-    method: 'POST',
-    url: '/api/v1/auth/register',
-    headers: { 'content-type': 'application/json', 'x-device-id': crypto.randomUUID() },
-    payload: { fullName: 'طالب اختبار هيكل المنتج', email, password },
+  const registration = await registerStudent(app, {
+    fullName: 'طالب اختبار هيكل المنتج',
+    email,
+    password,
   });
   assert.equal(registration.statusCode, 201);
   const auth = registration.json<{ accessToken: string; user: { id: string } }>();
@@ -57,7 +57,7 @@ void test('grade personalization and server-side content entitlements', async ()
   const grade = await app.prisma.grade.findUniqueOrThrow({ where: { code: 'PREP_1' } });
   const profileBefore = await app.inject({ method: 'GET', url: '/api/v1/student/profile', headers });
   assert.equal(profileBefore.statusCode, 200);
-  assert.equal(profileBefore.json<{ data: { grade: null } }>().data.grade, null);
+  assert.equal(profileBefore.json<{ data: { grade: { id: string } } }>().data.grade.id, grade.id);
 
   const gradeUpdate = await app.inject({
     method: 'PATCH',
@@ -65,11 +65,7 @@ void test('grade personalization and server-side content entitlements', async ()
     headers: { ...headers, 'content-type': 'application/json' },
     payload: { gradeId: grade.id },
   });
-  assert.equal(gradeUpdate.statusCode, 200);
-  assert.equal(
-    gradeUpdate.json<{ data: { grade: { id: string } } }>().data.grade.id,
-    grade.id,
-  );
+  assert.equal(gradeUpdate.statusCode, 404);
 
   const course = await app.prisma.course.create({
     data: {
@@ -224,10 +220,10 @@ void test('grade personalization and server-side content entitlements', async ()
   });
   assert.equal(allowedResource.statusCode, 200);
 
-  const secondRegistration = await app.inject({
-    method: 'POST', url: '/api/v1/auth/register',
-    headers: { 'content-type': 'application/json', 'x-device-id': crypto.randomUUID() },
-    payload: { fullName: 'Scoped access student', email: `scoped-${crypto.randomUUID()}@example.test`, password },
+  const secondRegistration = await registerStudent(app, {
+    fullName: 'Scoped access student',
+    email: `scoped-${crypto.randomUUID()}@example.test`,
+    password,
   });
   assert.equal(secondRegistration.statusCode, 201);
   const secondAuth = secondRegistration.json<{ accessToken: string; user: { id: string } }>();

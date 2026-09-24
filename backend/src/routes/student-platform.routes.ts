@@ -6,6 +6,7 @@ import { uuidSchema } from '../utils/validation.js';
 
 export const studentPlatformRoutes: FastifyPluginAsync = async (app) => {
   const service = new StudentPlatformService(app.prisma);
+  app.get('/catalog/grades', async () => ({ data: await service.grades() }));
 
   await app.register(
     (student, _options, done) => {
@@ -14,9 +15,16 @@ export const studentPlatformRoutes: FastifyPluginAsync = async (app) => {
       student.get('/profile', async (request) => ({
         data: await service.profile(request.user.sub),
       }));
-      student.patch('/profile/grade', async (request) => {
-        const { gradeId } = z.object({ gradeId: uuidSchema }).parse(request.body);
-        return { data: await service.updateGrade(request.user.sub, gradeId) };
+      student.patch('/profile', async (request) => {
+        const input = z
+          .object({
+            fullName: z.string().trim().min(2).max(160).optional(),
+            studentPhone: z.string().trim().min(8).max(32).optional(),
+            guardianPhone: z.string().trim().min(8).max(32).optional(),
+            email: z.email().max(320).nullable().optional(),
+          })
+          .parse(request.body);
+        return { data: await service.updateProfile(request.user.sub, input) };
       });
       student.get('/explore', async (request) => ({
         data: await service.explore(request.user.sub),
@@ -33,6 +41,10 @@ export const studentPlatformRoutes: FastifyPluginAsync = async (app) => {
       student.get('/progress', async (request) => ({
         data: await service.progress(request.user.sub),
       }));
+      student.get('/courses/:courseId/roadmap', async (request) => {
+        const { courseId } = z.object({ courseId: uuidSchema }).parse(request.params);
+        return { data: await service.roadmap(request.user.sub, courseId) };
+      });
       student.get('/lessons/:lessonId', async (request) => {
         const { lessonId } = z.object({ lessonId: uuidSchema }).parse(request.params);
         return { data: await service.lesson(request.user.sub, lessonId) };

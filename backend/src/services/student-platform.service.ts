@@ -9,6 +9,7 @@ import {
 } from '../generated/prisma/client.js';
 import { AppError } from '../utils/app-error.js';
 import { hasScopedEntitlement } from './content-access.service.js';
+import { ProgressionService } from './progression.service.js';
 
 const freeAccess: AccessLevel[] = [AccessLevel.FREE, AccessLevel.PREVIEW];
 
@@ -40,7 +41,9 @@ export class StudentPlatformService {
         id: true,
         fullName: true,
         parentName: true,
+        studentPhone: true,
         parentPhone: true,
+        avatarAssetId: true,
         grade: {
           select: {
             id: true,
@@ -54,17 +57,42 @@ export class StudentPlatformService {
     });
   }
 
-  async updateGrade(userId: string, gradeId: string) {
-    const [profile, grade] = await Promise.all([
-      this.studentForUser(userId),
-      this.prisma.grade.findFirst({ where: { id: gradeId, isActive: true } }),
-    ]);
-    if (!grade) throw new AppError(404, 'Grade not found', 'GRADE_NOT_FOUND');
-    await this.prisma.studentProfile.update({
-      where: { id: profile.id },
-      data: { gradeId: grade.id },
-    });
+  async updateProfile(
+    userId: string,
+    input: {
+      fullName?: string | undefined;
+      studentPhone?: string | undefined;
+      guardianPhone?: string | undefined;
+      email?: string | null | undefined;
+    },
+  ) {
+    const profile = await this.studentForUser(userId);
+    const data: { fullName?: string; studentPhone?: string; parentPhone?: string } = {};
+    if (input.fullName !== undefined) data.fullName = input.fullName.trim();
+    if (input.studentPhone !== undefined) {
+      const { normalizeEgyptianPhone } = await import('../utils/phone.js');
+      data.studentPhone = normalizeEgyptianPhone(input.studentPhone);
+      await this.prisma.user.update({ where: { id: userId }, data: { phone: data.studentPhone } });
+    }
+    if (input.guardianPhone !== undefined) {
+      const { normalizeEgyptianPhone } = await import('../utils/phone.js');
+      data.parentPhone = normalizeEgyptianPhone(input.guardianPhone);
+    }
+    if (input.email !== undefined) {
+      const email = input.email?.trim().toLowerCase() || null;
+      if (email) {
+        const taken = await this.prisma.user.findFirst({ where: { email, NOT: { id: userId } } });
+        if (taken) throw new AppError(409, 'An account already exists for this email.', 'EMAIL_EXISTS');
+      }
+      await this.prisma.user.update({ where: { id: userId }, data: { email } });
+    }
+    await this.prisma.studentProfile.update({ where: { id: profile.id }, data });
     return this.profile(userId);
+  }
+
+  async roadmap(userId: string, courseId: string) {
+    const student = await this.studentForUser(userId);
+    return new ProgressionService(this.prisma).courseRoadmap(student.id, courseId);
   }
 
   async explore(userId: string) {
@@ -100,6 +128,17 @@ export class StudentPlatformService {
           },
           take: 1,
           select: { id: true, status: true, expiresAt: true },
+        },
+        units: {
+          where: { deletedAt: null, status: ContentStatus.PUBLISHED },
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            position: true,
+            accessLevel: true,
+            coverAssetId: true,
+          },
         },
       },
     });
@@ -214,7 +253,10 @@ export class StudentPlatformService {
       },
       include: {
         unit: {
-          include: { course: { select: { id: true, title: true, accessLevel: true } } },
+          include: {
+            course: { select: { id: true, title: true, accessLevel: true } },
+            coverAsset: { select: { id: true } },
+          },
         },
         videos: {
           where: { status: ContentStatus.PUBLISHED, deletedAt: null },
@@ -237,6 +279,9 @@ export class StudentPlatformService {
     const hasFreeVideo = lesson.videos.some((video) => freeAccess.includes(video.accessLevel));
     if (!lessonIsFree && !hasFreeVideo && !entitled) {
       throw new AppError(403, 'Active course enrollment is required', 'ENROLLMENT_REQUIRED');
+    }
+    if (!lessonIsFree && entitled) {
+      await new ProgressionService(this.prisma).assertCanAccessLesson(userId, lessonId);
     }
     return {
       ...lesson,
@@ -293,7 +338,7 @@ export class StudentPlatformService {
           select: {
             id: true,
             title: true,
-            unit: { select: { course: { select: { id: true, title: true } } } },
+            unit: { select: { id: true, title: true, course: { select: { id: true, title: true } } } },
           },
         },
         submissions: {
@@ -360,30 +405,33 @@ export class StudentPlatformService {
 
   async progress(userId: string) {
     const student = await this.studentForUser(userId);
-    const now = new Date();
-    return this.prisma.courseEnrollment.findMany({
+    const enrollments = await this.prisma.courseEnrollment.findMany({
       where: {
         studentId: student.id,
         status: EnrollmentStatus.ACTIVE,
-        OR: [{ startsAt: null }, { startsAt: { lte: now } }],
-        AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
         course: { deletedAt: null, status: CourseStatus.PUBLISHED },
       },
-      orderBy: { updatedAt: 'desc' },
+      select: { courseId: true, course: { select: { id: true, title: true } } },
+    });
+    const activations = await this.prisma.activationCodeRedemption.findMany({
+      where: { studentId: student.id },
       select: {
-        id: true,
-        course: { select: { id: true, title: true } },
-        courseProgress: {
-          select: {
-            status: true,
-            completedLessons: true,
-            totalLessons: true,
-            progressPercent: true,
-            completedAt: true,
-          },
-        },
+        activationCode: { select: { unit: { select: { courseId: true, course: { select: { id: true, title: true } } } } } },
       },
     });
+    const courses = new Map<string, { id: string; title: string }>();
+    for (const row of enrollments) courses.set(row.courseId, row.course);
+    for (const row of activations) {
+      const course = row.activationCode.unit?.course;
+      if (course) courses.set(course.id, course);
+    }
+    const progression = new ProgressionService(this.prisma);
+    return Promise.all(
+      [...courses.values()].map(async (course) => ({
+        course,
+        units: await progression.courseRoadmap(student.id, course.id),
+      })),
+    );
   }
 
   private async studentForUser(userId: string) {

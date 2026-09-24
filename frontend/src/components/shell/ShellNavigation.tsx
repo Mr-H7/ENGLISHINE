@@ -4,11 +4,20 @@ import { assets } from '@/assets/registry';
 import { Button } from '@/components/ui';
 import { Drawer } from '@/components/overlays/Drawer';
 import { Container } from '@/components/layout/Container';
+import { useSession } from '@/hooks/useSession';
 import type { NavigationItem } from '@/types/platform';
 
-export function ShellBrand() {
+export function ShellBrand({ homeTo }: { homeTo?: string } = {}) {
+  const session = useSession();
+  const href =
+    homeTo ??
+    (session.status === 'authenticated'
+      ? session.user.roles.some((role) => role !== 'STUDENT')
+        ? '/admin/'
+        : '/student/'
+      : '/');
   return (
-    <Link to="/" className="ui-brand">
+    <Link to={href} className="ui-brand">
       <img src={assets.logo} width="44" height="44" alt="" />
       <span>
         <strong lang="en" dir="ltr">
@@ -41,15 +50,17 @@ function NavItems({
 export function Navbar({
   items,
   actions,
+  brandTo,
 }: {
   items: NavigationItem[];
   actions?: ReactNode;
+  brandTo?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <header className="ui-navbar">
       <Container className="ui-nav-row">
-        <ShellBrand />
+        <ShellBrand homeTo={brandTo} />
         <nav className="ui-nav-links" aria-label="التنقل الرئيسي">
           <NavItems items={items} />
         </nav>

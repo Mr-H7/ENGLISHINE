@@ -30,10 +30,9 @@ export function Component() {
     >
       <form className="auth-fields" onSubmit={submit} noValidate>
         <AuthField
-          id="login-email"
-          label="البريد الإلكتروني"
-          type="email"
-          autoComplete="email"
+          id="login-identifier"
+          label="البريد أو رقم الهاتف"
+          autoComplete="username"
         />
         <AuthField
           id="login-password"

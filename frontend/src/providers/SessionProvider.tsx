@@ -78,7 +78,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [session.status]);
 
   const login = useCallback(
-    async (input: { email: string; password: string }) => {
+    async (input: { email?: string; phone?: string; identifier?: string; password: string }) => {
       const { user } = await authApi.login(input);
       const identity = toIdentity(user);
       setSession({ status: 'authenticated', user: identity });
@@ -90,9 +90,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const signup = useCallback(
     async (input: {
       fullName: string;
-      email: string;
+      email?: string;
+      studentPhone: string;
+      guardianPhone: string;
+      gradeId: string;
       password: string;
-      parentPhone?: string;
     }) => {
       const { user } = await authApi.signup(input);
       const identity = toIdentity(user);

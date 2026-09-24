@@ -6,6 +6,7 @@ import { StorageService } from '../src/services/storage.service.js';
 import type { UploadKind } from '../src/services/storage.types.js';
 import type { MultipartFile } from '@fastify/multipart';
 import { AccessLevel, ContentStatus, CourseStatus, HomeworkStatus, SystemRole } from '../src/generated/prisma/client.js';
+import { registerStudent } from './register-student.js';
 
 class LocalCoverStorage extends StorageService {
   private readonly localDriver = new LocalStorageDriver();
@@ -53,9 +54,11 @@ after(async () => {
 
 void test('unit and homework covers upload, replace, protect and remove', async () => {
   async function register(name: string) {
-    const response = await app.inject({ method: 'POST', url: '/api/v1/auth/register',
-      headers: { 'content-type': 'application/json', 'x-device-id': crypto.randomUUID() },
-      payload: { fullName: name, email: `${crypto.randomUUID()}@example.test`, password: 'Englishine-Test-2026!' } });
+    const response = await registerStudent(app, {
+      fullName: name,
+      email: `${crypto.randomUUID()}@example.test`,
+      password: 'Englishine-Test-2026!',
+    });
     assert.equal(response.statusCode, 201);
     return response.json<{ accessToken: string; user: { id: string } }>();
   }

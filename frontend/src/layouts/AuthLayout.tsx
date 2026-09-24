@@ -3,8 +3,16 @@ import { assets } from '@/assets/registry';
 import foundationStyles from '@/styles/index.css?inline';
 import authStyles from '@/styles/auth-app.css?inline';
 import { ScrollManager } from '@/components/ScrollManager';
+import { useSession } from '@/hooks/useSession';
 
 export function Component() {
+  const session = useSession();
+  const home =
+    session.status === 'authenticated'
+      ? session.user.roles.some((role) => role !== 'STUDENT')
+        ? '/admin/'
+        : '/student/'
+      : '/';
   return (
     <>
       <style>{foundationStyles}</style>
@@ -15,7 +23,7 @@ export function Component() {
           انتقل للمحتوى
         </a>
         <aside className="auth-story-panel">
-          <Link className="auth-brand" to="/">
+          <Link className="auth-brand" to={home}>
             <img src={assets.logo} alt="" />
             <span>
               <strong>Englishine</strong>

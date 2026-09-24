@@ -1,12 +1,7 @@
-import { useState } from 'react';
 import { useStudentPlatform } from '@/hooks/useStudentPlatform';
 
 export function GradeOnboarding({ children }: { children: React.ReactNode }) {
-  const { profile, stages, loading, error, updateGrade, reload } =
-    useStudentPlatform();
-  const [selected, setSelected] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { profile, loading, error, reload } = useStudentPlatform();
 
   if (loading) {
     return (
@@ -34,53 +29,11 @@ export function GradeOnboarding({ children }: { children: React.ReactNode }) {
   if (!profile?.grade) {
     return (
       <section className="student-onboarding" aria-labelledby="grade-onboarding-title">
-        <span className="student-kicker">خطوة واحدة قبل البداية</span>
-        <h1 id="grade-onboarding-title">اختار صفك الدراسي</h1>
+        <span className="student-kicker">يلزم تحديد الصف من الإدارة</span>
+        <h1 id="grade-onboarding-title">صفك الدراسي غير محدد</h1>
         <p>
-          هنستخدم الصف علشان نرتّب الكورسات والمحتوى المجاني المناسب ليك من غير زحمة.
+          لا يمكن للطالب تغيير الصف بنفسه. تواصل مع الإدارة لتعيين الصف الصحيح حتى تظهر الكورسات المناسبة.
         </p>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!selected) return;
-            setSaving(true);
-            setSubmitError(null);
-            void updateGrade(selected)
-              .catch((reason: unknown) => {
-                setSubmitError(
-                  reason instanceof Error ? reason.message : 'تعذر حفظ الصف الدراسي.',
-                );
-              })
-              .finally(() => setSaving(false));
-          }}
-        >
-          <label htmlFor="student-grade">الصف الدراسي الحالي</label>
-          <select
-            id="student-grade"
-            value={selected}
-            onChange={(event) => setSelected(event.target.value)}
-            required
-          >
-            <option value="">اختر الصف</option>
-            {stages.map((stage) => (
-              <optgroup key={stage.id} label={stage.nameAr}>
-                {stage.grades.map((grade) => (
-                  <option key={grade.id} value={grade.id}>
-                    {grade.nameAr}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          {submitError ? <p className="student-form-error">{submitError}</p> : null}
-          <button
-            className="student-primary-action"
-            type="submit"
-            disabled={!selected || saving}
-          >
-            {saving ? 'جاري الحفظ…' : 'ابدأ التعلّم'}
-          </button>
-        </form>
       </section>
     );
   }

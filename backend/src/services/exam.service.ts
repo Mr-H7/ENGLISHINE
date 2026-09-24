@@ -11,6 +11,7 @@ type InputPatch<T> = { [Key in keyof T]?: T[Key] | undefined };
 
 export interface ExamInput {
   courseId: string;
+  unitId?: string | undefined;
   lessonId?: string | undefined;
   title: string;
   instructions?: string | undefined;
@@ -75,6 +76,7 @@ export class ExamService {
     return this.prisma.exam.create({
       data: {
         courseId: input.courseId,
+        unitId: input.unitId ?? null,
         lessonId: input.lessonId ?? null,
         title: input.title,
         instructions: input.instructions ?? null,
@@ -95,6 +97,7 @@ export class ExamService {
       where: { id },
       data: {
         ...(input.courseId !== undefined && { courseId: input.courseId }),
+        ...(input.unitId !== undefined && { unitId: input.unitId || null }),
         ...(input.lessonId !== undefined && { lessonId: input.lessonId || null }),
         ...(input.title !== undefined && { title: input.title }),
         ...(input.instructions !== undefined && { instructions: input.instructions || null }),
@@ -118,6 +121,10 @@ export class ExamService {
 
   async remove(id: string) {
     await this.get(id);
+    const attempts = await this.prisma.examAttempt.count({ where: { examId: id } });
+    if (attempts) {
+      throw new AppError(409, 'Exam with student attempts cannot be deleted', 'EXAM_HAS_ATTEMPTS');
+    }
     await this.prisma.exam.update({
       where: { id },
       data: { deletedAt: new Date(), status: ExamStatus.ARCHIVED },

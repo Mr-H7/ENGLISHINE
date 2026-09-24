@@ -58,14 +58,18 @@ export function StudentPlatformProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const updateGrade = useCallback(async (gradeId: string) => {
-    const nextProfile = await studentPlatformApi.updateGrade(gradeId);
-    setProfile(nextProfile);
-  }, []);
-
   const value = useMemo(
-    () => ({ profile, stages, loading, error, updateGrade, reload }),
-    [profile, stages, loading, error, updateGrade, reload],
+    () => ({
+      profile,
+      stages,
+      loading,
+      error,
+      updateGrade: async () => {
+        throw new Error('تغيير الصف متاح للإدارة فقط.');
+      },
+      reload,
+    }),
+    [profile, stages, loading, error, reload],
   );
 
   return (
