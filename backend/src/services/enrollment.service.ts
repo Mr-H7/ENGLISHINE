@@ -9,6 +9,7 @@ import {
 } from '../generated/prisma/client.js';
 import { AppError } from '../utils/app-error.js';
 import { LearningProgressService } from './learning-progress.service.js';
+import { activationScopes } from './learning-scope.service.js';
 
 export class EnrollmentService {
   constructor(private readonly prisma: PrismaClient) {}
@@ -165,7 +166,7 @@ export class EnrollmentService {
   async myCourses(userId: string) {
     const student = await this.studentForUser(userId);
     const now = new Date();
-    return this.prisma.courseEnrollment.findMany({
+    const enrollments = await this.prisma.courseEnrollment.findMany({
       where: {
         studentId: student.id,
         status: EnrollmentStatus.ACTIVE,
@@ -185,12 +186,38 @@ export class EnrollmentService {
       },
       orderBy: { updatedAt: 'desc' },
     });
+    const scopes = await activationScopes(this.prisma, student.id);
+    const enrolledIds = new Set(enrollments.map((row) => row.courseId));
+    const scoped = await Promise.all([...scopes].filter(([id]) => !enrolledIds.has(id)).map(async ([courseId, scope]) => {
+      const course = await this.prisma.course.findUniqueOrThrow({ where: { id: courseId }, select: {
+        id: true, title: true, shortDescription: true, grade: { include: { stage: true } }, academicTerm: true,
+        _count: { select: { units: { where: { deletedAt: null, status: ContentStatus.PUBLISHED, OR: [{ id: { in: scope.unitIds } }, { lessons: { some: { id: { in: scope.lessonIds } } } }] } } } },
+      } });
+      return { id: null, status: null, expiresAt: null, accessKind: 'ACTIVATION' as const, scope, course, courseProgress: null };
+    }));
+    return [...enrollments.map((row) => ({ ...row, accessKind: 'ENROLLMENT' as const, scope: null })), ...scoped];
   }
 
   async myCourse(userId: string, courseId: string) {
-    const student = await this.studentForUser(userId);
-    const enrollment = await this.activeEnrollment(student.id, courseId);
-    return this.prisma.courseEnrollment.findUnique({
+    const context = (await this.myCourses(userId)).find((row) => row.course.id === courseId);
+    if (!context) throw new AppError(403, 'Course activation or enrollment is required', 'ENROLLMENT_REQUIRED');
+    if (context.accessKind === 'ACTIVATION') {
+      const scope = context.scope;
+      const course = await this.prisma.course.findUniqueOrThrow({ where: { id: courseId }, select: {
+        id: true, title: true, shortDescription: true, grade: { include: { stage: true } }, academicTerm: true,
+        units: { where: { deletedAt: null, status: ContentStatus.PUBLISHED, OR: [{ id: { in: scope.unitIds } }, { lessons: { some: { id: { in: scope.lessonIds } } } }] }, orderBy: { position: 'asc' }, select: {
+          id: true, title: true, description: true, position: true, coverAssetId: true, accessLevel: true,
+          lessons: { where: { deletedAt: null, status: ContentStatus.PUBLISHED, OR: [{ unitId: { in: scope.unitIds } }, { id: { in: scope.lessonIds } }] }, orderBy: { position: 'asc' }, select: {
+            id: true, title: true, description: true, position: true, accessLevel: true, estimatedMinutes: true,
+          } },
+        } },
+      } });
+      // Parent context is metadata only. Playback/material endpoints still authorize
+      // each content item and enforce progression independently.
+      return { ...context, course: { ...course, _count: context.course._count, units: course.units.map((unit) => ({ ...unit, lessons: unit.lessons.map((lesson) => ({ ...lesson, videos: [], resources: [] })) })) }, lessonProgress: [], videoProgress: [] };
+    }
+    const enrollment = context;
+    const detail = await this.prisma.courseEnrollment.findUnique({
       where: { id: enrollment.id },
       include: {
         course: {
@@ -221,6 +248,7 @@ export class EnrollmentService {
         courseProgress: true,
       },
     });
+    return detail ? { ...detail, accessKind: 'ENROLLMENT' as const, scope: null } : null;
   }
 
   async updateLessonProgress(userId: string, lessonId: string, status: ProgressStatus) {

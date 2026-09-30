@@ -10,6 +10,8 @@ import {
   SystemRole,
 } from '../src/generated/prisma/client.js';
 import { registerStudent, testPhone } from './register-student.js';
+import { ExamService } from '../src/services/exam.service.js';
+import { ProgressionService } from '../src/services/progression.service.js';
 
 const app = await buildApp();
 await app.ready();
@@ -18,6 +20,8 @@ after(async () => {
   await app.prisma.studentVideoProgress.deleteMany({ where: { student: { userId: { in: ids } } } });
   await app.prisma.studentLessonProgress.deleteMany({ where: { student: { userId: { in: ids } } } });
   await app.prisma.courseEnrollment.deleteMany({ where: { student: { userId: { in: ids } } } });
+  await app.prisma.examAttempt.deleteMany({ where: { student: { userId: { in: ids } } } });
+  await app.prisma.exam.deleteMany({ where: { course: { createdById: { in: ids } } } });
   await app.prisma.course.deleteMany({ where: { createdById: { in: ids } } });
   await app.prisma.user.deleteMany({ where: { id: { in: ids } } });
   await app.close();
@@ -149,6 +153,18 @@ void test('phone signup, admin grade control, progression lock, and video comple
     headers: studentHeaders,
   });
   assert.equal(open.statusCode, 200);
+
+  const firstUnit = course.units.find((unit) => unit.position === 0)!;
+  const exam = await app.prisma.exam.create({ data: { courseId: course.id, unitId: firstUnit.id, lessonId: firstUnit.lessons[0]!.id, title: 'Local resume regression', status: 'PUBLISHED', maxAttempts: 1 } });
+  const roadmap = await new ProgressionService(app.prisma).courseRoadmap(student.id, course.id);
+  for (const unit of roadmap) assert.equal(new Set(unit.requirements.map((item) => item.key)).size, unit.requirements.length);
+  const exams = new ExamService(app.prisma);
+  const started = await exams.start(firstUser.id, exam.id);
+  const resumed = await exams.start(firstUser.id, exam.id);
+  assert.equal(resumed.attempt.id, started.attempt.id);
+  assert.equal(await app.prisma.examAttempt.count({ where: { examId: exam.id } }), 1);
+  await app.prisma.examAttempt.update({ where: { id: started.attempt.id }, data: { expiresAt: new Date(0) } });
+  await assert.rejects(() => exams.start(firstUser.id, exam.id), { code: 'MAX_ATTEMPTS_REACHED' });
 
   const blockedSignup = await app.inject({
     method: 'POST',

@@ -2,6 +2,7 @@ import {
   AccessLevel,
   ContentStatus,
   CourseStatus,
+  Prisma,
   type PrismaClient,
 } from '../generated/prisma/client.js';
 import { AppError } from '../utils/app-error.js';
@@ -186,18 +187,36 @@ export class ContentService {
 
   async createUnit(courseId: string, input: UnitInput) {
     await this.getCourse(courseId);
-    return this.prisma.courseUnit.create({
-      data: {
-        courseId,
-        title: input.title,
-        description: input.description ?? null,
-        academicTermId: input.academicTermId ?? null,
-        position: input.position,
-        status: input.status ?? ContentStatus.DRAFT,
-        accessLevel: input.accessLevel ?? AccessLevel.ENROLLED,
-        availableFrom: input.availableFrom ?? null,
-      },
-    });
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        return await this.prisma.$transaction(async (tx) => {
+          // The unique index also includes soft-deleted Units. Visible counts are
+          // not positions; append after every reserved position in this Course.
+          const existing = await tx.courseUnit.aggregate({
+            where: { courseId }, _max: { position: true },
+          });
+          const nextPosition = (existing._max.position ?? -1) + 1;
+          return tx.courseUnit.create({
+            data: {
+              courseId,
+              title: input.title,
+              description: input.description ?? null,
+              academicTermId: input.academicTermId ?? null,
+              position: Math.max(input.position, nextPosition),
+              status: input.status ?? ContentStatus.DRAFT,
+              accessLevel: input.accessLevel ?? AccessLevel.ENROLLED,
+              availableFrom: input.availableFrom ?? null,
+            },
+          });
+        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      } catch (error) {
+        // Concurrent appends/reorders may invalidate the snapshot. Retry the
+        // complete allocation, never the insert with the stale position.
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          !['P2002', 'P2034'].includes(error.code) || attempt === 3) throw error;
+      }
+    }
+    throw new AppError(409, 'تعذر ترتيب الوحدة. أعد المحاولة.', 'CONFLICT');
   }
 
   async updateUnit(id: string, input: InputPatch<UnitInput>) {

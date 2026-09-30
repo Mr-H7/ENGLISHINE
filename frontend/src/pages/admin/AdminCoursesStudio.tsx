@@ -44,7 +44,9 @@ function publishTone(status: string) {
 }
 
 function formatMegabytes(bytes: number) {
-  return (bytes / (1024 * 1024)).toFixed(1);
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function phaseLabel(phase: UploadPhase) {
@@ -87,7 +89,7 @@ function UploadMeter({ progress }: { progress: UploadProgressEvent | null }) {
       <div className="admin-upload-meter-copy">
         <strong>{phaseLabel(progress.phase)}</strong>
         <span>
-          {formatMegabytes(progress.loaded)} / {formatMegabytes(progress.total)} م.ب · {percent}%
+          <bdi dir="ltr">{formatMegabytes(progress.loaded)} / {formatMegabytes(progress.total)} · {percent}%</bdi>
         </span>
       </div>
       <progress value={percent} max={100} />
@@ -101,6 +103,8 @@ export function AdminCoursesPage() {
   const [details, setDetails] = useState<AdminCourseDetails | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [lessonDetails, setLessonDetails] = useState<AdminLesson | null>(null);
+  const [videoFilename, setVideoFilename] = useState('');
+  const [pdfFilename, setPdfFilename] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -278,8 +282,8 @@ export function AdminCoursesPage() {
       ) : null}
 
       <div className="admin-studio-grid">
-        <section className="admin-card admin-course-rail">
-          <h2>الكورسات</h2>
+        <details className="admin-card admin-course-rail" open={!details}>
+          <summary>الكورسات{details ? ` — ${details.title} · تغيير الكورس` : ''}</summary>
           {loading ? <p>جارٍ تحميل الكورسات…</p> : null}
           {courses.length ? (
             <ul className="admin-live-list">
@@ -310,7 +314,7 @@ export function AdminCoursesPage() {
           ) : loading ? null : (
             <p>لا توجد كورسات بعد. ابدأ بإضافة كورس.</p>
           )}
-        </section>
+        </details>
 
         <section className="admin-card admin-workspace">
           {!details ? (
@@ -419,6 +423,8 @@ export function AdminCoursesPage() {
                 </form>
               ) : null}
 
+              <details className="admin-hierarchy-browser" open={!lessonDetails}>
+                <summary>الوحدات والدروس{selectedUnit ? ` — ${selectedUnit.title}` : ''}{lessonDetails ? ` ← ${lessonDetails.title} · تغيير الدرس` : ''}</summary>
               <div className="admin-workspace-split">
                 <div>
                   <h3>الوحدات</h3>
@@ -549,6 +555,7 @@ export function AdminCoursesPage() {
                 </div>
               </div>
 
+              </details>
               {lessonDetails ? (
                 <section className="admin-lesson-workspace">
                   <header className="admin-workspace-head">
@@ -653,6 +660,7 @@ export function AdminCoursesPage() {
                           );
                           setLessonDetails(await adminApi.lesson(lessonDetails.id));
                           form.reset();
+                          setVideoFilename('');
                         }, 'تم رفع الفيديو.');
                       }}
                     >
@@ -685,7 +693,8 @@ export function AdminCoursesPage() {
                       </label>
                       <label>
                         ملف الفيديو
-                        <input name="video" type="file" accept="video/mp4,video/webm,video/quicktime" />
+                        <input name="video" type="file" accept="video/mp4,video/webm,video/quicktime" onChange={(event) => setVideoFilename(event.target.files?.[0]?.name ?? '')} />
+                        {videoFilename ? <small className="admin-selected-file" dir="auto">{videoFilename}</small> : null}
                       </label>
                       <button className="ui-button" type="submit" disabled={saving || uploading}>
                         {uploading ? phaseLabel(upload?.phase ?? 'uploading') : 'رفع فيديو'}
@@ -707,13 +716,15 @@ export function AdminCoursesPage() {
                           await adminApi.uploadResource(lessonDetails.id, file, file.name, setUpload);
                           setLessonDetails(await adminApi.lesson(lessonDetails.id));
                           form.reset();
+                          setPdfFilename('');
                         }, 'تم رفع ملف PDF.');
                       }}
                     >
                       <h4>مادة PDF</h4>
                       <label>
                         ملف المادة
-                        <input name="pdf" type="file" accept="application/pdf" />
+                        <input name="pdf" type="file" accept="application/pdf" onChange={(event) => setPdfFilename(event.target.files?.[0]?.name ?? '')} />
+                        {pdfFilename ? <small className="admin-selected-file" dir="auto">{pdfFilename}</small> : null}
                       </label>
                       <button className="ui-button" type="submit" disabled={saving || uploading}>
                         {uploading ? phaseLabel(upload?.phase ?? 'uploading') : 'رفع PDF'}
@@ -721,6 +732,7 @@ export function AdminCoursesPage() {
                     </form>
                   </div>
                   <UploadMeter progress={upload} />
+                  <StatusNote message={upload?.phase === 'failed' ? error : null} error />
 
                   {(lessonDetails.videos ?? []).map((video) => (
                     <div className="admin-live-lesson" key={video.id}>

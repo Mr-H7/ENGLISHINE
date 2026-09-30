@@ -2,6 +2,7 @@ import {
   AccessLevel,
   ContentStatus,
   CourseStatus,
+  Prisma,
   type ResourceType,
   SubmissionStatus,
   SystemRole,
@@ -10,6 +11,7 @@ import {
 } from '../generated/prisma/client.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/app-error.js';
+import { isRetryableWriteConflict } from '../utils/prisma-conflict.js';
 import { retireAssetIfUnreferenced } from './asset-lifecycle.service.js';
 import { hasScopedEntitlement } from './content-access.service.js';
 import { ProgressionService } from './progression.service.js';
@@ -33,6 +35,12 @@ export interface ResourceInput {
 
 type InputPatch<T> = { [Key in keyof T]?: T[Key] | undefined };
 
+const POSITION_CONFLICT = new AppError(
+  409,
+  'يوجد تعارض مع البيانات الحالية. حدّث الصفحة وحاول مرة أخرى.',
+  'CONFLICT',
+);
+
 export class MediaService {
   constructor(
     private readonly prisma: PrismaClient,
@@ -42,27 +50,47 @@ export class MediaService {
   async createVideo(lessonId: string, input: VideoInput, upload: StoredUpload) {
     const lesson = await this.prisma.lesson.findFirst({ where: { id: lessonId, deletedAt: null } });
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
-    return this.prisma.$transaction(async (tx) => {
-      const asset = await tx.fileAsset.create({
-        data: {
-          isPublic: false,
-          ...upload,
-          storageProvider: upload.storageProvider ?? env.STORAGE_DRIVER,
-        },
-      });
-      return tx.video.create({
-        data: {
-          lessonId,
-          fileAssetId: asset.id,
-          title: input.title,
-          type: input.type,
-          position: input.position,
-          status: input.status,
-          accessLevel: input.accessLevel,
-          durationSeconds: input.durationSeconds ?? null,
-        },
-      });
-    });
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        return await this.prisma.$transaction(
+          async (tx) => {
+            // Unique (lessonId, position) includes soft-deleted Videos. Visible
+            // counts and authorize-ticket positions are not authoritative.
+            const existing = await tx.video.aggregate({
+              where: { lessonId },
+              _max: { position: true },
+            });
+            const nextPosition = (existing._max.position ?? -1) + 1;
+            const asset = await tx.fileAsset.create({
+              data: {
+                isPublic: false,
+                ...upload,
+                storageProvider: upload.storageProvider ?? env.STORAGE_DRIVER,
+              },
+            });
+            return tx.video.create({
+              data: {
+                lessonId,
+                fileAssetId: asset.id,
+                title: input.title,
+                type: input.type,
+                position: Math.max(input.position, nextPosition),
+                status: input.status,
+                accessLevel: input.accessLevel,
+                durationSeconds: input.durationSeconds ?? null,
+              },
+            });
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
+      } catch (error) {
+        if (!isRetryableWriteConflict(error) || attempt === 3) {
+          if (isRetryableWriteConflict(error)) throw POSITION_CONFLICT;
+          throw error;
+        }
+      }
+    }
+    throw POSITION_CONFLICT;
   }
 
   async createResource(lessonId: string, input: ResourceInput, upload: StoredUpload) {
@@ -86,17 +114,22 @@ export class MediaService {
   async updateVideo(id: string, input: InputPatch<VideoInput>) {
     const video = await this.prisma.video.findFirst({ where: { id, deletedAt: null } });
     if (!video) throw new AppError(404, 'Video not found', 'VIDEO_NOT_FOUND');
-    return this.prisma.video.update({
-      where: { id },
-      data: {
-        ...(input.title !== undefined && { title: input.title }),
-        ...(input.type !== undefined && { type: input.type }),
-        ...(input.position !== undefined && { position: input.position }),
-        ...(input.status !== undefined && { status: input.status }),
-        ...(input.accessLevel !== undefined && { accessLevel: input.accessLevel }),
-        ...(input.durationSeconds !== undefined && { durationSeconds: input.durationSeconds }),
-      },
-    });
+    try {
+      return await this.prisma.video.update({
+        where: { id },
+        data: {
+          ...(input.title !== undefined && { title: input.title }),
+          ...(input.type !== undefined && { type: input.type }),
+          ...(input.position !== undefined && { position: input.position }),
+          ...(input.status !== undefined && { status: input.status }),
+          ...(input.accessLevel !== undefined && { accessLevel: input.accessLevel }),
+          ...(input.durationSeconds !== undefined && { durationSeconds: input.durationSeconds }),
+        },
+      });
+    } catch (error) {
+      if (isRetryableWriteConflict(error)) throw POSITION_CONFLICT;
+      throw error;
+    }
   }
 
   async updateResource(id: string, input: InputPatch<ResourceInput>) {
@@ -195,6 +228,8 @@ export class MediaService {
     }
     if (!hasFreeAccess) {
       await new ProgressionService(this.prisma).assertCanAccessLesson(userId, video.lessonId);
+    } else {
+      await new ProgressionService(this.prisma).assertAssessmentDependencies(student.id, video.lessonId, video.lesson.unitId);
     }
     if (video.homeworkSolution) {
       const submitted = await this.prisma.homeworkSubmission.findFirst({

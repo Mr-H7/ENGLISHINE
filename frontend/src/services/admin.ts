@@ -1,4 +1,5 @@
 import { authApi, apiRequest, getAccessTokenExpiresAt } from '@/services/api';
+import { transferProgress, uploadFailureMessage } from '@/services/upload-feedback';
 
 export interface GradeOption {
   id: string;
@@ -128,7 +129,7 @@ async function isDirectUploadEnabled(): Promise<boolean> {
     const mode = await data<{ directUpload: boolean }>('/admin/media/upload-mode');
     cachedDirectUpload = Boolean(mode.directUpload);
   } catch {
-    cachedDirectUpload = false;
+    throw new Error('تعذر تحديد طريقة الرفع. تحقق من الاتصال وتسجيل الدخول وحاول مرة أخرى.');
   }
   return cachedDirectUpload;
 }
@@ -157,16 +158,19 @@ function putToR2(
       xhr.setRequestHeader(name, value);
     }
     xhr.upload.onprogress = (event) => {
-      onProgress?.(event.loaded, event.total || file.size);
+      const progress = transferProgress(event.loaded, file.size);
+      onProgress?.(progress.loaded, progress.total);
     };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
         return;
       }
-      reject(new Error('تعذر رفع الملف إلى التخزين.'));
+      reject(Object.assign(new Error(uploadFailureMessage('uploading', xhr.status === 0 ? undefined : 'STORAGE_REJECTED')), {
+        code: xhr.status === 0 ? 'STORAGE_NETWORK' : 'STORAGE_REJECTED',
+      }));
     };
-    xhr.onerror = () => reject(new Error('تعذر رفع الملف إلى التخزين.'));
+    xhr.onerror = () => reject(new Error(uploadFailureMessage('uploading')));
     xhr.send(file);
   });
 }
@@ -253,6 +257,7 @@ export const adminApi = {
     replaceId?: string,
   ) => {
     if (await isDirectUploadEnabled()) {
+      let stage: 'preparing' | 'uploading' | 'finalizing' = 'preparing';
       try {
         onProgress?.({ phase: 'preparing', loaded: 0, total: file.size });
         const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
@@ -270,10 +275,12 @@ export const adminApi = {
             accessLevel: input.accessLevel,
           }),
         });
+        stage = 'uploading';
         onProgress?.({ phase: 'uploading', loaded: 0, total: file.size });
         await putToR2(session.uploadUrl, file, session.headers, (loaded, total) => {
           onProgress?.({ phase: 'uploading', loaded, total });
         });
+        stage = 'finalizing';
         onProgress?.({ phase: 'finalizing', loaded: file.size, total: file.size });
         await refreshAccessIfNeeded();
         const result = await data(`/admin/uploads/finalize`, {
@@ -284,7 +291,8 @@ export const adminApi = {
         return result;
       } catch (error) {
         onProgress?.({ phase: 'failed', loaded: 0, total: file.size });
-        throw error;
+        const code = error && typeof error === 'object' && 'code' in error && typeof error.code === 'string' ? error.code : undefined;
+        throw new Error(uploadFailureMessage(stage, code), { cause: error });
       }
     }
     const query = new URLSearchParams({
@@ -309,6 +317,7 @@ export const adminApi = {
     replaceId?: string,
   ) => {
     if (await isDirectUploadEnabled()) {
+      let stage: 'preparing' | 'uploading' | 'finalizing' = 'preparing';
       try {
         onProgress?.({ phase: 'preparing', loaded: 0, total: file.size });
         const session = await data<DirectUploadTicket>(`/admin/lessons/${lessonId}/uploads/authorize`, {
@@ -325,10 +334,12 @@ export const adminApi = {
             isDownload: true,
           }),
         });
+        stage = 'uploading';
         onProgress?.({ phase: 'uploading', loaded: 0, total: file.size });
         await putToR2(session.uploadUrl, file, session.headers, (loaded, total) => {
           onProgress?.({ phase: 'uploading', loaded, total });
         });
+        stage = 'finalizing';
         onProgress?.({ phase: 'finalizing', loaded: file.size, total: file.size });
         await refreshAccessIfNeeded();
         const result = await data(`/admin/uploads/finalize`, {
@@ -339,7 +350,8 @@ export const adminApi = {
         return result;
       } catch (error) {
         onProgress?.({ phase: 'failed', loaded: 0, total: file.size });
-        throw error;
+        const code = error && typeof error === 'object' && 'code' in error && typeof error.code === 'string' ? error.code : undefined;
+        throw new Error(uploadFailureMessage(stage, code), { cause: error });
       }
     }
     const query = new URLSearchParams({

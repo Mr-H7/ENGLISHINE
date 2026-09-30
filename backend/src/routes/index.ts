@@ -9,6 +9,8 @@ import { healthRoutes } from './health.routes.js';
 import { homeworkRoutes } from './homework.routes.js';
 import { mediaRoutes } from './media.routes.js';
 import { studentPlatformRoutes } from './student-platform.routes.js';
+import { assessmentRoutes } from './assessment.routes.js';
+import { questionImageRoutes } from './question-image.routes.js';
 
 export const apiRoutes: FastifyPluginAsync = async (app) => {
   await app.register(healthRoutes, { prefix: '/health' });
@@ -21,4 +23,6 @@ export const apiRoutes: FastifyPluginAsync = async (app) => {
   await app.register(examRoutes);
   await app.register(mediaRoutes);
   await app.register(studentPlatformRoutes);
+  await app.register(assessmentRoutes);
+  await app.register(questionImageRoutes);
 };

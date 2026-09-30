@@ -7,6 +7,12 @@ export interface StudentPlatformContextValue {
   loading: boolean;
   error: string | null;
   updateGrade(_gradeId: string): Promise<void>;
+  updateProfile(input: {
+    fullName?: string;
+    studentPhone?: string;
+    guardianPhone?: string;
+    email?: string | null;
+  }): Promise<StudentProfile>;
   reload(): Promise<void>;
 }
 

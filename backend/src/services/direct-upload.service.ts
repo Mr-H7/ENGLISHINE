@@ -97,8 +97,29 @@ export class DirectUploadService {
     }
     const existing = await this.prisma.fileAsset.findUnique({
       where: { storageKey: authorization.storageKey },
+      include: { videoFile: true, lessonResources: true },
     });
     if (existing) {
+      if (
+        authorization.kind === 'video' &&
+        existing.videoFile &&
+        existing.videoFile.lessonId === authorization.lessonId &&
+        (!authorization.replaceId || existing.videoFile.id === authorization.replaceId)
+      ) {
+        return { kind: 'video' as const, record: existing.videoFile };
+      }
+      if (
+        authorization.kind === 'material' &&
+        existing.lessonResources[0] &&
+        existing.lessonResources[0].lessonId === authorization.lessonId &&
+        (!authorization.replaceId || existing.lessonResources[0].id === authorization.replaceId)
+      ) {
+        const record = await this.prisma.lessonResource.findUniqueOrThrow({
+          where: { id: existing.lessonResources[0].id },
+          include: { asset: true },
+        });
+        return { kind: 'material' as const, record };
+      }
       throw new AppError(409, 'Upload authorization has already been used', 'UPLOAD_AUTHORIZATION_REUSED');
     }
 
@@ -128,38 +149,32 @@ export class DirectUploadService {
       storageProvider: 'r2',
     };
 
-    try {
-      if (authorization.kind === 'video') {
-        return {
-          kind: 'video' as const,
-          record: authorization.replaceId
-            ? await this.media.replaceVideo(authorization.replaceId, upload)
-            : await this.media.createVideo(authorization.lessonId, {
-            title: authorization.title,
-            type: authorization.type as VideoType,
-            position: authorization.position,
-            status: (authorization.status as ContentStatus | undefined) ?? ContentStatus.DRAFT,
-            accessLevel: (authorization.accessLevel as AccessLevel | undefined) ?? AccessLevel.LOCKED,
-            durationSeconds: authorization.durationSeconds,
-          }, upload),
-        };
-      }
+    if (authorization.kind === 'video') {
       return {
-        kind: 'material' as const,
+        kind: 'video' as const,
         record: authorization.replaceId
-          ? await this.media.replaceResource(authorization.replaceId, upload)
-          : await this.media.createResource(authorization.lessonId, {
+          ? await this.media.replaceVideo(authorization.replaceId, upload)
+          : await this.media.createVideo(authorization.lessonId, {
           title: authorization.title,
-          type: authorization.type as ResourceType,
+          type: authorization.type as VideoType,
           position: authorization.position,
-          isDownload: authorization.isDownload ?? true,
+          status: (authorization.status as ContentStatus | undefined) ?? ContentStatus.DRAFT,
+          accessLevel: (authorization.accessLevel as AccessLevel | undefined) ?? AccessLevel.LOCKED,
+          durationSeconds: authorization.durationSeconds,
         }, upload),
       };
-    } catch (error) {
-      const attached = await this.prisma.fileAsset.findUnique({ where: { storageKey: authorization.storageKey }, select: { id: true } });
-      if (!attached) await this.storage.remove(authorization.storageKey, 'r2').catch(() => undefined);
-      throw error;
     }
+    return {
+      kind: 'material' as const,
+      record: authorization.replaceId
+        ? await this.media.replaceResource(authorization.replaceId, upload)
+        : await this.media.createResource(authorization.lessonId, {
+        title: authorization.title,
+        type: authorization.type as ResourceType,
+        position: authorization.position,
+        isDownload: authorization.isDownload ?? true,
+      }, upload),
+    };
   }
 }
 

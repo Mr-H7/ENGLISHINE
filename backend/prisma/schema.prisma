@@ -30,6 +30,7 @@ model User {
   deviceSessions          DeviceSession[]
   emailVerificationTokens EmailVerificationToken[]
   reviewedHomework        HomeworkSubmission[]     @relation("HomeworkReviewedBy")
+  assessmentGrants        AssessmentAttemptGrant[]
   createdNotifications    Notification[]           @relation("NotificationCreatedBy")
   orders                  Order[]
   passwordResetTokens     PasswordResetToken[]
@@ -176,6 +177,7 @@ model StudentProfile {
   enrollments           CourseEnrollment[]
   examAttempts          ExamAttempt[]
   homeworkSubmissions   HomeworkSubmission[]
+  assessmentGrants      AssessmentAttemptGrant[]
   liveAttendances       LiveSessionAttendance[]
   avatarAsset           FileAsset?                 @relation("StudentAvatar", fields: [avatarAssetId], references: [id])
   grade                 Grade?                     @relation(fields: [gradeId], references: [id])
@@ -312,26 +314,26 @@ model CourseTeacher {
 }
 
 model CourseUnit {
-  id              String           @id @default(uuid()) @db.Uuid
-  courseId        String           @db.Uuid
-  coverAssetId    String?          @unique @db.Uuid
-  academicTermId  String?          @db.Uuid
-  title           String           @db.VarChar(180)
-  description     String?
-  position        Int
-  status          ContentStatus    @default(DRAFT)
-  accessLevel     AccessLevel      @default(ENROLLED)
-  availableFrom   DateTime?        @db.Timestamptz(3)
-  deletedAt       DateTime?        @db.Timestamptz(3)
-  createdAt       DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime         @updatedAt @db.Timestamptz(3)
-  activationCodes ActivationCode[]
-  academicTerm    AcademicTerm?    @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
-  coverAsset      FileAsset?       @relation("UnitCover", fields: [coverAssetId], references: [id])
-  course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  exams           Exam[]
-  lessons         Lesson[]
-  productLinks    ProductUnit[]
+  id                      String                   @id @default(uuid()) @db.Uuid
+  courseId                String                   @db.Uuid
+  coverAssetId            String?                  @unique @db.Uuid
+  academicTermId          String?                  @db.Uuid
+  title                   String                   @db.VarChar(180)
+  description             String?
+  position                Int
+  status                  ContentStatus            @default(DRAFT)
+  accessLevel             AccessLevel              @default(ENROLLED)
+  availableFrom           DateTime?                @db.Timestamptz(3)
+  deletedAt               DateTime?                @db.Timestamptz(3)
+  createdAt               DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                 @updatedAt @db.Timestamptz(3)
+  activationCodes         ActivationCode[]
+  academicTerm            AcademicTerm?            @relation(fields: [academicTermId], references: [id], onDelete: Restrict)
+  coverAsset              FileAsset?               @relation("UnitCover", fields: [coverAssetId], references: [id])
+  course                  Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  exams                   Exam[]
+  lessons                 Lesson[]
+  productLinks            ProductUnit[]
   progressionRequirements ProgressionRequirement[]
 
   @@unique([courseId, position])
@@ -341,30 +343,30 @@ model CourseUnit {
 }
 
 model Lesson {
-  id                 String           @id @default(uuid()) @db.Uuid
-  unitId             String           @db.Uuid
-  title              String           @db.VarChar(180)
-  description        String?
-  position           Int
-  status             ContentStatus    @default(DRAFT)
-  accessLevel        AccessLevel      @default(ENROLLED)
-  estimatedMinutes   Int?
-  availableFrom      DateTime?        @db.Timestamptz(3)
-  deletedAt          DateTime?        @db.Timestamptz(3)
-  createdAt          DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt          DateTime         @updatedAt @db.Timestamptz(3)
-  activationCodes    ActivationCode[]
-  assignments        Assignment[]
-  comments           Comment[]
-  lastCourseProgress CourseProgress[] @relation("CourseProgressLastLesson")
-  exams              Exam[]
-  homework           Homework[]
-  unit               CourseUnit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  lessonProgress     LessonProgress[]
-  studentProgress    StudentLessonProgress[]
-  resources          LessonResource[]
-  productLinks       ProductLesson[]
-  videos             Video[]
+  id                      String                   @id @default(uuid()) @db.Uuid
+  unitId                  String                   @db.Uuid
+  title                   String                   @db.VarChar(180)
+  description             String?
+  position                Int
+  status                  ContentStatus            @default(DRAFT)
+  accessLevel             AccessLevel              @default(ENROLLED)
+  estimatedMinutes        Int?
+  availableFrom           DateTime?                @db.Timestamptz(3)
+  deletedAt               DateTime?                @db.Timestamptz(3)
+  createdAt               DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                 @updatedAt @db.Timestamptz(3)
+  activationCodes         ActivationCode[]
+  assignments             Assignment[]
+  comments                Comment[]
+  lastCourseProgress      CourseProgress[]         @relation("CourseProgressLastLesson")
+  exams                   Exam[]
+  homework                Homework[]
+  unit                    CourseUnit               @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  lessonProgress          LessonProgress[]
+  studentProgress         StudentLessonProgress[]
+  resources               LessonResource[]
+  productLinks            ProductLesson[]
+  videos                  Video[]
   progressionRequirements ProgressionRequirement[]
 
   @@unique([unitId, position])
@@ -373,26 +375,26 @@ model Lesson {
 }
 
 model Video {
-  id                  String               @id @default(uuid()) @db.Uuid
-  lessonId            String               @db.Uuid
-  fileAssetId         String?              @unique @db.Uuid
-  thumbnailAssetId    String?              @db.Uuid
-  title               String               @db.VarChar(180)
-  type                VideoType
-  status              ContentStatus        @default(DRAFT)
-  accessLevel         AccessLevel          @default(LOCKED)
-  position            Int
-  durationSeconds     Int?
-  externalProviderKey String?              @db.VarChar(255)
-  availableFrom       DateTime?            @db.Timestamptz(3)
-  deletedAt           DateTime?            @db.Timestamptz(3)
-  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
-  comments            Comment[]
-  homeworkSolution    Homework?
-  fileAsset           FileAsset?           @relation("VideoFile", fields: [fileAssetId], references: [id])
-  lesson              Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  thumbnailAsset      FileAsset?           @relation("VideoThumbnail", fields: [thumbnailAssetId], references: [id])
+  id                   String                 @id @default(uuid()) @db.Uuid
+  lessonId             String                 @db.Uuid
+  fileAssetId          String?                @unique @db.Uuid
+  thumbnailAssetId     String?                @db.Uuid
+  title                String                 @db.VarChar(180)
+  type                 VideoType
+  status               ContentStatus          @default(DRAFT)
+  accessLevel          AccessLevel            @default(LOCKED)
+  position             Int
+  durationSeconds      Int?
+  externalProviderKey  String?                @db.VarChar(255)
+  availableFrom        DateTime?              @db.Timestamptz(3)
+  deletedAt            DateTime?              @db.Timestamptz(3)
+  createdAt            DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime               @updatedAt @db.Timestamptz(3)
+  comments             Comment[]
+  homeworkSolution     Homework?
+  fileAsset            FileAsset?             @relation("VideoFile", fields: [fileAssetId], references: [id])
+  lesson               Lesson                 @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  thumbnailAsset       FileAsset?             @relation("VideoThumbnail", fields: [thumbnailAssetId], references: [id])
   watchProgress        VideoWatchProgress[]
   studentWatchProgress StudentVideoProgress[]
 
@@ -404,28 +406,30 @@ model Video {
 }
 
 model FileAsset {
-  id                    String                 @id @default(uuid()) @db.Uuid
-  storageProvider       String                 @db.VarChar(60)
-  storageKey            String                 @unique @db.VarChar(512)
-  originalName          String                 @db.VarChar(255)
-  mimeType              String                 @db.VarChar(160)
-  byteSize              BigInt
-  checksum              String?                @db.VarChar(128)
-  isPublic              Boolean                @default(false)
-  metadata              Json?
-  deletedAt             DateTime?              @db.Timestamptz(3)
-  createdAt             DateTime               @default(now()) @db.Timestamptz(3)
-  updatedAt             DateTime               @updatedAt @db.Timestamptz(3)
-  assignmentSubmissions AssignmentSubmission[]
-  certificates          Certificate[]
-  courseCover           Course?                @relation("CourseCover")
-  unitCover             CourseUnit?            @relation("UnitCover")
-  homeworkCover         Homework?              @relation("HomeworkCover")
-  homeworkImportSources HomeworkImportJob[]
-  lessonResources       LessonResource[]
-  studentAvatars        StudentProfile[]       @relation("StudentAvatar")
-  videoFile             Video?                 @relation("VideoFile")
-  videoThumbnails       Video[]                @relation("VideoThumbnail")
+  id                     String                 @id @default(uuid()) @db.Uuid
+  storageProvider        String                 @db.VarChar(60)
+  storageKey             String                 @unique @db.VarChar(512)
+  originalName           String                 @db.VarChar(255)
+  mimeType               String                 @db.VarChar(160)
+  byteSize               BigInt
+  checksum               String?                @db.VarChar(128)
+  isPublic               Boolean                @default(false)
+  metadata               Json?
+  deletedAt              DateTime?              @db.Timestamptz(3)
+  createdAt              DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime               @updatedAt @db.Timestamptz(3)
+  assignmentSubmissions  AssignmentSubmission[]
+  certificates           Certificate[]
+  courseCover            Course?                @relation("CourseCover")
+  unitCover              CourseUnit?            @relation("UnitCover")
+  homeworkCover          Homework?              @relation("HomeworkCover")
+  homeworkImportSources  HomeworkImportJob[]
+  homeworkQuestionImages HomeworkQuestion[]     @relation("HomeworkQuestionImage")
+  examQuestionImages     ExamQuestion[]         @relation("ExamQuestionImage")
+  lessonResources        LessonResource[]
+  studentAvatars         StudentProfile[]       @relation("StudentAvatar")
+  videoFile              Video?                 @relation("VideoFile")
+  videoThumbnails        Video[]                @relation("VideoThumbnail")
 
   @@index([mimeType])
   @@index([deletedAt])
@@ -474,24 +478,27 @@ model CourseEnrollment {
 }
 
 model Homework {
-  id              String               @id @default(uuid()) @db.Uuid
-  lessonId        String               @db.Uuid
-  coverAssetId    String?              @unique @db.Uuid
-  solutionVideoId String?              @unique @db.Uuid
-  title           String               @db.VarChar(180)
-  instructions    String?
-  status          HomeworkStatus       @default(DRAFT)
-  maxScore        Decimal?             @db.Decimal(8, 2)
-  dueAt           DateTime?            @db.Timestamptz(3)
-  deletedAt       DateTime?            @db.Timestamptz(3)
-  createdAt       DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt       DateTime             @updatedAt @db.Timestamptz(3)
-  lesson          Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  coverAsset      FileAsset?           @relation("HomeworkCover", fields: [coverAssetId], references: [id])
-  solutionVideo   Video?               @relation(fields: [solutionVideoId], references: [id])
-  questions       HomeworkQuestion[]
-  submissions     HomeworkSubmission[]
-  importJobs      HomeworkImportJob[]
+  id                String                   @id @default(uuid()) @db.Uuid
+  lessonId          String                   @db.Uuid
+  coverAssetId      String?                  @unique @db.Uuid
+  solutionVideoId   String?                  @unique @db.Uuid
+  title             String                   @db.VarChar(180)
+  instructions      String?
+  status            HomeworkStatus           @default(DRAFT)
+  maxScore          Decimal?                 @db.Decimal(8, 2)
+  maxAttempts       Int                      @default(3)
+  passingPercentage Decimal?                 @db.Decimal(5, 2)
+  attemptGrants     AssessmentAttemptGrant[]
+  dueAt             DateTime?                @db.Timestamptz(3)
+  deletedAt         DateTime?                @db.Timestamptz(3)
+  createdAt         DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                 @updatedAt @db.Timestamptz(3)
+  lesson            Lesson                   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  coverAsset        FileAsset?               @relation("HomeworkCover", fields: [coverAssetId], references: [id])
+  solutionVideo     Video?                   @relation(fields: [solutionVideoId], references: [id])
+  questions         HomeworkQuestion[]
+  submissions       HomeworkSubmission[]
+  importJobs        HomeworkImportJob[]
 
   @@index([lessonId, status])
   @@index([dueAt])
@@ -499,34 +506,38 @@ model Homework {
 }
 
 model HomeworkQuestion {
-  id          String           @id @default(uuid()) @db.Uuid
-  homeworkId  String           @db.Uuid
-  type        QuestionType
-  prompt      String
-  position    Int
-  points      Decimal?         @db.Decimal(8, 2)
-  correctText String?
-  explanation String?
-  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime         @updatedAt @db.Timestamptz(3)
-  answers     HomeworkAnswer[]
-  choices     HomeworkChoice[]
-  homework    Homework         @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  id           String           @id @default(uuid()) @db.Uuid
+  homeworkId   String           @db.Uuid
+  type         QuestionType
+  prompt       String
+  position     Int
+  points       Decimal?         @db.Decimal(8, 2)
+  correctText  String?
+  explanation  String?
+  imageAssetId String?          @db.Uuid
+  imageAsset   FileAsset?       @relation("HomeworkQuestionImage", fields: [imageAssetId], references: [id], onDelete: Restrict)
+  createdAt    DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @db.Timestamptz(3)
+  answers      HomeworkAnswer[]
+  choices      HomeworkChoice[]
+  homework     Homework         @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
 
   @@unique([homeworkId, position])
   @@index([homeworkId])
+  @@index([imageAssetId])
 }
 
 model HomeworkChoice {
-  id         String           @id @default(uuid()) @db.Uuid
-  questionId String           @db.Uuid
-  label      String
-  position   Int
-  isCorrect  Boolean          @default(false)
-  createdAt  DateTime         @default(now()) @db.Timestamptz(3)
-  updatedAt  DateTime         @updatedAt @db.Timestamptz(3)
-  answers    HomeworkAnswer[]
-  question   HomeworkQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id           String                 @id @default(uuid()) @db.Uuid
+  questionId   String                 @db.Uuid
+  label        String
+  position     Int
+  isCorrect    Boolean                @default(false)
+  createdAt    DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime               @updatedAt @db.Timestamptz(3)
+  answers      HomeworkAnswer[]
+  multiAnswers HomeworkAnswerChoice[]
+  question     HomeworkQuestion       @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([questionId, position])
 }
@@ -542,6 +553,9 @@ model HomeworkSubmission {
   submittedAt  DateTime?        @db.Timestamptz(3)
   reviewedAt   DateTime?        @db.Timestamptz(3)
   score        Decimal?         @db.Decimal(8, 2)
+  maxScore     Decimal?         @db.Decimal(10, 2)
+  percentage   Decimal?         @db.Decimal(5, 2)
+  passed       Boolean?
   feedback     String?
   createdAt    DateTime         @default(now()) @db.Timestamptz(3)
   updatedAt    DateTime         @updatedAt @db.Timestamptz(3)
@@ -557,21 +571,32 @@ model HomeworkSubmission {
 }
 
 model HomeworkAnswer {
-  id               String             @id @default(uuid()) @db.Uuid
-  submissionId     String             @db.Uuid
-  questionId       String             @db.Uuid
-  selectedChoiceId String?            @db.Uuid
+  id               String                 @id @default(uuid()) @db.Uuid
+  submissionId     String                 @db.Uuid
+  questionId       String                 @db.Uuid
+  selectedChoiceId String?                @db.Uuid
   textAnswer       String?
-  awardedPoints    Decimal?           @db.Decimal(8, 2)
-  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime           @updatedAt @db.Timestamptz(3)
-  question         HomeworkQuestion   @relation(fields: [questionId], references: [id])
-  selectedChoice   HomeworkChoice?    @relation(fields: [selectedChoiceId], references: [id])
-  submission       HomeworkSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  awardedPoints    Decimal?               @db.Decimal(8, 2)
+  createdAt        DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime               @updatedAt @db.Timestamptz(3)
+  question         HomeworkQuestion       @relation(fields: [questionId], references: [id])
+  selectedChoice   HomeworkChoice?        @relation(fields: [selectedChoiceId], references: [id])
+  selectedChoices  HomeworkAnswerChoice[]
+  submission       HomeworkSubmission     @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@unique([submissionId, questionId])
   @@index([questionId])
   @@index([selectedChoiceId])
+}
+
+model HomeworkAnswerChoice {
+  answerId String         @db.Uuid
+  choiceId String         @db.Uuid
+  answer   HomeworkAnswer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  choice   HomeworkChoice @relation(fields: [choiceId], references: [id], onDelete: Restrict)
+
+  @@id([answerId, choiceId])
+  @@index([choiceId])
 }
 
 model Assignment {
@@ -622,25 +647,27 @@ model AssignmentSubmission {
 }
 
 model Exam {
-  id                String         @id @default(uuid()) @db.Uuid
-  courseId          String         @db.Uuid
-  unitId            String?        @db.Uuid
-  lessonId          String?        @db.Uuid
-  title             String         @db.VarChar(180)
+  id                String                   @id @default(uuid()) @db.Uuid
+  courseId          String                   @db.Uuid
+  unitId            String?                  @db.Uuid
+  lessonId          String?                  @db.Uuid
+  title             String                   @db.VarChar(180)
   instructions      String?
-  status            ExamStatus     @default(DRAFT)
+  status            ExamStatus               @default(DRAFT)
   durationMinutes   Int?
-  maxAttempts       Int            @default(1)
-  passingPercentage Decimal?       @db.Decimal(5, 2)
-  opensAt           DateTime?      @db.Timestamptz(3)
-  closesAt          DateTime?      @db.Timestamptz(3)
-  publishedAt       DateTime?      @db.Timestamptz(3)
-  deletedAt         DateTime?      @db.Timestamptz(3)
-  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
-  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
-  course            Course         @relation(fields: [courseId], references: [id])
-  unit              CourseUnit?    @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  lesson            Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  maxAttempts       Int                      @default(3)
+  attemptGrants     AssessmentAttemptGrant[]
+  importJobs        HomeworkImportJob[]
+  passingPercentage Decimal?                 @db.Decimal(5, 2)
+  opensAt           DateTime?                @db.Timestamptz(3)
+  closesAt          DateTime?                @db.Timestamptz(3)
+  publishedAt       DateTime?                @db.Timestamptz(3)
+  deletedAt         DateTime?                @db.Timestamptz(3)
+  createdAt         DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime                 @updatedAt @db.Timestamptz(3)
+  course            Course                   @relation(fields: [courseId], references: [id])
+  unit              CourseUnit?              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  lesson            Lesson?                  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   attempts          ExamAttempt[]
   sections          ExamSection[]
   statistic         ExamStatistic?
@@ -667,21 +694,24 @@ model ExamSection {
 }
 
 model ExamQuestion {
-  id          String       @id @default(uuid()) @db.Uuid
-  sectionId   String       @db.Uuid
-  type        QuestionType
-  prompt      String
-  position    Int
-  points      Decimal      @db.Decimal(8, 2)
-  correctText String?
-  explanation String?
-  createdAt   DateTime     @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime     @updatedAt @db.Timestamptz(3)
-  answers     ExamAnswer[]
-  choices     ExamChoice[]
-  section     ExamSection  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  id           String       @id @default(uuid()) @db.Uuid
+  sectionId    String       @db.Uuid
+  type         QuestionType
+  prompt       String
+  position     Int
+  points       Decimal      @db.Decimal(8, 2)
+  correctText  String?
+  explanation  String?
+  imageAssetId String?      @db.Uuid
+  imageAsset   FileAsset?   @relation("ExamQuestionImage", fields: [imageAssetId], references: [id], onDelete: Restrict)
+  createdAt    DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime     @updatedAt @db.Timestamptz(3)
+  answers      ExamAnswer[]
+  choices      ExamChoice[]
+  section      ExamSection  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
 
   @@unique([sectionId, position])
+  @@index([imageAssetId])
 }
 
 model ExamChoice {
@@ -885,6 +915,7 @@ model ProgressionRequirement {
 model HomeworkImportJob {
   id             String          @id @default(uuid()) @db.Uuid
   homeworkId     String?         @db.Uuid
+  examId         String?         @db.Uuid
   createdById    String          @db.Uuid
   sourceAssetId  String          @db.Uuid
   status         ImportJobStatus @default(UPLOADED)
@@ -894,10 +925,29 @@ model HomeworkImportJob {
   createdAt      DateTime        @default(now()) @db.Timestamptz(3)
   updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
   homework       Homework?       @relation(fields: [homeworkId], references: [id])
+  exam           Exam?           @relation(fields: [examId], references: [id], onDelete: Restrict)
   sourceAsset    FileAsset       @relation(fields: [sourceAssetId], references: [id])
 
   @@index([homeworkId, status])
   @@index([createdById, createdAt])
+}
+
+// Student-specific additive allowances. Existing attempts are never removed.
+model AssessmentAttemptGrant {
+  id          String         @id @default(uuid()) @db.Uuid
+  homeworkId  String?        @db.Uuid
+  examId      String?        @db.Uuid
+  studentId   String         @db.Uuid
+  grantedById String         @db.Uuid
+  amount      Int
+  createdAt   DateTime       @default(now()) @db.Timestamptz(3)
+  homework    Homework?      @relation(fields: [homeworkId], references: [id], onDelete: Restrict)
+  exam        Exam?          @relation(fields: [examId], references: [id], onDelete: Restrict)
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  grantedBy   User           @relation(fields: [grantedById], references: [id], onDelete: Restrict)
+
+  @@index([homeworkId, studentId])
+  @@index([examId, studentId])
 }
 
 model Certificate {

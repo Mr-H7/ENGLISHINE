@@ -87,10 +87,24 @@ const studentRoutes = [
     },
   },
   {
+    path: '/student/courses/:courseId/units/:unitId/',
+    lazy: async () => {
+      const module = await import('@/pages/student/StudentCatalogPages');
+      return { Component: module.StudentUnitDetailsPage };
+    },
+  },
+  {
     path: '/student/homework/',
     lazy: async () => {
       const module = await import('@/pages/student/StudentCatalogPages');
       return { Component: module.StudentHomeworkPage };
+    },
+  },
+  {
+    path: '/student/homework/:homeworkId/',
+    lazy: async () => {
+      const module = await import('@/pages/student/StudentCatalogPages');
+      return { Component: module.StudentHomeworkAssessmentPage };
     },
   },
   {
@@ -105,6 +119,13 @@ const studentRoutes = [
     lazy: async () => {
       const module = await import('@/pages/student/StudentCatalogPages');
       return { Component: module.StudentExamsPage };
+    },
+  },
+  {
+    path: '/student/exams/:examId/',
+    lazy: async () => {
+      const module = await import('@/pages/student/StudentCatalogPages');
+      return { Component: module.StudentExamAssessmentPage };
     },
   },
   {

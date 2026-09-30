@@ -9,6 +9,8 @@ import {
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { HomeworkService } from '../services/homework.service.js';
+import { retireAssetIfUnreferenced } from '../services/asset-lifecycle.service.js';
+import { QuestionImageService } from '../services/question-image.service.js';
 import { uuidSchema } from '../utils/validation.js';
 
 const homeworkSchema = z.object({
@@ -17,6 +19,8 @@ const homeworkSchema = z.object({
   instructions: z.string().trim().max(20_000).optional(),
   status: z.enum(HomeworkStatus).optional(),
   maxScore: z.number().nonnegative().max(1_000_000).optional(),
+  maxAttempts: z.number().int().min(1).max(100).optional(),
+  passingPercentage: z.number().min(0).max(100).optional(),
   dueAt: z.coerce.date().optional(),
   solutionVideoId: uuidSchema.optional(),
 });
@@ -76,7 +80,10 @@ export const homeworkRoutes: FastifyPluginAsync = async (app) => {
       });
       admin.delete('/homework-questions/:questionId', async (request, reply) => {
         const { questionId } = z.object({ questionId: uuidSchema }).parse(request.params);
+        const question = await app.prisma.homeworkQuestion.findUnique({ where: { id: questionId }, select: { imageAssetId: true } });
+        if (question?.imageAssetId) await new QuestionImageService(app.prisma, app.storage).assertEditable('homework', questionId);
         await service.removeQuestion(questionId);
+        if (question?.imageAssetId) await retireAssetIfUnreferenced(app.prisma, app.storage, question.imageAssetId).catch(() => app.log.warn('Question image cleanup deferred'));
         return reply.code(204).send();
       });
       admin.patch('/homework-submissions/:id/review', async (request) => {
@@ -86,6 +93,7 @@ export const homeworkRoutes: FastifyPluginAsync = async (app) => {
             score: z.number().nonnegative().optional(),
             feedback: z.string().max(20_000).optional(),
             reviewStatus: z.enum(ReviewStatus),
+            marks: z.array(z.object({ answerId: uuidSchema, points: z.number().min(0).max(1_000_000) })).optional(),
           })
           .parse(request.body);
         return { data: await service.review(id, request.user.sub, input) };
@@ -99,23 +107,29 @@ export const homeworkRoutes: FastifyPluginAsync = async (app) => {
     const { id } = z.object({ id: uuidSchema }).parse(request.params);
     return { data: await service.getForStudent(request.user.sub, id) };
   });
+  app.post('/student/homework/:id/attempts', { onRequest: authenticate }, async (request, reply) => {
+    const { id } = z.object({ id: uuidSchema }).parse(request.params);
+    return reply.code(201).send({ data: await service.start(request.user.sub, id) });
+  });
   app.post(
     '/student/homework/:id/submissions',
     { onRequest: authenticate },
     async (request, reply) => {
       const { id } = z.object({ id: uuidSchema }).parse(request.params);
-      const { answers } = z
+      const { answers, attemptId } = z
         .object({
+          attemptId: uuidSchema.optional(),
           answers: z.array(
             z.object({
               questionId: uuidSchema,
               selectedChoiceId: uuidSchema.optional(),
+              selectedChoiceIds: z.array(uuidSchema).max(100).optional(),
               textAnswer: z.string().max(20_000).optional(),
             }),
           ),
         })
         .parse(request.body);
-      return reply.code(201).send({ data: await service.submit(request.user.sub, id, answers) });
+      return reply.code(201).send({ data: await service.submit(request.user.sub, id, answers, attemptId) });
     },
   );
 };

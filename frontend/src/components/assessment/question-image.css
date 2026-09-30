@@ -1,0 +1,16 @@
+.assessment-question-image {
+  margin: 1rem 0;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+.assessment-question-image img {
+  display: block;
+  inline-size: auto;
+  max-inline-size: 100%;
+  block-size: auto;
+  max-block-size: 32rem;
+  object-fit: contain;
+  margin-inline: auto;
+  border-radius: 8px;
+}
+.assessment-question-image figcaption { font-size: .9rem; line-height: 1.6; }

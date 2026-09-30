@@ -67,6 +67,16 @@ export function StudentPlatformProvider({ children }: { children: ReactNode }) {
       updateGrade: async () => {
         throw new Error('تغيير الصف متاح للإدارة فقط.');
       },
+      updateProfile: async (input: {
+        fullName?: string;
+        studentPhone?: string;
+        guardianPhone?: string;
+        email?: string | null;
+      }) => {
+        const nextProfile = await studentPlatformApi.updateProfile(input);
+        setProfile(nextProfile);
+        return nextProfile;
+      },
       reload,
     }),
     [profile, stages, loading, error, reload],

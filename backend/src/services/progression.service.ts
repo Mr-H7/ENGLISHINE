@@ -34,6 +34,7 @@ export interface LessonProgression {
 export interface UnitProgression {
   unitId: string;
   entitled: boolean;
+  contextAccessible: boolean;
   state: ProgressionState;
   progressPercent: number;
   requirements: RequirementStatus[];
@@ -70,7 +71,7 @@ export class ProgressionService {
         studentId,
         courseId,
         unit.id,
-        unit.lessons[0]?.id ?? '00000000-0000-0000-0000-000000000000',
+        '00000000-0000-0000-0000-000000000000',
       );
       const unitEntitled =
         entitled ||
@@ -83,24 +84,28 @@ export class ProgressionService {
         );
       }
       const lessonComplete = lessons.length === 0 || lessons.every((item) => item.state === 'COMPLETED');
+      const contextAccessible = unitEntitled || lessons.some((lesson) => lesson.entitled);
       const examRequirements = await this.examRequirements(studentId, unit.exams.map((exam) => exam.id));
       const configured = unit.progressionRequirements.filter((item) => item.type === 'PREVIOUS_UNIT_COMPLETE');
       const previousRequired = configured.length ? configured.length > 0 : true;
       const previousMet = !previousRequired || previousComplete;
-      const complete = lessonComplete && examRequirements.every((item) => item.complete);
+      const authored = await this.authoredRequirements(studentId, unit.progressionRequirements);
+      const dependenciesMet = authored.every((item) => item.complete);
+      const complete = lessonComplete && examRequirements.every((item) => item.complete) && dependenciesMet;
       const inProgress = lessons.some((item) => item.state === 'IN_PROGRESS' || item.state === 'COMPLETED');
-      const state: ProgressionState = !previousMet
+      const state: ProgressionState = !previousMet || !dependenciesMet
         ? 'LOCKED'
         : complete
           ? 'COMPLETED'
           : inProgress
             ? 'IN_PROGRESS'
             : 'AVAILABLE';
-      const requirements: RequirementStatus[] = [
+      const requirements: RequirementStatus[] = [...new Map([
         { key: 'previous-unit', label: 'إكمال الوحدة السابقة', complete: previousMet, current: !previousMet },
         ...lessons.flatMap((lesson) => lesson.requirements),
         ...examRequirements,
-      ];
+        ...authored,
+      ].map((requirement) => [requirement.key, requirement])).values()];
       const currentIndex = requirements.findIndex((item) => !item.complete);
       const marked = requirements.map((item, index) => ({ ...item, current: index === currentIndex }));
       const percent = marked.length
@@ -111,14 +116,15 @@ export class ProgressionService {
       result.push({
         unitId: unit.id,
         entitled: unitEntitled,
-        state: unitEntitled ? state : state === 'LOCKED' ? 'LOCKED' : 'LOCKED',
-        progressPercent: unitEntitled ? percent : 0,
+        contextAccessible,
+        state: contextAccessible ? state : 'LOCKED',
+        progressPercent: contextAccessible ? percent : 0,
         requirements: marked,
         lessons,
       });
       if (unitEntitled && state === 'LOCKED') {
         result[result.length - 1]!.state = 'LOCKED';
-      } else if (!unitEntitled) {
+      } else if (!contextAccessible) {
         result[result.length - 1]!.state = 'LOCKED';
       }
       previousComplete = complete && unitEntitled;
@@ -134,6 +140,7 @@ export class ProgressionService {
       include: { unit: { include: { course: true } } },
     });
     if (!lesson) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
+    await this.assertAssessmentDependencies(student.id, lessonId, lesson.unitId);
     if (
       freeAccess.includes(lesson.accessLevel) ||
       freeAccess.includes(lesson.unit.accessLevel) ||
@@ -151,6 +158,14 @@ export class ProgressionService {
     if (row.state === 'LOCKED') {
       throw new AppError(403, 'Complete the previous learning requirements first', 'PROGRESSION_LOCKED');
     }
+  }
+
+  // Explicit assessment gates apply even to free media, without granting or
+  // requiring paid enrollment. Other sequencing rules remain unchanged.
+  async assertAssessmentDependencies(studentId: string, lessonId: string, unitId: string): Promise<void> {
+    const authored = await this.prisma.progressionRequirement.findMany({ where: { OR: [{ lessonId }, { unitId }] } });
+    if ((await this.authoredRequirements(studentId, authored)).some((item) => !item.complete))
+      throw new AppError(403, 'يجب اجتياز التقييم المطلوب أولًا.', 'PROGRESSION_LOCKED');
   }
 
   private async unitEntitled(studentId: string, courseId: string, unitId: string) {
@@ -196,10 +211,11 @@ export class ProgressionService {
     });
     const homeworkRequirements = await this.homeworkRequirements(studentId, lesson.homework.map((item) => item.id));
     const examRequirements = await this.examRequirements(studentId, lesson.exams.map((item) => item.id));
-    const requirements = [...videoRequirements, ...homeworkRequirements, ...examRequirements];
+    const authored = await this.authoredRequirements(studentId, await this.prisma.progressionRequirement.findMany({ where: { OR: [{ lessonId: lesson.id }, { unitId }] } }));
+    const requirements = [...videoRequirements, ...homeworkRequirements, ...examRequirements, ...authored];
     const complete = requirements.length === 0 || requirements.every((item) => item.complete);
     const started = requirements.some((item) => item.complete);
-    const state: ProgressionState = !previousUnitComplete
+    const state: ProgressionState = !previousUnitComplete || authored.some((item) => !item.complete)
       ? 'LOCKED'
       : !entitled
         ? 'LOCKED'
@@ -230,7 +246,9 @@ export class ProgressionService {
             latest.status === SubmissionStatus.LATE ||
             latest.status === SubmissionStatus.RETURNED),
       );
-      const graded = latest?.reviewStatus === ReviewStatus.REVIEWED;
+      const graded = latest?.maxScore == null
+        ? latest?.reviewStatus === ReviewStatus.REVIEWED
+        : submissions.some((item) => item.homeworkId === id && item.passed === true && item.reviewStatus === ReviewStatus.REVIEWED);
       return [
         { key: `homework-submit:${id}`, label: 'Submit homework', complete: submitted, current: false },
         { key: `homework-review:${id}`, label: 'Review homework/solution', complete: graded, current: false },
@@ -247,9 +265,20 @@ export class ProgressionService {
     return examIds.map((id) => {
       const latest = attempts.filter((item) => item.examId === id);
       const submitted = latest.some(
-        (item) => item.status === ExamAttemptStatus.SUBMITTED || item.status === ExamAttemptStatus.AUTO_SUBMITTED,
+        (item) => item.result?.passed === true || item.result?.passed === null && item.result?.publishedAt !== null &&
+          (item.status === ExamAttemptStatus.SUBMITTED || item.status === ExamAttemptStatus.AUTO_SUBMITTED),
       );
       return { key: `exam:${id}`, label: 'Complete test', complete: submitted, current: false };
     });
+  }
+
+  private async authoredRequirements(studentId: string, requirements: Array<{ id: string; type: string; targetId: string | null }>): Promise<RequirementStatus[]> {
+    return Promise.all(requirements.filter((item) => ['HOMEWORK_PASSED', 'EXAM_PASSED'].includes(item.type)).map(async (item) => {
+      const complete = item.targetId ? item.type === 'HOMEWORK_PASSED'
+        ? Boolean(await this.prisma.homeworkSubmission.findFirst({ where: { homeworkId: item.targetId, studentId, passed: true, reviewStatus: 'REVIEWED' } }))
+        : Boolean(await this.prisma.examResult.findFirst({ where: { passed: true, publishedAt: { not: null }, attempt: { examId: item.targetId, studentId } } }))
+        : false;
+      return { key: `dependency:${item.id}`, label: 'اجتياز التقييم المطلوب', complete, current: false };
+    }));
   }
 }

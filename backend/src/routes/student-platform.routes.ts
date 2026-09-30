@@ -49,6 +49,10 @@ export const studentPlatformRoutes: FastifyPluginAsync = async (app) => {
         const { lessonId } = z.object({ lessonId: uuidSchema }).parse(request.params);
         return { data: await service.lesson(request.user.sub, lessonId) };
       });
+      student.get('/lessons/:lessonId/requirements', async (request) => {
+        const { lessonId } = z.object({ lessonId: uuidSchema }).parse(request.params);
+        return { data: await service.lessonRequirements(request.user.sub, lessonId) };
+      });
       done();
     },
     { prefix: '/student' },

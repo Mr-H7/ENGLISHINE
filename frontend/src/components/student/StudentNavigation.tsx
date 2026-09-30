@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router';
+import { Link, NavLink } from 'react-router';
 import { assets } from '@/assets/registry';
 import { AppIcon } from '@/components/icons/AppIcon';
 import { LogoutButton } from '@/components/auth/LogoutButton';
 import { Drawer } from '@/components/overlays/Drawer';
-import { studentNavigation } from '@/router/studentNavigation';
+import {
+  studentMobileNavigation,
+  studentNavigation,
+} from '@/router/studentNavigation';
 import { useSession } from '@/hooks/useSession';
-import { useToast } from '@/hooks/useToast';
+import { useStudentPlatform } from '@/hooks/useStudentPlatform';
 
 function StudentNavLinks({
   collapsed = false,
@@ -21,7 +23,7 @@ function StudentNavLinks({
         <NavLink
           key={item.href}
           to={item.href}
-          end
+          end={item.href === '/student/'}
           onClick={onNavigate}
           title={collapsed ? item.label : undefined}
         >
@@ -30,6 +32,25 @@ function StudentNavLinks({
         </NavLink>
       ))}
     </nav>
+  );
+}
+
+function StudentIdentity({ compact = false }: { compact?: boolean }) {
+  const session = useSession();
+  const { profile } = useStudentPlatform();
+  const name = profile?.fullName ?? session.user?.displayName ?? 'حساب الطالب';
+  return (
+    <Link className="student-identity" to="/student/account/" aria-label="فتح حساب الطالب">
+      <span className="student-avatar-fallback" aria-hidden="true">
+        {name.slice(0, 1)}
+      </span>
+      {compact ? null : (
+        <span>
+          <strong>{name}</strong>
+          <small>{profile?.grade?.nameAr ?? 'الصف غير محدد'}</small>
+        </span>
+      )}
+    </Link>
   );
 }
 
@@ -44,7 +65,7 @@ export function StudentSidebar({
     <aside className="student-sidebar" data-collapsed={collapsed}>
       <div className="student-sidebar-brand">
         <Link to="/student/" aria-label="Englishine — مساحة الطالب">
-          <img src={assets.logo} alt="" />
+          <img src={assets.logo} alt="Englishine" />
         </Link>
         <button
           type="button"
@@ -57,19 +78,21 @@ export function StudentSidebar({
         </button>
       </div>
       <StudentNavLinks collapsed={collapsed} />
-      <LogoutButton className="student-logout">
-        <AppIcon name="logout" />
-        <span>تسجيل الخروج</span>
-      </LogoutButton>
+      <div className="student-sidebar-footer">
+        <StudentIdentity compact={collapsed} />
+        <LogoutButton className="student-logout">
+          <AppIcon name="logout" />
+          <span>تسجيل الخروج</span>
+        </LogoutButton>
+      </div>
     </aside>
   );
 }
 
-export function StudentTopbar({ onOpenMenu }: { onOpenMenu: () => void }) {
-  const [query, setQuery] = useState('');
-  const toast = useToast();
-  const navigate = useNavigate();
+export function StudentTopbar({ onOpenMenu, theme, onToggleTheme }: { onOpenMenu: () => void; theme: 'light' | 'dark'; onToggleTheme: () => void }) {
   const session = useSession();
+  const { profile } = useStudentPlatform();
+  const name = profile?.fullName ?? session.user?.displayName ?? 'طالب Englishine';
   return (
     <header className="student-topbar">
       <button
@@ -80,54 +103,17 @@ export function StudentTopbar({ onOpenMenu }: { onOpenMenu: () => void }) {
       >
         <AppIcon name="menu" />
       </button>
-      <form
-        className="student-search"
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault();
-          toast.notify(
-            query.trim()
-              ? 'البحث يحتاج ربط بيانات الطالب أولًا.'
-              : 'اكتب كلمة للبحث.',
-          );
-        }}
-      >
-        <AppIcon name="search" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          aria-label="ابحث في دروسك"
-          placeholder="ابحث في دروسك"
-        />
-      </form>
-      <button
-        className="current-course-chip"
-        type="button"
-        onClick={() => navigate('/student/courses/')}
-      >
-        <span>الكورس الحالي</span>
-        <strong>غير محدد</strong>
+      <Link className="student-mobile-brand" to="/student/" aria-label="الرئيسية">
+        <img src={assets.logo} alt="Englishine" />
+      </Link>
+      <div className="student-topbar-greeting">
+        <strong>مرحبًا، {name}</strong>
+        <small>{profile?.grade?.nameAr ?? 'اختر صفك الدراسي للبدء'}</small>
+      </div>
+      <button type="button" className="sx-theme-toggle" onClick={onToggleTheme} aria-pressed={theme === 'dark'} aria-label="الوضع الداكن">
+        {theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
       </button>
-      <button
-        className="topbar-icon-button"
-        type="button"
-        onClick={() => navigate('/student/notifications/')}
-        aria-label="الإشعارات"
-      >
-        <AppIcon name="notifications" />
-      </button>
-      <button
-        className="student-avatar-button"
-        type="button"
-        onClick={() => navigate('/student/account/')}
-        aria-label="الملف الشخصي"
-      >
-        <span>{session.user?.displayName.slice(0, 1) ?? 'ط'}</span>
-        <span className="student-avatar-copy">
-          <strong>{session.user?.displayName ?? 'حساب الطالب'}</strong>
-          <small>{session.user?.email ?? ''}</small>
-        </span>
-      </button>
+      <StudentIdentity compact />
     </header>
   );
 }
@@ -142,14 +128,41 @@ export function StudentMobileDrawer({
   return (
     <Drawer open={open} onClose={onClose} title="مساحة الطالب">
       <div className="student-drawer-brand">
-        <img src={assets.logo} alt="" />
-        <strong>Englishine</strong>
+        <img src={assets.logo} alt="Englishine" />
       </div>
       <StudentNavLinks onNavigate={onClose} />
+      <Link className="student-free-shortcut" to="/student/free/" onClick={onClose}>
+        <AppIcon name="play" />
+        <span>
+          <strong>المحتوى المجاني</strong>
+          <small>فيديوهات وعينات متاحة لحسابك</small>
+        </span>
+      </Link>
       <LogoutButton className="student-logout" onComplete={onClose}>
         <AppIcon name="logout" />
         <span>تسجيل الخروج</span>
       </LogoutButton>
     </Drawer>
+  );
+}
+
+export function StudentMobileNav({
+  onOpenMenu,
+}: {
+  onOpenMenu: () => void;
+}) {
+  return (
+    <nav className="student-mobile-nav" aria-label="التنقل السريع">
+      {studentMobileNavigation.map((item) => (
+        <NavLink key={item.href} to={item.href} end={item.href === '/student/'}>
+          <AppIcon name={item.icon} />
+          <span>{item.label}</span>
+        </NavLink>
+      ))}
+      <button type="button" onClick={onOpenMenu} aria-label="عرض المزيد">
+        <AppIcon name="more" />
+        <span>المزيد</span>
+      </button>
+    </nav>
   );
 }

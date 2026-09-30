@@ -1,4 +1,6 @@
 import { Outlet } from 'react-router';
+import foundationStyles from '@/styles/index.css?inline';
+import shellStyles from '@/styles/shell.css?inline';
 import adminStyles from '@/styles/admin-app.css?inline';
 import { Container, ContentWrapper } from '@/components/layout/Container';
 import { AuthGuard } from '@/components/auth/AuthGuard';
@@ -13,6 +15,8 @@ export function Component() {
   return (
     <AuthGuard roles={['SUPER_ADMIN', 'ADMIN', 'TEACHER']}>
       <div className="ui-app-shell" data-layout="admin" dir="rtl">
+        <style>{foundationStyles}</style>
+        <style>{shellStyles}</style>
         <style>{adminStyles}</style>
         <a className="ui-skip" href="#main-content">
           انتقل للمحتوى

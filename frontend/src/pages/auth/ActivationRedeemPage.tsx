@@ -27,7 +27,11 @@ export function Component() {
   });
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!code.trim() || busy) return;
+    if (busy) return;
+    if (code.trim().length < 8 || code.trim().length > 120) {
+      setMessage('أدخل كود التفعيل كاملًا، من 8 إلى 120 حرفًا.');
+      return;
+    }
     setBusy(true);
     setMessage('');
     try {
@@ -56,7 +60,7 @@ export function Component() {
           <label htmlFor="activation-code">كود التفعيل</label>
           <div className="auth-input-wrap">
             <input id="activation-code" name="activation-code" dir="ltr" value={code}
-              onChange={(event) => setCode(event.target.value)} required autoComplete="off" />
+              onChange={(event) => setCode(event.target.value)} minLength={8} maxLength={120} required autoComplete="off" />
           </div>
         </div>
         <AuthSubmit busy={busy}>تفعيل الكود</AuthSubmit>

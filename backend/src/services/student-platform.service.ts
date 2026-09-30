@@ -8,8 +8,11 @@ import {
   type PrismaClient,
 } from '../generated/prisma/client.js';
 import { AppError } from '../utils/app-error.js';
+import { attemptAllowance } from './assessment-engine.js';
 import { hasScopedEntitlement } from './content-access.service.js';
 import { ProgressionService } from './progression.service.js';
+import { EnrollmentService } from './enrollment.service.js';
+import { activationScopes } from './learning-scope.service.js';
 
 const freeAccess: AccessLevel[] = [AccessLevel.FREE, AccessLevel.PREVIEW];
 
@@ -44,6 +47,7 @@ export class StudentPlatformService {
         studentPhone: true,
         parentPhone: true,
         avatarAssetId: true,
+        user: { select: { email: true } },
         grade: {
           select: {
             id: true,
@@ -92,7 +96,18 @@ export class StudentPlatformService {
 
   async roadmap(userId: string, courseId: string) {
     const student = await this.studentForUser(userId);
-    return new ProgressionService(this.prisma).courseRoadmap(student.id, courseId);
+    const context = await new EnrollmentService(this.prisma).myCourse(userId, courseId);
+    if (!context) throw new AppError(404, 'Course not found', 'COURSE_NOT_FOUND');
+    const roadmap = await new ProgressionService(this.prisma).courseRoadmap(student.id, courseId);
+    if (context.accessKind === 'ENROLLMENT') return roadmap;
+    return roadmap.flatMap((unit) => {
+      const visible = context.course.units.find((item) => item.id === unit.unitId);
+      if (!visible) return [];
+      const lessons = unit.lessons.filter((lesson) => visible.lessons.some((item) => item.id === lesson.lessonId));
+      const keys = new Set(lessons.flatMap((lesson) => lesson.requirements.map((item) => item.key)));
+      const requirements = unit.requirements.filter((item) => item.key === 'previous-unit' || unit.entitled || keys.has(item.key));
+      return [{ ...unit, lessons, requirements, progressPercent: requirements.length ? Math.round(requirements.filter((item) => item.complete).length / requirements.length * 100) : 0 }];
+    });
   }
 
   async explore(userId: string) {
@@ -264,7 +279,7 @@ export class StudentPlatformService {
         },
         resources: {
           orderBy: { position: 'asc' },
-          select: { id: true, title: true, type: true },
+            select: { id: true, title: true, type: true, createdAt: true, asset: { select: { originalName: true, byteSize: true } } },
         },
       },
     });
@@ -289,14 +304,28 @@ export class StudentPlatformService {
       videos: lesson.videos
         .filter((video) => entitled || freeAccess.includes(video.accessLevel))
         .map((video) => ({ ...video, streamPath: `/media/videos/${video.id}` })),
-      resources: lessonIsFree || entitled ? lesson.resources : [],
+        resources: lessonIsFree || entitled ? lesson.resources.map(({ asset, ...resource }) => ({ ...resource, originalName: asset.originalName, byteSize: asset.byteSize.toString() })) : [],
     };
+  }
+
+  async lessonRequirements(userId: string, lessonId: string) {
+    // Authorize the requested lesson, not the entire paid course context.
+    const lesson = await this.lesson(userId, lessonId);
+    const student = await this.studentForUser(userId);
+    const roadmap = await new ProgressionService(this.prisma).courseRoadmap(student.id, lesson.unit.course.id);
+    const row = roadmap.flatMap((unit) => unit.lessons).find((item) => item.lessonId === lessonId);
+    if (!row) throw new AppError(404, 'Lesson not found', 'LESSON_NOT_FOUND');
+    if (lesson.entitled) return row;
+    // A preview does not disclose paid homework/exam requirements or sibling lessons.
+    const allowed = new Set(lesson.videos.map((video) => `video:${video.id}`));
+    const requirements = row.requirements.filter((item) => allowed.has(item.key));
+    return { ...row, requirements, progressPercent: requirements.length ? Math.round(requirements.filter((item) => item.complete).length / requirements.length * 100) : 0 };
   }
 
   async homework(userId: string) {
     const student = await this.studentForUser(userId);
     const now = new Date();
-    return this.prisma.homework.findMany({
+    const items = await this.prisma.homework.findMany({
       where: {
         status: HomeworkStatus.PUBLISHED,
         deletedAt: null,
@@ -334,6 +363,8 @@ export class StudentPlatformService {
         coverAssetId: true,
         dueAt: true,
         maxScore: true,
+        maxAttempts: true,
+        passingPercentage: true,
         lesson: {
           select: {
             id: true,
@@ -350,37 +381,54 @@ export class StudentPlatformService {
             status: true,
             reviewStatus: true,
             score: true,
+            passed: true,
+            percentage: true,
+            attemptNo: true,
             submittedAt: true,
           },
         },
       },
     });
+    return Promise.all(items.map(async (item) => {
+      const allowance = await attemptAllowance(this.prisma, student.id, { homeworkId: item.id }, item.maxAttempts);
+      const attemptsUsed = await this.prisma.homeworkSubmission.count({ where: { homeworkId: item.id, studentId: student.id } });
+      return { ...item, ...allowance, attemptsUsed, remainingAttempts: Math.max(0, allowance.maxAttempts - attemptsUsed) };
+    }));
   }
 
   async exams(userId: string) {
     const student = await this.studentForUser(userId);
     const now = new Date();
-    return this.prisma.exam.findMany({
+    const scopes = await activationScopes(this.prisma, student.id);
+    const items = await this.prisma.exam.findMany({
       where: {
         status: ExamStatus.PUBLISHED,
         deletedAt: null,
-        course: {
-          deletedAt: null,
-          status: CourseStatus.PUBLISHED,
-          enrollments: {
+          course: {
+            deletedAt: null,
+            status: CourseStatus.PUBLISHED,
+          },
+          OR: [{ course: {
+            enrollments: {
             some: {
               studentId: student.id,
               status: EnrollmentStatus.ACTIVE,
               OR: [{ startsAt: null }, { startsAt: { lte: now } }],
               AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }],
             },
-          },
-        },
+          } } }, ...[...scopes].map(([courseId, scope]) => ({ courseId, OR: [
+            { lessonId: { in: scope.lessonIds } },
+            { lesson: { unitId: { in: scope.unitIds }, deletedAt: null, status: ContentStatus.PUBLISHED } },
+            { lessonId: null, unitId: { in: scope.unitIds } },
+          ] }))],
       },
       orderBy: [{ opensAt: 'asc' }, { createdAt: 'desc' }],
       select: {
         id: true,
         title: true,
+        instructions: true,
+        unitId: true,
+        lessonId: true,
         durationMinutes: true,
         maxAttempts: true,
         opensAt: true,
@@ -393,45 +441,24 @@ export class StudentPlatformService {
             id: true,
             attemptNo: true,
             status: true,
+            expiresAt: true,
             submittedAt: true,
             result: {
-              select: { score: true, maxScore: true, percentage: true, passed: true },
+              select: { score: true, maxScore: true, percentage: true, passed: true, publishedAt: true },
             },
           },
         },
       },
     });
+    return Promise.all(items.map(async (item) => ({ ...item, ...await attemptAllowance(this.prisma, student.id, { examId: item.id }, item.maxAttempts) })));
   }
 
   async progress(userId: string) {
-    const student = await this.studentForUser(userId);
-    const enrollments = await this.prisma.courseEnrollment.findMany({
-      where: {
-        studentId: student.id,
-        status: EnrollmentStatus.ACTIVE,
-        course: { deletedAt: null, status: CourseStatus.PUBLISHED },
-      },
-      select: { courseId: true, course: { select: { id: true, title: true } } },
-    });
-    const activations = await this.prisma.activationCodeRedemption.findMany({
-      where: { studentId: student.id },
-      select: {
-        activationCode: { select: { unit: { select: { courseId: true, course: { select: { id: true, title: true } } } } } },
-      },
-    });
-    const courses = new Map<string, { id: string; title: string }>();
-    for (const row of enrollments) courses.set(row.courseId, row.course);
-    for (const row of activations) {
-      const course = row.activationCode.unit?.course;
-      if (course) courses.set(course.id, course);
-    }
-    const progression = new ProgressionService(this.prisma);
-    return Promise.all(
-      [...courses.values()].map(async (course) => ({
-        course,
-        units: await progression.courseRoadmap(student.id, course.id),
-      })),
-    );
+    const contexts = await new EnrollmentService(this.prisma).myCourses(userId);
+    return Promise.all(contexts.map(async (context) => ({
+      course: { id: context.course.id, title: context.course.title },
+      units: await this.roadmap(userId, context.course.id),
+    })));
   }
 
   private async studentForUser(userId: string) {

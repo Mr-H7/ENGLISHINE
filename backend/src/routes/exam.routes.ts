@@ -4,6 +4,8 @@ import { ExamStatus, QuestionType, SystemRole } from '../generated/prisma/client
 import { authenticate } from '../middleware/authenticate.js';
 import { authorize } from '../middleware/authorize.js';
 import { ExamService } from '../services/exam.service.js';
+import { retireAssetIfUnreferenced } from '../services/asset-lifecycle.service.js';
+import { QuestionImageService } from '../services/question-image.service.js';
 import { uuidSchema } from '../utils/validation.js';
 
 const examSchema = z.object({
@@ -79,6 +81,23 @@ export const examRoutes: FastifyPluginAsync = async (app) => {
         return reply
           .code(201)
           .send({ data: await service.addQuestion(sectionId, questionSchema.parse(request.body)) });
+      });
+      admin.patch('/exam-attempts/:id/review', async (request) => {
+        const { id } = z.object({ id: uuidSchema }).parse(request.params);
+        const { marks } = z.object({ marks: z.array(z.object({ answerId: uuidSchema, points: z.number().nonnegative().max(1_000_000) })) }).parse(request.body);
+        return { data: await service.review(id, marks) };
+      });
+      admin.patch('/exam-questions/:id', async (request) => {
+        const { id } = z.object({ id: uuidSchema }).parse(request.params);
+        return { data: await service.updateQuestion(id, questionSchema.partial().parse(request.body)) };
+      });
+      admin.delete('/exam-questions/:id', async (request, reply) => {
+        const { id } = z.object({ id: uuidSchema }).parse(request.params);
+        const question = await app.prisma.examQuestion.findUnique({ where: { id }, select: { imageAssetId: true } });
+        if (question?.imageAssetId) await new QuestionImageService(app.prisma, app.storage).assertEditable('exam', id);
+        await service.removeQuestion(id);
+        if (question?.imageAssetId) await retireAssetIfUnreferenced(app.prisma, app.storage, question.imageAssetId).catch(() => app.log.warn('Question image cleanup deferred'));
+        return reply.code(204).send();
       });
       done();
     },

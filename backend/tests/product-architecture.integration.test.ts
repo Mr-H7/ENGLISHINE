@@ -13,6 +13,7 @@ import {
   SystemRole,
 } from '../src/generated/prisma/client.js';
 import { registerStudent } from './register-student.js';
+import { env } from '../src/config/env.js';
 
 const app = await buildApp();
 await app.ready();
@@ -112,14 +113,15 @@ void test('grade personalization and server-side content entitlements', async ()
     include: { units: { include: { lessons: true } } },
   });
   courseId = course.id;
-  const [freeLesson, paidLesson] = course.units[0]!.lessons;
+  const freeLesson = course.units[0]!.lessons.find((lesson) => lesson.position === 1);
+  const paidLesson = course.units[0]!.lessons.find((lesson) => lesson.position === 2);
   assert.ok(freeLesson && paidLesson);
-  const fixtureDirectory = resolve('storage/uploads/tests');
+  const fixtureDirectory = resolve(env.UPLOAD_DIR, 'tests');
   await mkdir(fixtureDirectory, { recursive: true });
   const videoKey = `tests/${crypto.randomUUID()}.mp4`;
   const resourceKey = `tests/${crypto.randomUUID()}.pdf`;
-  const videoPath = resolve('storage/uploads', videoKey);
-  const resourcePath = resolve('storage/uploads', resourceKey);
+  const videoPath = resolve(env.UPLOAD_DIR, videoKey);
+  const resourcePath = resolve(env.UPLOAD_DIR, resourceKey);
   await writeFile(videoPath, 'englishine-video-access-test');
   await writeFile(resourcePath, '%PDF-1.4 englishine-resource-access-test');
   fixturePaths.push(videoPath, resourcePath);
@@ -237,7 +239,7 @@ void test('grade personalization and server-side content entitlements', async ()
   assert.equal((await app.inject({ method: 'GET', url: `/api/v1/media/videos/${paidVideo.id}`, headers: secondHeaders })).statusCode, 403);
 
   const freeKey = `tests/${crypto.randomUUID()}.mp4`;
-  const freePath = resolve('storage/uploads', freeKey);
+  const freePath = resolve(env.UPLOAD_DIR, freeKey);
   await writeFile(freePath, 'englishine-explicit-free-video');
   fixturePaths.push(freePath);
   const freeAsset = await app.prisma.fileAsset.create({ data: { storageProvider: 'local',

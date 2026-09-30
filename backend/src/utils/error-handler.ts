@@ -1,7 +1,7 @@
 import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
-import { env } from '../config/env.js';
 import { AppError } from './app-error.js';
+import { isRetryableWriteConflict } from './prisma-conflict.js';
 
 export function registerErrorHandlers(app: FastifyInstance): void {
   app.setNotFoundHandler(async (request, reply) => {
@@ -17,8 +17,9 @@ export function registerErrorHandlers(app: FastifyInstance): void {
     const isAppError = error instanceof AppError;
     const isValidationError = error instanceof ZodError;
     const prismaCode = 'code' in error && typeof error.code === 'string' ? error.code : undefined;
+    const writeConflict = isRetryableWriteConflict(error);
     const prismaStatus =
-      prismaCode === 'P2002' || prismaCode === 'P2003'
+      writeConflict || prismaCode === 'P2002' || prismaCode === 'P2003' || prismaCode === 'P2034'
         ? 409
         : prismaCode === 'P2025'
           ? 404
@@ -35,7 +36,7 @@ export function registerErrorHandlers(app: FastifyInstance): void {
       ? error.code
       : isValidationError
         ? 'VALIDATION_ERROR'
-        : prismaCode === 'P2002'
+        : writeConflict || prismaCode === 'P2002' || prismaCode === 'P2034'
           ? 'CONFLICT'
           : prismaCode === 'P2003'
             ? 'RELATION_CONFLICT'
@@ -43,6 +44,14 @@ export function registerErrorHandlers(app: FastifyInstance): void {
               ? 'NOT_FOUND'
               : (error.code ?? 'INTERNAL_SERVER_ERROR');
     const isServerError = statusCode >= 500;
+    const safeDatabaseMessage =
+      writeConflict || prismaCode === 'P2002' || prismaCode === 'P2034'
+        ? 'يوجد تعارض مع البيانات الحالية. حدّث الصفحة وحاول مرة أخرى.'
+        : prismaCode === 'P2003'
+          ? 'لا يمكن إكمال العملية لوجود بيانات مرتبطة.'
+          : prismaCode === 'P2025'
+            ? 'العنصر المطلوب غير موجود.'
+            : undefined;
 
     request.log[isServerError ? 'error' : 'warn']({ err: error }, error.message);
 
@@ -50,7 +59,7 @@ export function registerErrorHandlers(app: FastifyInstance): void {
       error: {
         code,
         message:
-          isServerError && env.NODE_ENV === 'production' ? 'Internal server error.' : error.message,
+          safeDatabaseMessage ?? (isServerError ? 'تعذر إكمال الطلب. حاول مرة أخرى.' : error.message),
         ...(isAppError && error.details !== undefined ? { details: error.details } : {}),
         ...(isValidationError ? { details: error.issues } : {}),
       },

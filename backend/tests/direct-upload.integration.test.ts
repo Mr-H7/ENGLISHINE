@@ -115,10 +115,10 @@ const course = await app.prisma.course.create({
 courseId = course.id;
 lessonId = course.units[0]!.lessons[0]!.id;
 
-const fixtureDirectory = resolve('storage/uploads/tests');
+const fixtureDirectory = resolve(env.UPLOAD_DIR, 'tests');
 await mkdir(fixtureDirectory, { recursive: true });
 const rangeKey = `tests/${crypto.randomUUID()}.mp4`;
-const rangePath = resolve('storage/uploads', rangeKey);
+const rangePath = resolve(env.UPLOAD_DIR, rangeKey);
 await writeFile(rangePath, 'englishine-range-direct-upload');
 fixturePaths.push(rangePath);
 const rangeAsset = await app.prisma.fileAsset.create({
@@ -315,7 +315,37 @@ void describe('direct-to-R2 upload finalize', { concurrency: 1 }, () => {
     assert.equal(asset, null);
   });
 
-  void test('authorization cannot be reused', async () => {
+  void test('stale position zero still appends when the lesson already has a video', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: `/api/v1/admin/lessons/${lessonId}/uploads/authorize`,
+      headers: adminHeaders,
+      payload: { ...videoAuthorizePayload, title: `فيديو ${crypto.randomUUID().slice(0, 8)}`, position: 0 },
+    });
+    assert.equal(response.statusCode, 201);
+    const session = response.json<{ data: { authorization: string; storageKey: string } }>().data;
+    storage.objects.set(session.storageKey, {
+      size: videoAuthorizePayload.byteSize,
+      mimeType: 'video/mp4',
+      checksum: 'etag-stale-position',
+    });
+    const ticket = verifyDirectUploadAuthorization(session.authorization, adminId);
+    assert.equal(ticket.position, 0);
+    const finalized = await app.inject({
+      method: 'POST',
+      url: '/api/v1/admin/uploads/finalize',
+      headers: adminHeaders,
+      payload: { authorization: session.authorization },
+    });
+    assert.equal(finalized.statusCode, 201);
+    const created = finalized.json<{ data: { id: string; fileAssetId: string; position: number } }>().data;
+    createdAssetIds.push(created.fileAssetId);
+    assert.notEqual(created.position, 0);
+    assert.ok(created.position > 99);
+    assert.ok(storage.objects.has(session.storageKey));
+  });
+
+  void test('successful finalize is idempotent for the same uploaded object', async () => {
     const session = await authorizeVideo();
     storage.objects.set(session.storageKey, {
       size: videoAuthorizePayload.byteSize,
@@ -337,8 +367,11 @@ void describe('direct-to-R2 upload finalize', { concurrency: 1 }, () => {
       headers: adminHeaders,
       payload: { authorization: session.authorization },
     });
-    assert.equal(second.statusCode, 409);
-    assert.equal(second.json<{ error: { code: string } }>().error.code, 'UPLOAD_AUTHORIZATION_REUSED');
+    assert.equal(second.statusCode, 201);
+    const retried = second.json<{ data: { id: string; fileAssetId: string } }>().data;
+    assert.equal(retried.id, created.id);
+    assert.equal(retried.fileAssetId, created.fileAssetId);
+    assert.equal(await app.prisma.video.count({ where: { fileAssetId: created.fileAssetId } }), 1);
   });
 
   void test('expired upload authorization is not treated as a session 401', () => {
@@ -408,5 +441,44 @@ void describe('direct-to-R2 upload finalize', { concurrency: 1 }, () => {
     assert.notEqual(replaced.fileAssetId, before.fileAssetId);
     assert.ok((await app.prisma.fileAsset.findUniqueOrThrow({ where: { id: before.fileAssetId! } })).deletedAt);
     assert.equal((await app.prisma.video.count({ where: { id: rangeVideoId, deletedAt: null } })), 1);
+  });
+
+  void test('concurrent finalize of two tickets assigns distinct positions', async () => {
+    const tickets = await Promise.all(
+      [0, 1].map(async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: `/api/v1/admin/lessons/${lessonId}/uploads/authorize`,
+          headers: adminHeaders,
+          payload: { ...videoAuthorizePayload, title: `فيديو ${crypto.randomUUID().slice(0, 8)}`, position: 0 },
+        });
+        assert.equal(response.statusCode, 201);
+        const session = response.json<{ data: { authorization: string; storageKey: string } }>().data;
+        storage.objects.set(session.storageKey, {
+          size: videoAuthorizePayload.byteSize,
+          mimeType: 'video/mp4',
+          checksum: `etag-${session.storageKey}`,
+        });
+        return session;
+      }),
+    );
+    const results = await Promise.all(
+      tickets.map((session) =>
+        app.inject({
+          method: 'POST',
+          url: '/api/v1/admin/uploads/finalize',
+          headers: adminHeaders,
+          payload: { authorization: session.authorization },
+        }),
+      ),
+    );
+    for (const result of results) {
+      assert.equal(result.statusCode, 201);
+      createdAssetIds.push(result.json<{ data: { fileAssetId: string } }>().data.fileAssetId);
+    }
+    const positions = results
+      .map((result) => result.json<{ data: { position: number } }>().data.position)
+      .sort((a, b) => a - b);
+    assert.equal(new Set(positions).size, 2);
   });
 });

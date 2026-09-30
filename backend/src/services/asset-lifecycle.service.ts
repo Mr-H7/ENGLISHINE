@@ -15,11 +15,16 @@ export async function retireAssetIfUnreferenced(
       lessonResources: { select: { id: true } },
       assignmentSubmissions: { select: { id: true } },
       certificates: { select: { id: true } },
+      homeworkImportSources: { select: { id: true } },
+      homeworkQuestionImages: { select: { id: true } },
+      examQuestionImages: { select: { id: true } },
+      studentAvatars: { select: { id: true } },
     },
   });
   if (!asset || asset.deletedAt || asset.courseCover || asset.unitCover || asset.homeworkCover ||
       asset.videoFile || asset.videoThumbnails.length || asset.lessonResources.length ||
-      asset.assignmentSubmissions.length || asset.certificates.length) return;
+      asset.assignmentSubmissions.length || asset.certificates.length || asset.homeworkImportSources.length ||
+      asset.homeworkQuestionImages.length || asset.examQuestionImages.length || asset.studentAvatars.length) return;
   // Keep an active FileAsset record if storage deletion fails, so a cleanup job can retry.
   await storage.remove(asset.storageKey, asset.storageProvider);
   await prisma.fileAsset.update({ where: { id: assetId }, data: { deletedAt: new Date() } });

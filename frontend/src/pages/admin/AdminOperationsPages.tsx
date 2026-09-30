@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata';
 import { AdminCoursesPage } from '@/pages/admin/AdminCoursesStudio';
 import { HomeworkEditor } from '@/components/admin/HomeworkEditor';
+import { AssessmentWorkbench } from '@/components/admin/AssessmentWorkbench';
 import {
   adminApi,
   type AdminCourse,
@@ -179,6 +180,7 @@ export function AdminStudentsPage() {
 }
 
 export function AdminHomeworkPage() {
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [items, setItems] = useState<AdminHomework[]>([]);
   const [courses, setCourses] = useState<AdminCourseDetails[]>([]);
   const [lessonId, setLessonId] = useState('');
@@ -219,7 +221,7 @@ export function AdminHomeworkPage() {
       <PageIntro
         eyebrow="الواجبات"
         title="واجبات الدروس"
-        description="إنشاء واجب منشور مرتبط بدرس. يظهر للطلاب بعد تفعيل الكورس فقط."
+        description="إنشاء مسودة واجب، مراجعة الأسئلة، ثم النشر للطلاب ضمن المحتوى المفعّل."
       />
       <StatusNote message={error} error />
       <StatusNote message={status} />
@@ -229,7 +231,7 @@ export function AdminHomeworkPage() {
           event.preventDefault();
           if (!lessonId || !title.trim()) return;
           void adminApi
-            .createHomework({ lessonId, title: title.trim(), instructions: instructions.trim(), status: 'PUBLISHED' })
+            .createHomework({ lessonId, title: title.trim(), instructions: instructions.trim(), status: 'DRAFT' })
             .then(() => {
               setTitle('');
               setInstructions('');
@@ -261,7 +263,7 @@ export function AdminHomeworkPage() {
           <textarea rows={4} value={instructions} onChange={(event) => setInstructions(event.target.value)} />
         </label>
         <button className="ui-button" type="submit">
-          إنشاء واجب منشور
+          إنشاء مسودة واجب
         </button>
       </form>
       <section className="admin-card">
@@ -275,6 +277,7 @@ export function AdminHomeworkPage() {
                   {item.lesson.title} · {item.status} · أسئلة: {item._count.questions}
                 </small>
                 <button className="ui-button ui-button-secondary" type="button" onClick={() => setEditing(item)}>تعديل الواجب والغلاف</button>
+                <button className="ui-button ui-button-secondary" type="button" onClick={() => setAssessmentId(item.id)}>الأسئلة والمحاولات والنشر</button>
               </li>
             ))}
           </ul>
@@ -283,11 +286,13 @@ export function AdminHomeworkPage() {
         )}
       </section>
       {editing ? <HomeworkEditor key={editing.id} item={editing} onClose={() => setEditing(null)} onChanged={reload} /> : null}
+      {assessmentId ? <AssessmentWorkbench key={assessmentId} kind="homework" id={assessmentId} onChanged={reload} onClose={() => setAssessmentId(null)} /> : null}
     </div>
   );
 }
 
 export function AdminExamsPage() {
+  const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [items, setItems] = useState<AdminExam[]>([]);
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [courseId, setCourseId] = useState('');
@@ -312,7 +317,7 @@ export function AdminExamsPage() {
       <PageIntro
         eyebrow="الاختبارات"
         title="اختبارات الكورسات"
-        description="إنشاء اختبار منشور مرتبط بكورس. يظهر للطلاب بعد تفعيل الكورس فقط."
+        description="إنشاء مسودة اختبار، مراجعة الأسئلة، ثم نشر التقييم ومتابعة المحاولات."
       />
       <StatusNote message={error} error />
       <StatusNote message={status} />
@@ -322,7 +327,7 @@ export function AdminExamsPage() {
           event.preventDefault();
           if (!courseId || !title.trim()) return;
           void adminApi
-            .createExam({ courseId, title: title.trim(), status: 'PUBLISHED' })
+            .createExam({ courseId, title: title.trim(), status: 'DRAFT' })
             .then(() => {
               setTitle('');
               setStatus('تم إنشاء الاختبار.');
@@ -349,7 +354,7 @@ export function AdminExamsPage() {
           <input value={title} onChange={(event) => setTitle(event.target.value)} required />
         </label>
         <button className="ui-button" type="submit">
-          إنشاء اختبار منشور
+          إنشاء مسودة اختبار
         </button>
       </form>
       <section className="admin-card">
@@ -361,6 +366,7 @@ export function AdminExamsPage() {
                 <small>
                   {item.course?.title ?? 'كورس'} · {item.status}
                 </small>
+                <button className="ui-button ui-button-secondary" type="button" onClick={() => setAssessmentId(item.id)}>إعداد الأسئلة والمحاولات والنشر</button>
               </li>
             ))}
           </ul>
@@ -368,6 +374,7 @@ export function AdminExamsPage() {
           <p>لا توجد اختبارات بعد.</p>
         )}
       </section>
+      {assessmentId ? <AssessmentWorkbench key={assessmentId} kind="exam" id={assessmentId} onChanged={reload} onClose={() => setAssessmentId(null)} /> : null}
     </div>
   );
 }

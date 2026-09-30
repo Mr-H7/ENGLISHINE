@@ -1,219 +1,226 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { AppIcon } from '@/components/icons/AppIcon';
-import type { AppIconName } from '@/components/icons/AppIcon';
 import {
-  AnnouncementCard,
-  ActivityCard,
-  ContinueCard,
-  ExamCard,
-  HomeworkCard,
-  ProgressCard,
-  QuickActionCard,
-} from '@/components/student/DashboardCards';
-import { useSession } from '@/hooks/useSession';
+  NextAction,
+  StudentEmptyState,
+  StudentLoading,
+  StudentProgressBar,
+} from '@/components/student/StudentExperience';
+import { deriveNextAction } from '@/features/student/student-learning';
 import { useDocumentMetadata } from '@/hooks/useDocumentMetadata';
+import { useSession } from '@/hooks/useSession';
 import { useStudentPlatform } from '@/hooks/useStudentPlatform';
-import { studentPlatformApi, type MyCourseEnrollment } from '@/services/student-platform';
-import { useEffect, useState } from 'react';
+import {
+  studentPlatformApi,
+  type MyCourseEnrollment,
+  type RoadmapUnit,
+  type StudentCourseEnrollment,
+  type StudentExam,
+  type StudentHomework,
+} from '@/services/student-platform';
+import { mediaUrl } from '@/services/api';
 
-const quickActions = [
-  {
-    href: '/student/courses/',
-    icon: 'courses' as const,
-    title: 'كورساتي',
-    description: 'المحتوى المفعّل لحسابك',
-  },
-  {
-    href: '/student/explore/',
-    icon: 'courses' as const,
-    title: 'استكشف الكورسات',
-    description: 'كورسات صفك الدراسي',
-  },
-  {
-    href: '/student/free/',
-    icon: 'courses' as const,
-    title: 'محتوى مجاني',
-    description: 'ريلز وفيديوهات وعينات',
-  },
-  {
-    href: '/student/homework/',
-    icon: 'homework' as const,
-    title: 'الواجب',
-    description: 'راجع المطلوب منك',
-  },
-  {
-    href: '/student/exams/',
-    icon: 'exams' as const,
-    title: 'الاختبارات',
-    description: 'المواعيد والنتائج',
-  },
-  {
-    href: '/student/progress/',
-    icon: 'progress' as const,
-    title: 'التقدم',
-    description: 'نتائجك المحفوظة',
-  },
-];
+interface DashboardState {
+  loading: boolean;
+  error: string | null;
+  courses: MyCourseEnrollment[];
+  course: StudentCourseEnrollment | null;
+  roadmap: RoadmapUnit[];
+  homework: StudentHomework[];
+  exams: StudentExam[];
+}
 
-const quickStats: { label: string; icon: AppIconName }[] = [
-  { label: 'كورسات مفعّلة', icon: 'courses' },
-  { label: 'واجبات متبقية', icon: 'homework' },
-  { label: 'اختبارات', icon: 'exams' },
-];
+const emptyState: DashboardState = {
+  loading: true,
+  error: null,
+  courses: [],
+  course: null,
+  roadmap: [],
+  homework: [],
+  exams: [],
+};
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'صباح الخير';
+  if (hour < 18) return 'مساء الخير';
+  return 'أهلًا بك';
+}
 
 export function Component() {
   const session = useSession();
   const { profile } = useStudentPlatform();
-  const [courses, setCourses] = useState<MyCourseEnrollment[]>([]);
+  const [state, setState] = useState<DashboardState>(emptyState);
+
   useDocumentMetadata({
-    title: 'لوحة التعلم — Englishine',
-    description: 'مساحة الطالب اليومية لمتابعة التعلم والواجبات والتقدم.',
+    title: 'الرئيسية — Englishine',
+    description: 'خطوتك التعليمية التالية في Englishine.',
     openGraph: [],
     structuredData: [],
   });
+
   useEffect(() => {
     let active = true;
-    void studentPlatformApi.myCourses().then(
-      (items) => {
-        if (active) setCourses(items);
-      },
-      () => {
-        if (active) setCourses([]);
-      },
-    );
+    void (async () => {
+      try {
+        const [courses, homework, exams] = await Promise.all([
+          studentPlatformApi.myCourses(),
+          studentPlatformApi.homework(),
+          studentPlatformApi.exams(),
+        ]);
+        const ordered = [...courses.filter((item) => item.courseProgress?.lastLessonId), ...courses.filter((item) => !item.courseProgress?.lastLessonId)];
+        let course: StudentCourseEnrollment | null = null;
+        let roadmap: RoadmapUnit[] = [];
+        for (const candidate of ordered) {
+          const [nextCourse, nextRoadmap] = await Promise.all([
+            studentPlatformApi.myCourse(candidate.course.id), studentPlatformApi.roadmap(candidate.course.id),
+          ]);
+          const actionable = nextRoadmap.some((unit) => unit.state !== 'LOCKED' && unit.state !== 'COMPLETED' && (unit.entitled || unit.contextAccessible));
+          if (!course || actionable) { course = nextCourse; roadmap = nextRoadmap; }
+          if (actionable) break;
+        }
+        if (active) {
+          setState({
+            loading: false,
+            error: null,
+            courses,
+            course,
+            roadmap,
+            homework,
+            exams,
+          });
+        }
+      } catch (reason) {
+        if (active) {
+          setState((current) => ({
+            ...current,
+            loading: false,
+            error:
+              reason instanceof Error
+                ? reason.message
+                : 'تعذر تحميل مساحة التعلم.',
+          }));
+        }
+      }
+    })();
     return () => {
       active = false;
     };
   }, []);
+
+  const action = useMemo(
+    () =>
+      state.course
+        ? deriveNextAction(
+            state.course,
+            state.roadmap,
+            state.homework,
+            state.exams,
+          )
+        : null,
+    [state.course, state.roadmap, state.homework, state.exams],
+  );
+
+  const currentUnitState = state.roadmap.find(
+    (unit) => unit.state !== 'COMPLETED',
+  );
+  const currentUnit = state.course?.course.units.find(
+    (unit) => unit.id === currentUnitState?.unitId,
+  );
+  const completedRequirements = state.roadmap.reduce(
+    (total, unit) =>
+      total + unit.requirements.filter((requirement) => requirement.complete).length,
+    0,
+  );
+  const allRequirements = state.roadmap.reduce(
+    (total, unit) => total + unit.requirements.length,
+    0,
+  );
+  const progressPercent = allRequirements
+    ? Math.round((completedRequirements / allRequirements) * 100)
+    : Number(state.course?.courseProgress?.progressPercent ?? 0);
   const studentName =
-    session.status === 'authenticated' ? session.user.displayName : null;
+    profile?.fullName ??
+    (session.status === 'authenticated' ? session.user.displayName : 'طالب Englishine');
+
+  if (state.loading) return <StudentLoading label="جارٍ تجهيز خطوتك التالية" />;
+
   return (
-    <div className="student-dashboard">
-      <section
-        className="student-command-hero"
-        aria-labelledby="student-welcome"
-      >
-        <div className="student-command-copy">
-          <span className="student-kicker">مساحة التعلم اليومية</span>
-          <h1 id="student-welcome">
-            {studentName
-              ? `أهلًا يا ${studentName}`
-              : 'أهلًا بيك في Englishine'}
-          </h1>
-          <p>ابدأ من الكورسات المفعّلة أو المحتوى المجاني المناسب لصفك.</p>
-          <div className="student-hero-meta">
-            <span>الصف: {profile?.grade?.nameAr ?? 'غير محدد'}</span>
-            <span>الكورسات المفعّلة: {courses.length}</span>
-          </div>
-          <div className="student-hero-actions">
-            <Link className="student-primary-action" to="/student/courses/">
-              كورساتي
-            </Link>
-            <Link className="student-secondary-action" to="/student/free/">
-              المحتوى المجاني
-            </Link>
-          </div>
-        </div>
-        <div
-          className="student-progress-ring"
-          aria-label="عدد الكورسات المفعّلة"
-        >
-          <span>{courses.length}</span>
-          <small>كورسات مفعّلة</small>
-        </div>
-      </section>
+    <div className="sx-page sx-home">
+      <header className="sx-home-heading">
+        <span>{profile?.grade?.nameAr ?? 'مساحة التعلم'}</span>
+        <h1>{greeting()}، {studentName}</h1>
+        <p>خطوتك الأكاديمية التالية جاهزة للمتابعة.</p>
+      </header>
 
-      <section aria-labelledby="quick-stats-title">
-        <div className="student-section-heading">
-          <div>
-            <span>نظرة سريعة</span>
-            <h2 id="quick-stats-title">وضعك اليوم</h2>
-          </div>
-        </div>
-        <div className="student-stat-grid">
-          {quickStats.map(({ label, icon }) => (
-            <article className="student-stat-card" key={label}>
-              <span>
-                <AppIcon name={icon} />
-              </span>
-              <strong>{label === 'كورسات مفعّلة' ? courses.length : '—'}</strong>
-              <small>{label}</small>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="student-dashboard-grid" aria-label="ملخص التعلم">
-        <ContinueCard />
-        <HomeworkCard />
-        <ExamCard />
-        <AnnouncementCard />
-      </section>
-
-      <section aria-labelledby="my-courses-title">
-        <div className="student-section-heading">
-          <div>
-            <span>مساراتك</span>
-            <h2 id="my-courses-title">كورساتي</h2>
-          </div>
-          <Link to="/student/courses/">عرض الكل</Link>
-        </div>
-        {courses.length ? (
-          <div className="learning-course-grid">
-            {courses.slice(0, 3).map((item) => (
-              <article className="learning-course-card student-catalog-card" key={item.id}>
-                <div className="learning-course-body">
-                  <span className="student-kicker">
-                    {item.course.grade?.nameAr ?? 'كورس مفعّل'}
-                  </span>
-                  <h2>{item.course.title}</h2>
-                  <p>
-                    {item.course.shortDescription ??
-                      'المحتوى المفعّل لحسابك جاهز للمتابعة.'}
-                  </p>
-                  <Link
-                    className="student-primary-action"
-                    to={`/student/courses/${item.course.id}/`}
-                  >
-                    فتح الكورس
-                  </Link>
+      {state.error ? (
+        <StudentEmptyState
+          title="تعذر تحميل مساحة التعلم"
+          description={state.error}
+        />
+      ) : state.course && action ? (
+        <>
+          <section className="sx-continue" aria-labelledby="continue-title">
+            <div className="sx-continue-copy">
+              <span className="sx-eyebrow">أكمل من حيث توقفت</span>
+              <small>{state.course.course.title}</small>
+              {state.course.accessKind === 'ACTIVATION' ? <small>تفعيل وحدات أو دروس محددة</small> : null}
+              <h2 id="continue-title">
+                {currentUnit?.title ?? action.description}
+              </h2>
+              <p>{action.description}</p>
+              <StudentProgressBar
+                value={currentUnitState?.progressPercent ?? progressPercent}
+                label={currentUnit ? 'إنجاز الوحدة' : 'تقدم الكورس'}
+              />
+              <NextAction action={action} compact />
+            </div>
+            <div className="sx-continue-cover">
+              {currentUnit?.coverAssetId ? (
+                <img
+                  src={mediaUrl(`/media/covers/unit/${currentUnit.id}`)}
+                  alt={`غلاف ${currentUnit.title}`}
+                />
+              ) : (
+                <div className="sx-unit-fallback" aria-hidden="true">
+                  <span>Englishine</span>
+                  <AppIcon name="courses" />
                 </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="student-empty-wide">
-            <AppIcon name="courses" />
-            <strong>لم يتم تفعيل كورسات بعد</strong>
-            <p>
-              التسجيل لا يفتح الكورسات المدفوعة. يظهر هنا فقط ما يتم تفعيله
-              لحسابك، مع محتوى مجاني مناسب لصفك.
-            </p>
-            <Link className="student-secondary-action" to="/student/explore/">
-              استكشف كورسات صفك
+              )}
+            </div>
+          </section>
+
+          <section className="sx-progress-snapshot">
+            <div>
+              <span className="sx-eyebrow">خريطة تقدمك</span>
+              <h2>
+                {completedRequirements} من {allRequirements} خطوات مكتملة
+              </h2>
+            </div>
+            <StudentProgressBar value={progressPercent} label="إجمالي التقدم" />
+            <Link to="/student/progress/">
+              عرض التقدم
+              <AppIcon name="arrow" />
             </Link>
-          </div>
-        )}
-      </section>
-
-      <section className="student-insight-grid" aria-label="التقدم">
-        <ProgressCard />
-        <ActivityCard />
-      </section>
-
-      <section aria-labelledby="quick-actions-title">
-        <div className="student-section-heading">
-          <div>
-            <span>اختصارات</span>
-            <h2 id="quick-actions-title">وصول سريع</h2>
-          </div>
-        </div>
-        <div className="quick-actions-grid">
-          {quickActions.map((action) => (
-            <QuickActionCard key={action.href} {...action} />
-          ))}
-        </div>
-      </section>
+          </section>
+        </>
+      ) : (
+        <StudentEmptyState
+          title="لم يتم تفعيل كورسات بعد"
+          description="يمكنك البدء بالمحتوى المجاني أو استكشاف الكورسات المناسبة لصفك."
+          action={
+            <div className="sx-empty-actions">
+              <Link className="sx-button sx-button-primary" to="/student/free/">
+                المحتوى المجاني
+              </Link>
+              <Link className="sx-button sx-button-secondary" to="/student/explore/">
+                استكشف الكورسات
+              </Link>
+            </div>
+          }
+        />
+      )}
     </div>
   );
 }
