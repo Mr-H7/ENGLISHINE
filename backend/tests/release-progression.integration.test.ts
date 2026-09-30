@@ -62,6 +62,39 @@ if (!['localhost', '127.0.0.1'].includes(new URL(env.DATABASE_URL).hostname) ||
       const homework = new HomeworkService(app.prisma);
       const exam = new ExamService(app.prisma);
       const lessonId = course.units[0]!.lessons[0]!.id;
+      const gateHomework = await homework.create({ lessonId, title: 'Actual passed prerequisite', passingPercentage: 60 });
+      const gateQuestion = await homework.addQuestion(gateHomework.id, { type: 'SINGLE_CHOICE', prompt: 'Choose A', position: 0, points: 1,
+        choices: [{ label: 'A', position: 0, isCorrect: true }, { label: 'B', position: 1 }] });
+      await homework.update(gateHomework.id, { status: 'PUBLISHED' });
+      const lockedPlaceholder = await app.prisma.lesson.create({ data: { unitId: course.units[0]!.id,
+        title: 'Locked empty prerequisite target', position: 2, status: 'PUBLISHED', accessLevel: 'ENROLLED' } });
+      await app.prisma.progressionRequirement.create({ data: { lessonId: lockedPlaceholder.id, type: 'HOMEWORK_PASSED', targetId: gateHomework.id } });
+      const blockedByGate = await progression.courseRoadmap(student.id, courseId);
+      assert.equal(blockedByGate[0]!.lessons[1]!.state, 'LOCKED');
+      assert.equal(blockedByGate[0]!.state, 'IN_PROGRESS');
+      assert.equal(blockedByGate[1]!.state, 'LOCKED');
+      const gateAttempt = await homework.start(userId, gateHomework.id);
+      const gateSubmission = await homework.submit(userId, gateHomework.id,
+        [{ questionId: gateQuestion.id, selectedChoiceId: gateQuestion.choices.find((choice) => choice.isCorrect)!.id }], gateAttempt.id);
+      assert.equal(gateSubmission.passed, true);
+      const unlockedByGate = await progression.courseRoadmap(student.id, courseId);
+      assert.equal(unlockedByGate[0]!.lessons[1]!.state, 'AVAILABLE');
+      assert.equal(unlockedByGate[0]!.state, 'COMPLETED');
+      assert.equal(unlockedByGate[1]!.state, 'COMPLETED');
+      const target = await app.prisma.lesson.create({ data: { unitId: course.units[2]!.id, title: 'Empty prerequisite target', position: 0,
+        status: 'PUBLISHED', accessLevel: 'ENROLLED' } });
+      await app.prisma.progressionRequirement.create({ data: { lessonId: target.id, type: 'HOMEWORK_PASSED', targetId: gateHomework.id } });
+      const afterGate = await progression.courseRoadmap(student.id, courseId);
+      assert.equal(afterGate[2]!.lessons[0]!.state, 'AVAILABLE');
+      assert.equal(afterGate[2]!.lessons[0]!.progressPercent, 0);
+      assert.equal(afterGate[2]!.state, 'AVAILABLE');
+      assert.equal(afterGate[2]!.progressPercent, 0);
+      assert.equal(afterGate[3]!.state, 'LOCKED');
+      await app.prisma.studentLessonProgress.create({ data: { studentId: student.id, lessonId: target.id,
+        status: 'COMPLETED', startedAt: new Date(), completedAt: new Date() } });
+      const afterExplicitCompletion = await progression.courseRoadmap(student.id, courseId);
+      assert.equal(afterExplicitCompletion[2]!.state, 'COMPLETED');
+      assert.equal(afterExplicitCompletion[3]!.state, 'AVAILABLE');
       await assert.rejects(homework.create({ lessonId, title: 'Empty', status: 'PUBLISHED' }), { code: 'QUESTIONS_REQUIRED' });
       const draftHomework = await homework.create({ lessonId, title: 'Draft' });
       await assert.rejects(homework.update(draftHomework.id, { status: 'PUBLISHED' }), { code: 'QUESTIONS_REQUIRED' });
@@ -84,6 +117,8 @@ if (!['localhost', '127.0.0.1'].includes(new URL(env.DATABASE_URL).hostname) ||
       assert.equal((await exam.update(draftExam.id, { status: 'PUBLISHED' })).status, 'PUBLISHED');
     } finally {
       if (courseId) {
+        await app.prisma.homeworkSubmission.deleteMany({ where: { homework: { lesson: { unit: { courseId } } } } });
+        await app.prisma.studentLessonProgress.deleteMany({ where: { lesson: { unit: { courseId } } } });
         await app.prisma.exam.deleteMany({ where: { courseId } });
         await app.prisma.homework.deleteMany({ where: { lesson: { unit: { courseId } } } });
         await app.prisma.studentVideoProgress.deleteMany({ where: { video: { lesson: { unit: { courseId } } } } });

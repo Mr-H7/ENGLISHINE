@@ -84,7 +84,13 @@ export class ProgressionService {
           await this.lessonProgression(studentId, courseId, unit.id, lesson, previousComplete, unitEntitled),
         );
       }
-      const lessonComplete = lessons.every((item) => item.state === 'COMPLETED');
+      // A placeholder lesson with no learning activity is neutral. It cannot
+      // complete an otherwise empty unit, or hold back completed real work.
+      const substantiveLessons = lessons.filter((item, index) => {
+        const source = unit.lessons[index];
+        return Boolean(source?.videos.length || source?.homework.length || source?.exams.length || item.state === 'COMPLETED' || item.state === 'LOCKED');
+      });
+      const lessonComplete = substantiveLessons.every((item) => item.state === 'COMPLETED');
       const contextAccessible = unitEntitled || lessons.some((lesson) => lesson.entitled);
       const examRequirements = await this.examRequirements(studentId, unit.exams.map((exam) => exam.id));
       const configured = unit.progressionRequirements.filter((item) => item.type === 'PREVIOUS_UNIT_COMPLETE');
@@ -94,7 +100,7 @@ export class ProgressionService {
       const dependenciesMet = authored.every((item) => item.complete);
       // An empty container is neutral, not completed learning. An exam-only
       // unit can complete after its actual assessment has been completed.
-      const hasWork = lessons.length > 0 || examRequirements.length > 0;
+      const hasWork = substantiveLessons.length > 0 || examRequirements.length > 0;
       const complete: boolean = hasWork && lessonComplete && examRequirements.every((item) => item.complete) && dependenciesMet && previousMet;
       const inProgress = lessons.some((item) => item.state === 'IN_PROGRESS' || item.state === 'COMPLETED');
       const state: ProgressionState = !previousMet || !dependenciesMet
@@ -108,7 +114,7 @@ export class ProgressionService {
         ...(!previousMet ? [{ key: 'previous-unit', label: 'إكمال الوحدة السابقة', complete: false, current: true }] : []),
         ...lessons.flatMap((lesson) => lesson.requirements),
         ...examRequirements,
-        ...authored,
+        ...authored.filter((item) => !item.complete),
       ].map((requirement) => [requirement.key, requirement])).values()];
       const currentIndex = requirements.findIndex((item) => !item.complete);
       const marked = requirements.map((item, index) => ({ ...item, current: index === currentIndex }));
@@ -216,12 +222,14 @@ export class ProgressionService {
     const homeworkRequirements = await this.homeworkRequirements(studentId, lesson.homework.map((item) => item.id));
     const examRequirements = await this.examRequirements(studentId, lesson.exams.map((item) => item.id));
     const authored = await this.authoredRequirements(studentId, await this.prisma.progressionRequirement.findMany({ where: { OR: [{ lessonId: lesson.id }, { unitId }] } }));
-    const requirements = [...videoRequirements, ...homeworkRequirements, ...examRequirements, ...authored];
-    const explicitCompletion = requirements.length === 0 && Boolean(await this.prisma.studentLessonProgress.findFirst({
+    const learningRequirements = [...videoRequirements, ...homeworkRequirements, ...examRequirements];
+    // Prerequisites unlock a lesson; satisfying them is not lesson activity.
+    const requirements = [...learningRequirements, ...authored.filter((item) => !item.complete)];
+    const explicitCompletion = learningRequirements.length === 0 && Boolean(await this.prisma.studentLessonProgress.findFirst({
       where: { studentId, lessonId: lesson.id, status: ProgressStatus.COMPLETED },
     }));
-    const complete = requirements.length > 0 ? requirements.every((item) => item.complete) : explicitCompletion;
-    const started = requirements.some((item) => item.complete);
+    const complete = learningRequirements.length > 0 ? learningRequirements.every((item) => item.complete) : explicitCompletion;
+    const started = learningRequirements.some((item) => item.complete);
     const state: ProgressionState = !previousUnitComplete || authored.some((item) => !item.complete)
       ? 'LOCKED'
       : !entitled
