@@ -113,10 +113,17 @@ void test('activation-only hierarchy and multi-answer homework preserve authoriz
   assert.equal((await enrollment.myCourses(owner.userId)).length, 1);
 
   const examService = new ExamService(app.prisma);
-  const ownedExam = await examService.create({ courseId, lessonId: lesson.id, title: 'Scoped exam', status: 'PUBLISHED' });
-  const siblingExam = await examService.create({ courseId, lessonId: sibling.id, title: 'Sibling exam', status: 'PUBLISHED' });
-  const unitExam = await examService.create({ courseId, unitId: first.id, title: 'Unit exam', status: 'PUBLISHED' });
-  const lockedExam = await examService.create({ courseId, unitId: second.id, title: 'Locked unit exam', status: 'PUBLISHED' });
+  async function readyExam(input: { courseId: string; lessonId?: string; unitId?: string; title: string }) {
+    const row = await examService.create(input);
+    const section = await examService.addSection(row.id, { title: 'Questions', position: 0 });
+    await examService.addQuestion(section.id, { type: 'SINGLE_CHOICE', prompt: 'Choose A', position: 0, points: 1,
+      choices: [{ label: 'A', position: 0, isCorrect: true }, { label: 'B', position: 1 }] });
+    return examService.update(row.id, { status: 'PUBLISHED' });
+  }
+  const ownedExam = await readyExam({ courseId, lessonId: lesson.id, title: 'Scoped exam' });
+  const siblingExam = await readyExam({ courseId, lessonId: sibling.id, title: 'Sibling exam' });
+  const unitExam = await readyExam({ courseId, unitId: first.id, title: 'Unit exam' });
+  const lockedExam = await readyExam({ courseId, unitId: second.id, title: 'Locked unit exam' });
   assert.deepEqual((await platform.exams(lessonStudent.userId)).map((item) => item.id), [ownedExam.id]);
   await examService.start(lessonStudent.userId, ownedExam.id);
   await examService.start(unitStudent.userId, siblingExam.id);

@@ -95,6 +95,8 @@ export class HomeworkService {
   }
 
   async create(input: HomeworkInput) {
+    if (input.status === HomeworkStatus.PUBLISHED)
+      throw new AppError(409, 'أضف الأسئلة وراجعها قبل النشر.', 'QUESTIONS_REQUIRED');
     const lesson = await this.prisma.lesson.findFirst({
       where: { id: input.lessonId, deletedAt: null },
     });
@@ -115,8 +117,8 @@ export class HomeworkService {
   }
 
   async update(id: string, input: InputPatch<HomeworkInput>) {
-    const current = await this.get(id);
-    if (input.status === 'PUBLISHED' && (input.passingPercentage !== undefined || current.passingPercentage !== null))
+    await this.get(id);
+    if (input.status === 'PUBLISHED')
       validateQuestions(await this.prisma.homeworkQuestion.findMany({ where: { homeworkId: id }, include: { choices: true } }));
     return this.prisma.homework.update({
       where: { id },
@@ -235,7 +237,7 @@ export class HomeworkService {
     const homework = await this.getForStudent(userId, homeworkId);
     await new ProgressionService(this.prisma).assertCanAccessLesson(userId, homework.lessonId);
     const student = await this.prisma.studentProfile.findUniqueOrThrow({ where: { userId } });
-    if (homework.passingPercentage !== null) validateQuestions(await this.prisma.homeworkQuestion.findMany({ where: { homeworkId }, include: { choices: true } }));
+    validateQuestions(await this.prisma.homeworkQuestion.findMany({ where: { homeworkId }, include: { choices: true } }));
     return assessmentTransaction(this.prisma, async (tx) => {
       const open = await tx.homeworkSubmission.findFirst({ where: { homeworkId, studentId: student.id, status: 'IN_PROGRESS' } });
       if (open) return open;
@@ -259,6 +261,7 @@ export class HomeworkService {
       return { questionId: answer.questionId, choiceIds: answer.selectedChoiceIds ?? (answer.selectedChoiceId ? [answer.selectedChoiceId] : []), textAnswer: answer.textAnswer };
     });
     const canonical = await this.prisma.homeworkQuestion.findMany({ where: { homeworkId }, include: { choices: true } });
+    validateQuestions(canonical);
     const graded = gradeAnswers(canonical, inputs);
     const enabled = homework.passingPercentage !== null;
     if (enabled && !attemptId) throw new AppError(400, 'ابدأ محاولة قبل تسليم الإجابات.', 'ATTEMPT_REQUIRED');

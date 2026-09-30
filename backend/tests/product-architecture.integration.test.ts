@@ -287,13 +287,19 @@ void test('grade personalization and server-side content entitlements', async ()
 
   const homework = await app.inject({ method: 'POST', url: '/api/v1/admin/homework',
     headers: { ...headers, 'content-type': 'application/json' },
-    payload: { lessonId: otherLesson.id, title: 'Scoped homework', instructions: 'Original instructions', status: 'PUBLISHED' },
+    payload: { lessonId: otherLesson.id, title: 'Scoped homework', instructions: 'Original instructions' },
   });
   assert.equal(homework.statusCode, 201);
   const homeworkId = homework.json<{ data: { id: string } }>().data.id;
+  const question = await app.inject({ method: 'POST', url: `/api/v1/admin/homework/${homeworkId}/questions`,
+    headers: { ...headers, 'content-type': 'application/json' },
+    payload: { type: 'SINGLE_CHOICE', prompt: 'Choose A', position: 0, points: 1,
+      choices: [{ label: 'A', position: 0, isCorrect: true }, { label: 'B', position: 1 }] },
+  });
+  assert.equal(question.statusCode, 201);
   const homeworkUpdate = await app.inject({ method: 'PATCH', url: `/api/v1/admin/homework/${homeworkId}`,
     headers: { ...headers, 'content-type': 'application/json' },
-    payload: { title: 'Edited homework', instructions: 'Edited instructions' },
+    payload: { title: 'Edited homework', instructions: 'Edited instructions', status: 'PUBLISHED' },
   });
   assert.equal(homeworkUpdate.statusCode, 200);
   const listedHomework = await app.inject({ method: 'GET', url: '/api/v1/student/homework', headers: secondHeaders });

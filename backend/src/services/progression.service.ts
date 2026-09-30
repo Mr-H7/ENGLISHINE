@@ -3,6 +3,7 @@ import {
   ContentStatus,
   ExamAttemptStatus,
   HomeworkStatus,
+  ProgressStatus,
   ReviewStatus,
   SubmissionStatus,
   type PrismaClient,
@@ -83,15 +84,18 @@ export class ProgressionService {
           await this.lessonProgression(studentId, courseId, unit.id, lesson, previousComplete, unitEntitled),
         );
       }
-      const lessonComplete = lessons.length === 0 || lessons.every((item) => item.state === 'COMPLETED');
+      const lessonComplete = lessons.every((item) => item.state === 'COMPLETED');
       const contextAccessible = unitEntitled || lessons.some((lesson) => lesson.entitled);
       const examRequirements = await this.examRequirements(studentId, unit.exams.map((exam) => exam.id));
       const configured = unit.progressionRequirements.filter((item) => item.type === 'PREVIOUS_UNIT_COMPLETE');
       const previousRequired = configured.length ? configured.length > 0 : true;
-      const previousMet = !previousRequired || previousComplete;
+      const previousMet: boolean = !previousRequired || previousComplete;
       const authored = await this.authoredRequirements(studentId, unit.progressionRequirements);
       const dependenciesMet = authored.every((item) => item.complete);
-      const complete = lessonComplete && examRequirements.every((item) => item.complete) && dependenciesMet;
+      // An empty container is neutral, not completed learning. An exam-only
+      // unit can complete after its actual assessment has been completed.
+      const hasWork = lessons.length > 0 || examRequirements.length > 0;
+      const complete: boolean = hasWork && lessonComplete && examRequirements.every((item) => item.complete) && dependenciesMet && previousMet;
       const inProgress = lessons.some((item) => item.state === 'IN_PROGRESS' || item.state === 'COMPLETED');
       const state: ProgressionState = !previousMet || !dependenciesMet
         ? 'LOCKED'
@@ -101,14 +105,14 @@ export class ProgressionService {
             ? 'IN_PROGRESS'
             : 'AVAILABLE';
       const requirements: RequirementStatus[] = [...new Map([
-        { key: 'previous-unit', label: 'إكمال الوحدة السابقة', complete: previousMet, current: !previousMet },
+        ...(!previousMet ? [{ key: 'previous-unit', label: 'إكمال الوحدة السابقة', complete: false, current: true }] : []),
         ...lessons.flatMap((lesson) => lesson.requirements),
         ...examRequirements,
         ...authored,
       ].map((requirement) => [requirement.key, requirement])).values()];
       const currentIndex = requirements.findIndex((item) => !item.complete);
       const marked = requirements.map((item, index) => ({ ...item, current: index === currentIndex }));
-      const percent = marked.length
+      const percent = state === 'LOCKED' ? 0 : marked.length
         ? Math.round((marked.filter((item) => item.complete).length / marked.length) * 100)
         : complete
           ? 100
@@ -213,7 +217,10 @@ export class ProgressionService {
     const examRequirements = await this.examRequirements(studentId, lesson.exams.map((item) => item.id));
     const authored = await this.authoredRequirements(studentId, await this.prisma.progressionRequirement.findMany({ where: { OR: [{ lessonId: lesson.id }, { unitId }] } }));
     const requirements = [...videoRequirements, ...homeworkRequirements, ...examRequirements, ...authored];
-    const complete = requirements.length === 0 || requirements.every((item) => item.complete);
+    const explicitCompletion = requirements.length === 0 && Boolean(await this.prisma.studentLessonProgress.findFirst({
+      where: { studentId, lessonId: lesson.id, status: ProgressStatus.COMPLETED },
+    }));
+    const complete = requirements.length > 0 ? requirements.every((item) => item.complete) : explicitCompletion;
     const started = requirements.some((item) => item.complete);
     const state: ProgressionState = !previousUnitComplete || authored.some((item) => !item.complete)
       ? 'LOCKED'
@@ -224,7 +231,7 @@ export class ProgressionService {
           : started
             ? 'IN_PROGRESS'
             : 'AVAILABLE';
-    const percent = requirements.length
+    const percent = state === 'LOCKED' ? 0 : requirements.length
       ? Math.round((requirements.filter((item) => item.complete).length / requirements.length) * 100)
       : complete
         ? 100

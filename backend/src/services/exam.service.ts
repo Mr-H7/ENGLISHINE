@@ -85,6 +85,8 @@ export class ExamService {
   }
 
   async create(input: ExamInput) {
+    if (input.status === ExamStatus.PUBLISHED)
+      throw new AppError(409, 'أضف قسمًا بأسئلة صالحة قبل النشر.', 'QUESTIONS_REQUIRED');
     const course = await this.prisma.course.findFirst({
       where: { id: input.courseId, deletedAt: null },
     });
@@ -102,14 +104,17 @@ export class ExamService {
         passingPercentage: input.passingPercentage ?? null,
         opensAt: input.opensAt ?? null,
         closesAt: input.closesAt ?? null,
-        publishedAt: input.status === ExamStatus.PUBLISHED ? new Date() : null,
+        publishedAt: null,
       },
     });
   }
 
   async update(id: string, input: InputPatch<ExamInput>) {
     const current = await this.get(id);
-    if (input.status === 'PUBLISHED' && (input.passingPercentage !== undefined || current.passingPercentage !== null)) {
+    if (input.status === 'PUBLISHED') {
+      const sections = await this.prisma.examSection.findMany({ where: { examId: id }, select: { id: true, _count: { select: { questions: true } } } });
+      if (!sections.length || sections.some((section) => section._count.questions === 0))
+        throw new AppError(409, 'أضف سؤالًا صالحًا لكل قسم قبل النشر.', 'QUESTIONS_REQUIRED');
       const questions = await this.prisma.examQuestion.findMany({ where: { section: { examId: id } }, include: { choices: true } });
       validateQuestions(questions);
     }
@@ -233,7 +238,9 @@ export class ExamService {
 
   async start(userId: string, examId: string) {
     const exam = await this.get(examId, false);
-    if (exam.passingPercentage !== null) validateQuestions(await this.prisma.examQuestion.findMany({ where: { section: { examId } }, include: { choices: true } }));
+    if (!exam.sections.length || exam.sections.some((section) => section.questions.length === 0))
+      throw new AppError(409, 'هذا الاختبار بلا أسئلة متاحة. تواصل مع Englishine.', 'QUESTIONS_REQUIRED');
+    validateQuestions(await this.prisma.examQuestion.findMany({ where: { section: { examId } }, include: { choices: true } }));
     if (exam.status !== ExamStatus.PUBLISHED)
       throw new AppError(409, 'Exam is not available', 'EXAM_UNAVAILABLE');
     const now = new Date();
@@ -279,6 +286,9 @@ export class ExamService {
       if (!attempt) throw new AppError(404, 'المحاولة غير متاحة.', 'ATTEMPT_NOT_FOUND');
       if (attempt.status !== 'IN_PROGRESS') throw new AppError(409, 'تم تسليم هذه المحاولة بالفعل.', 'ATTEMPT_CLOSED');
       await this.requireEnrollment(student.id, attempt.exam.courseId, userId, attempt.exam);
+      if (!attempt.exam.sections.length || attempt.exam.sections.some((section) => section.questions.length === 0))
+        throw new AppError(409, 'هذا الاختبار بلا أسئلة متاحة. تواصل مع Englishine.', 'QUESTIONS_REQUIRED');
+      validateQuestions(attempt.exam.sections.flatMap((section) => section.questions));
       const graded = gradeAnswers(attempt.exam.sections.flatMap((s) => s.questions), submittedAnswers);
       const summary = summarizeMarks(graded.map((g) => g.awardedPoints), graded.reduce((sum, g) => sum + Number(g.question.points), 0), Number(attempt.exam.passingPercentage ?? 60));
       for (const item of graded) await tx.examAnswer.create({ data: {

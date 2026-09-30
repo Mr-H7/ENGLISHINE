@@ -156,6 +156,9 @@ void test('phone signup, admin grade control, progression lock, and video comple
 
   const firstUnit = course.units.find((unit) => unit.position === 0)!;
   const exam = await app.prisma.exam.create({ data: { courseId: course.id, unitId: firstUnit.id, lessonId: firstUnit.lessons[0]!.id, title: 'Local resume regression', status: 'PUBLISHED', maxAttempts: 1 } });
+  const section = await app.prisma.examSection.create({ data: { examId: exam.id, title: 'Questions', position: 0 } });
+  await app.prisma.examQuestion.create({ data: { sectionId: section.id, type: 'SINGLE_CHOICE', prompt: 'Choose A', position: 0, points: 1,
+    choices: { create: [{ label: 'A', position: 0, isCorrect: true }, { label: 'B', position: 1 }] } } });
   const roadmap = await new ProgressionService(app.prisma).courseRoadmap(student.id, course.id);
   for (const unit of roadmap) assert.equal(new Set(unit.requirements.map((item) => item.key)).size, unit.requirements.length);
   const exams = new ExamService(app.prisma);
