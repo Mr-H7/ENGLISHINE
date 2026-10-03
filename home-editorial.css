@@ -240,3 +240,43 @@
   .home-editorial .platform-intro-layout { gap: 24px; }
   .home-editorial .platform-intro-visual figcaption { padding: 18px 22px; }
 }
+
+/* Focused six-chapter homepage: preserve the approved blue system and scale. */
+.home-editorial { --chapter-space: clamp(76px, 8vw, 116px); }
+.home-editorial .home-hero { min-height: min(800px, 100svh); padding-bottom: 64px; }
+.home-editorial #learning-belief { padding-block: clamp(90px, 10vw, 148px); background: #071B46; }
+.home-editorial #learning-belief .statement-copy { max-width: 950px; margin-top: 24px; font-size: clamp(38px, 5vw, 72px); line-height: 1.55; }
+.home-editorial #teaching-philosophy { padding-block: clamp(76px, 8vw, 112px); }
+.home-editorial #teaching-philosophy .philosophy-layout { gap: clamp(36px, 7vw, 112px); }
+.home-editorial #teaching-philosophy .philosophy-copy p { max-width: 48ch; }
+.home-editorial #teaching-philosophy .philosophy-principle { border-color: #B2BED63d; }
+.home-editorial #learning-journey { padding-block: clamp(76px, 8vw, 112px); }
+.home-editorial #learning-journey .journey-list li { padding-block: 19px 24px; }
+.home-editorial #learning-journey .journey-list li:last-child { padding-bottom: 0; }
+.home-editorial #about-mr-ahmed { padding-block: clamp(84px, 9vw, 128px); background: linear-gradient(160deg, #071B46, #04326D); border-top: 1px solid #B2BED633; }
+.home-editorial #about-mr-ahmed .about-layout { align-items: center; }
+.home-editorial #about-mr-ahmed .about-portrait { position: relative; top: auto; height: clamp(540px, 47vw, 680px); border-color: #B2BED64d; background: radial-gradient(ellipse at 50% 32%, #0E4C92, #04326D 60%, #071B46); box-shadow: 0 30px 80px #071B4680; }
+.home-editorial #about-mr-ahmed .about-portrait img { object-position: 50% 24%; mask-image: radial-gradient(ellipse 82% 93% at 50% 38%, #000 52%, transparent 94%); }
+.home-editorial #about-mr-ahmed .about-portrait > div { background: #071B46e6; border: 1px solid #B2BED64d; color: #F7FAFC; }
+.home-editorial #about-mr-ahmed .about-portrait strong { color: #B2BED6; }
+.home-editorial #about-mr-ahmed .about-content blockquote { border-left: 0; border-inline-start: 2px solid #B2BED6; font-style: normal; }
+.home-editorial .home-footer .footer-grid { grid-template-columns: minmax(0, 1.7fr) repeat(2, minmax(0, 1fr)); gap: clamp(28px, 5vw, 70px); }
+.home-editorial .home-footer .footer-col a { width: fit-content; }
+@media (max-width: 768px) {
+  .home-editorial .home-hero { min-height: auto; padding-bottom: 32px; }
+  .home-editorial #learning-belief, .home-editorial #teaching-philosophy, .home-editorial #learning-journey, .home-editorial #about-mr-ahmed { padding-block: 72px; }
+  .home-editorial #learning-belief .statement-copy { font-size: clamp(34px, 6vw, 48px); line-height: 1.6; }
+  .home-editorial #teaching-philosophy .philosophy-layout, .home-editorial #learning-journey .journey-layout, .home-editorial #about-mr-ahmed .about-layout { gap: 34px; }
+  .home-editorial #about-mr-ahmed .about-portrait { height: 590px; }
+  .home-editorial .home-footer .footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .home-editorial .home-footer .footer-brand { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+  .home-editorial .hero-content h1 { font-size: clamp(38px, 10vw, 46px); }
+  .home-editorial #learning-belief, .home-editorial #teaching-philosophy, .home-editorial #learning-journey, .home-editorial #about-mr-ahmed { padding-block: 58px; }
+  .home-editorial #learning-belief .statement-copy { font-size: clamp(32px, 8.5vw, 38px); }
+  .home-editorial #learning-journey .journey-list li { padding-block: 16px 20px; }
+  .home-editorial #about-mr-ahmed .about-portrait { height: 470px; }
+  .home-editorial .home-footer .footer-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .home-editorial .home-footer .footer-brand { grid-column: auto; }
+}

@@ -1,5 +1,6 @@
 import logo from '../../../assets/logo/englishine-logo.svg?url';
 import portrait from '../../../assets/mr-ahmed/mr-ahmed-portrait.png?url';
+import englishineBluePortrait from '../../../assets/mr-ahmed/englishine-blue-portrait.png?url';
 import teacherProfile from '../../../assets/homepage/teacher-profile.png?url';
 import unitOne from '../../../assets/homepage/unit-1.png?url';
 import unitTwo from '../../../assets/homepage/unit-2.png?url';
@@ -8,6 +9,7 @@ import favicon from '../../../favicon.ico?url';
 export const assets = {
   logo,
   portrait,
+  englishineBluePortrait,
   teacherProfile,
   unitOne,
   unitTwo,
@@ -17,6 +19,7 @@ export const assets = {
 const references = new Map<string, string>([
   ['assets/logo/englishine-logo.svg', logo],
   ['assets/mr-ahmed/mr-ahmed-portrait.png', portrait],
+  ['assets/mr-ahmed/englishine-blue-portrait.png', englishineBluePortrait],
   ['assets/homepage/teacher-profile.png', teacherProfile],
   ['assets/homepage/unit-1.png', unitOne],
   ['assets/homepage/unit-2.png', unitTwo],
