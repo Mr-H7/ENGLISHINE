@@ -178,12 +178,21 @@ export class MediaService {
       include: { homeworkSolution: { select: { id: true } } },
     });
     if (!video) throw new AppError(404, 'Video not found', 'VIDEO_NOT_FOUND');
-    if (video.homeworkSolution) throw new AppError(409, 'Remove the homework solution link before removing this video', 'VIDEO_HAS_DEPENDENCIES');
+    const [studentProgress, legacyProgress, requirements, comments] = await Promise.all([
+      this.prisma.studentVideoProgress.count({ where: { videoId: id } }),
+      this.prisma.videoWatchProgress.count({ where: { videoId: id } }),
+      this.prisma.progressionRequirement.count({ where: { targetId: id } }),
+      this.prisma.comment.count({ where: { videoId: id } }),
+    ]);
+    if (video.homeworkSolution || studentProgress || legacyProgress || requirements || comments)
+      throw new AppError(409, 'Video has learning history or progression dependencies', 'VIDEO_HAS_DEPENDENCIES');
     await this.prisma.video.update({
       where: { id },
-      data: { deletedAt: new Date(), status: ContentStatus.ARCHIVED, fileAssetId: null },
+      data: { deletedAt: new Date(), status: ContentStatus.ARCHIVED, fileAssetId: null, thumbnailAssetId: null },
     });
     if (video.fileAssetId) await retireAssetIfUnreferenced(this.prisma, this.storage, video.fileAssetId);
+    if (video.thumbnailAssetId && video.thumbnailAssetId !== video.fileAssetId)
+      await retireAssetIfUnreferenced(this.prisma, this.storage, video.thumbnailAssetId);
   }
 
   async removeResource(id: string) {

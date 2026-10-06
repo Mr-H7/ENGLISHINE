@@ -166,16 +166,26 @@ export class ContentService {
   async deleteCourse(id: string) {
     const course = await this.prisma.course.findFirst({ where: { id, deletedAt: null } });
     if (!course) throw new AppError(404, 'Course not found', 'COURSE_NOT_FOUND');
-    const [units, enrollments, exams, codes] = await Promise.all([
+    const [units, enrollments, exams, codes, lessonProgress, videoProgress, examAttempts, homeworkSubmissions, requirements, certificates, productLinks] = await Promise.all([
       this.prisma.courseUnit.count({ where: { courseId: id, deletedAt: null } }),
       this.prisma.courseEnrollment.count({ where: { courseId: id } }),
       this.prisma.exam.count({ where: { courseId: id, deletedAt: null } }),
       this.prisma.activationCode.count({ where: { courseId: id } }),
+      this.prisma.studentLessonProgress.count({ where: { lesson: { unit: { courseId: id } } } }),
+      this.prisma.studentVideoProgress.count({ where: { video: { lesson: { unit: { courseId: id } } } } }),
+      this.prisma.examAttempt.count({ where: { exam: { courseId: id } } }),
+      this.prisma.homeworkSubmission.count({ where: { homework: { lesson: { unit: { courseId: id } } } } }),
+      this.prisma.progressionRequirement.count({ where: { OR: [
+        { unit: { courseId: id } }, { lesson: { unit: { courseId: id } } },
+        { targetId: id },
+      ] } }),
+      this.prisma.certificate.count({ where: { courseId: id } }),
+      this.prisma.productCourse.count({ where: { courseId: id } }),
     ]);
-    if (units || enrollments || exams || codes) {
+    if (units || enrollments || exams || codes || lessonProgress || videoProgress || examAttempts || homeworkSubmissions || requirements || certificates || productLinks) {
       throw new AppError(
         409,
-        'Remove units, enrollments, exams and activation codes before removing this course',
+        'Course has content, access, progression or student history; remove unused dependencies first',
         'COURSE_HAS_DEPENDENCIES',
       );
     }
@@ -241,11 +251,21 @@ export class ContentService {
   async deleteUnit(id: string) {
     const unit = await this.prisma.courseUnit.findFirst({ where: { id, deletedAt: null } });
     if (!unit) throw new AppError(404, 'Unit not found', 'UNIT_NOT_FOUND');
-    const [lessons, codes] = await Promise.all([
+    const [lessons, codes, exams, lessonProgress, legacyProgress, videoProgress, legacyVideoProgress, examAttempts, homeworkSubmissions, requirements, productLinks] = await Promise.all([
       this.prisma.lesson.count({ where: { unitId: id, deletedAt: null } }),
       this.prisma.activationCode.count({ where: { unitId: id } }),
+      this.prisma.exam.count({ where: { unitId: id, deletedAt: null } }),
+      this.prisma.studentLessonProgress.count({ where: { lesson: { unitId: id } } }),
+      this.prisma.lessonProgress.count({ where: { lesson: { unitId: id } } }),
+      this.prisma.studentVideoProgress.count({ where: { video: { lesson: { unitId: id } } } }),
+      this.prisma.videoWatchProgress.count({ where: { video: { lesson: { unitId: id } } } }),
+      this.prisma.examAttempt.count({ where: { exam: { unitId: id } } }),
+      this.prisma.homeworkSubmission.count({ where: { homework: { lesson: { unitId: id } } } }),
+      this.prisma.progressionRequirement.count({ where: { OR: [{ unitId: id }, { targetId: id }] } }),
+      this.prisma.productUnit.count({ where: { unitId: id } }),
     ]);
-    if (lessons || codes) throw new AppError(409, 'Remove lessons and activation codes before removing this unit', 'UNIT_HAS_DEPENDENCIES');
+    if (lessons || codes || exams || lessonProgress || legacyProgress || videoProgress || legacyVideoProgress || examAttempts || homeworkSubmissions || requirements || productLinks)
+      throw new AppError(409, 'Unit has content, access, progression or student history', 'UNIT_HAS_DEPENDENCIES');
     await this.prisma.courseUnit.update({
       where: { id },
       data: { deletedAt: new Date(), status: ContentStatus.ARCHIVED },
@@ -303,18 +323,25 @@ export class ContentService {
 
   async deleteLesson(id: string) {
     await this.getLesson(id);
-    const [videos, resources, homework, codes, exams, progress] = await Promise.all([
+    const [videos, resources, homework, codes, exams, progress, legacyProgress, videoProgress, legacyVideoProgress, examAttempts, homeworkSubmissions, requirements, productLinks] = await Promise.all([
       this.prisma.video.count({ where: { lessonId: id, deletedAt: null } }),
       this.prisma.lessonResource.count({ where: { lessonId: id } }),
       this.prisma.homework.count({ where: { lessonId: id, deletedAt: null } }),
       this.prisma.activationCode.count({ where: { lessonId: id } }),
       this.prisma.exam.count({ where: { lessonId: id, deletedAt: null } }),
       this.prisma.studentLessonProgress.count({ where: { lessonId: id } }),
+      this.prisma.lessonProgress.count({ where: { lessonId: id } }),
+      this.prisma.studentVideoProgress.count({ where: { video: { lessonId: id } } }),
+      this.prisma.videoWatchProgress.count({ where: { video: { lessonId: id } } }),
+      this.prisma.examAttempt.count({ where: { exam: { lessonId: id } } }),
+      this.prisma.homeworkSubmission.count({ where: { homework: { lessonId: id } } }),
+      this.prisma.progressionRequirement.count({ where: { OR: [{ lessonId: id }, { targetId: id }] } }),
+      this.prisma.productLesson.count({ where: { lessonId: id } }),
     ]);
-    if (videos || resources || homework || codes || exams || progress) {
+    if (videos || resources || homework || codes || exams || progress || legacyProgress || videoProgress || legacyVideoProgress || examAttempts || homeworkSubmissions || requirements || productLinks) {
       throw new AppError(
         409,
-        'Remove lesson media, homework, tests, activation codes and progress before removing this lesson',
+        'Lesson has content, access, progression or student history; remove unused dependencies first',
         'LESSON_HAS_DEPENDENCIES',
       );
     }

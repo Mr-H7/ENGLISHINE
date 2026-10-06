@@ -781,10 +781,19 @@ export function AdminCoursesPage() {
             await reloadCourses();
           }}
           onRemoved={async () => {
+            if (editor.kind === 'course') {
+              setDetails(null);
+              setSelectedUnitId(null);
+              setLessonDetails(null);
+              await reloadCourses();
+              setStatus('تم حذف الدورة غير المستخدمة.');
+              return;
+            }
             if (editor.kind === 'lesson' || editor.kind === 'video' || editor.kind === 'resource') setLessonDetails(null);
             if (editor.kind === 'unit') setSelectedUnitId(null);
             if (details) await refreshCourse(details.id, editor.kind === 'unit' ? null : selectedUnitId);
             await reloadCourses();
+            setStatus('تم حذف المحتوى غير المستخدم.');
           }}
         />
       ) : null}

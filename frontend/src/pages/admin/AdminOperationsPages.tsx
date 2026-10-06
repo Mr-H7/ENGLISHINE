@@ -285,8 +285,8 @@ export function AdminHomeworkPage() {
           <p>لا توجد واجبات بعد.</p>
         )}
       </section>
-      {editing ? <HomeworkEditor key={editing.id} item={editing} onClose={() => setEditing(null)} onChanged={reload} /> : null}
-      {assessmentId ? <AssessmentWorkbench key={assessmentId} kind="homework" id={assessmentId} onChanged={reload} onClose={() => setAssessmentId(null)} /> : null}
+      {editing ? <HomeworkEditor key={editing.id} item={editing} onClose={() => setEditing(null)} onChanged={reload} onDeleted={() => setStatus('تم حذف الواجب غير المستخدم.')} /> : null}
+      {assessmentId ? <AssessmentWorkbench key={assessmentId} kind="homework" id={assessmentId} onChanged={reload} onClose={() => setAssessmentId(null)} onDeleted={() => setStatus('تم حذف الواجب غير المستخدم.')} /> : null}
     </div>
   );
 }
@@ -374,7 +374,7 @@ export function AdminExamsPage() {
           <p>لا توجد اختبارات بعد.</p>
         )}
       </section>
-      {assessmentId ? <AssessmentWorkbench key={assessmentId} kind="exam" id={assessmentId} onChanged={reload} onClose={() => setAssessmentId(null)} /> : null}
+      {assessmentId ? <AssessmentWorkbench key={assessmentId} kind="exam" id={assessmentId} onChanged={reload} onClose={() => setAssessmentId(null)} onDeleted={() => setStatus('تم حذف الاختبار غير المستخدم.')} /> : null}
     </div>
   );
 }

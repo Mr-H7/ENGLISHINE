@@ -127,11 +127,11 @@ export function ContentStudioEditor({
   }
 
   function requestDelete() {
-    if (kind === 'course') return;
     setConfirm({
       label: `هل تريد حذف ${names[kind]} «${target.record.title}»؟`,
       action: async () => {
-        if (kind === 'unit') await adminApi.deleteUnit(targetId);
+        if (kind === 'course') await adminApi.deleteCourse(targetId);
+        else if (kind === 'unit') await adminApi.deleteUnit(targetId);
         else if (kind === 'lesson') await adminApi.deleteLesson(targetId);
         else if (kind === 'video') await adminApi.deleteVideo(targetId);
         else await adminApi.deleteResource(targetId);
@@ -216,7 +216,7 @@ export function ContentStudioEditor({
 
           <div className="admin-live-actions">
             <button className="ui-button" type="submit" disabled={busy}>حفظ التغييرات</button>
-            {kind !== 'course' ? <button className="ui-button ui-button-secondary" type="button" disabled={busy} onClick={requestDelete}>حذف {names[kind]}</button> : null}
+            <button className="ui-button ui-button-secondary" type="button" disabled={busy} onClick={requestDelete}>حذف {names[kind]}</button>
           </div>
         </form>
         {kind === 'unit' ? <section className="admin-create-panel">

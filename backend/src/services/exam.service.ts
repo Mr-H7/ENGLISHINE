@@ -146,9 +146,13 @@ export class ExamService {
 
   async remove(id: string) {
     await this.get(id);
-    const attempts = await this.prisma.examAttempt.count({ where: { examId: id } });
-    if (attempts) {
-      throw new AppError(409, 'Exam with student attempts cannot be deleted', 'EXAM_HAS_ATTEMPTS');
+    const [attempts, grants, requirements] = await Promise.all([
+      this.prisma.examAttempt.count({ where: { examId: id } }),
+      this.prisma.assessmentAttemptGrant.count({ where: { examId: id } }),
+      this.prisma.progressionRequirement.count({ where: { targetId: id } }),
+    ]);
+    if (attempts || grants || requirements) {
+      throw new AppError(409, 'Exam has student attempts, grants or progression dependencies', 'EXAM_HAS_DEPENDENCIES');
     }
     await this.prisma.exam.update({
       where: { id },
@@ -232,8 +236,13 @@ export class ExamService {
     });
   }
   async removeQuestion(id: string) {
-    if (await this.prisma.examAnswer.count({ where: { questionId: id } })) throw new AppError(409, 'لا يمكن حذف سؤال له إجابات محفوظة.', 'QUESTION_HAS_ANSWERS');
-    await this.prisma.examQuestion.delete({ where: { id } });
+    await assessmentTransaction(this.prisma, async (tx) => {
+      const question = await tx.examQuestion.findUnique({ where: { id }, select: { section: { select: { examId: true } } } });
+      if (!question) throw new AppError(404, 'السؤال غير موجود.', 'QUESTION_NOT_FOUND');
+      if (await tx.examAttempt.count({ where: { examId: question.section.examId } }))
+        throw new AppError(409, 'لا يمكن حذف سؤال من اختبار بدأ الطلاب حله.', 'QUESTION_HAS_ATTEMPTS');
+      await tx.examQuestion.delete({ where: { id } });
+    });
   }
 
   async start(userId: string, examId: string) {

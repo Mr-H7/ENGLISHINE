@@ -27,3 +27,16 @@ test('Content Studio reveals hierarchy progressively and keeps byte counts LTR',
   assert.doesNotMatch(api, /cachedDirectUpload = false/);
   assert.match(api, /transferProgress\(event.loaded, file.size\)/);
 });
+test('Admin delete controls confirm named content and refresh the course list', () => {
+  const editor = readFileSync(new URL('../src/components/admin/ContentStudioActions.tsx', import.meta.url), 'utf8');
+  const page = readFileSync(new URL('../src/pages/admin/AdminCoursesStudio.tsx', import.meta.url), 'utf8');
+  const homework = readFileSync(new URL('../src/components/admin/HomeworkEditor.tsx', import.meta.url), 'utf8');
+  const api = readFileSync(new URL('../src/services/admin.ts', import.meta.url), 'utf8');
+  assert.match(editor, /kind === 'course'\) await adminApi\.deleteCourse\(targetId\)/);
+  assert.match(editor, /role="alertdialog"/);
+  assert.match(editor, /disabled=\{busy\}/);
+  assert.match(page, /if \(editor\.kind === 'course'\)/);
+  assert.match(page, /await reloadCourses\(\)/);
+  assert.match(homework, /confirmQuestionId === question\.id/);
+  assert.match(api, /deleteCourse: \(id: string\) => apiRequest<void>\(`/);
+});

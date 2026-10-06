@@ -52,3 +52,15 @@ test('activation aliases and combined lesson source remain registered', () => {
   assert.ok(routes.some((r) => r.path === '/account/activation/'));
   assert.ok(routes.some((r) => r.path === '/lesson/'));
 });
+test('public routes are not shadowed by trailing-slash self redirects', () => {
+  const canonical = ['/', '/about', '/contact', '/login/', '/signup/'];
+  for (const path of canonical) assert.ok(reactPaths.includes(path), path);
+  const aliases = routerSource.match(/const studentRouteAliases = \[([\s\S]*?)\] as const;/)?.[1] ?? '';
+  const normalized = (path) => path.replace(/\/+$/, '') || '/';
+  for (const path of canonical) {
+    const equivalentAlias = [...aliases.matchAll(/path:\s*'([^']+)'/g)]
+      .map((match) => match[1])
+      .find((alias) => normalized(alias) === normalized(path));
+    assert.equal(equivalentAlias, undefined, `${path} has a competing redirect`);
+  }
+});

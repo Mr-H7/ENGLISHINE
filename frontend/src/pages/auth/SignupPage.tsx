@@ -14,6 +14,7 @@ import type { StageOption } from '@/services/student-platform';
 export function Component() {
   const { status, submit, isSubmitting, hasError } = usePreviewSubmit('');
   const [stages, setStages] = useState<StageOption[]>([]);
+  const [gradesError, setGradesError] = useState('');
   useDocumentMetadata({
     title: 'إنشاء حساب — Englishine',
     description: 'إنشاء حساب طالب جديد في Englishine.',
@@ -21,7 +22,10 @@ export function Component() {
     structuredData: [],
   });
   useEffect(() => {
-    void apiRequest<{ data: StageOption[] }>('/catalog/grades').then((payload) => setStages(payload.data));
+    void apiRequest<{ data: StageOption[] }>('/catalog/grades').then(
+      (payload) => setStages(payload.data),
+      () => setGradesError('تعذر تحميل الصفوف الدراسية. حدّث الصفحة وحاول مرة أخرى.'),
+    );
   }, []);
   return (
     <AuthCard
@@ -47,6 +51,7 @@ export function Component() {
         />
         <div className="auth-field">
           <label htmlFor="grade-id">الصف الدراسي</label>
+          {gradesError ? <p role="alert">{gradesError}</p> : null}
           <select id="grade-id" name="grade-id" required>
             <option value="">اختر الصف</option>
             {stages.map((stage) => (

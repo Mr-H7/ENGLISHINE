@@ -199,10 +199,6 @@ const adminRoutes = adminRouteSpecs.map(({ path, page }) => ({
 }));
 
 const studentRouteAliases = [
-  { path: '/login', to: '/login/' },
-  { path: '/signup', to: '/signup/' },
-  { path: '/contact/', to: '/contact' },
-  { path: '/about/', to: '/about' },
   { path: '/student', to: '/student/' },
   { path: '/student/courses', to: '/student/courses/' },
   { path: '/student/explore', to: '/student/explore/' },

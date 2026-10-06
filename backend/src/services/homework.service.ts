@@ -139,12 +139,16 @@ export class HomeworkService {
 
   async remove(id: string) {
     await this.get(id);
-    const submissions = await this.prisma.homeworkSubmission.count({ where: { homeworkId: id } });
-    if (submissions) {
+    const [submissions, grants, requirements] = await Promise.all([
+      this.prisma.homeworkSubmission.count({ where: { homeworkId: id } }),
+      this.prisma.assessmentAttemptGrant.count({ where: { homeworkId: id } }),
+      this.prisma.progressionRequirement.count({ where: { targetId: id } }),
+    ]);
+    if (submissions || grants || requirements) {
       throw new AppError(
         409,
-        'Homework with student submissions cannot be deleted',
-        'HOMEWORK_HAS_SUBMISSIONS',
+        'Homework has student attempts, grants or progression dependencies',
+        'HOMEWORK_HAS_DEPENDENCIES',
       );
     }
     await this.prisma.homework.update({
@@ -196,15 +200,13 @@ export class HomeworkService {
   }
 
   async removeQuestion(questionId: string) {
-    const question = await this.prisma.homeworkQuestion.findUnique({
-      where: { id: questionId },
-      include: { answers: { select: { id: true } } },
+    await assessmentTransaction(this.prisma, async (tx) => {
+      const question = await tx.homeworkQuestion.findUnique({ where: { id: questionId }, select: { homeworkId: true } });
+      if (!question) throw new AppError(404, 'Question not found', 'QUESTION_NOT_FOUND');
+      if (await tx.homeworkSubmission.count({ where: { homeworkId: question.homeworkId } }))
+        throw new AppError(409, 'Question belongs to a homework with student attempts', 'QUESTION_HAS_ATTEMPTS');
+      await tx.homeworkQuestion.delete({ where: { id: questionId } });
     });
-    if (!question) throw new AppError(404, 'Question not found', 'QUESTION_NOT_FOUND');
-    if (question.answers.length) {
-      throw new AppError(409, 'Question has student answers and cannot be deleted', 'QUESTION_HAS_ANSWERS');
-    }
-    await this.prisma.homeworkQuestion.delete({ where: { id: questionId } });
   }
 
   async addQuestion(homeworkId: string, input: QuestionInput) {

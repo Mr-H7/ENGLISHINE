@@ -13,11 +13,12 @@ type Question = {
 };
 
 export function HomeworkEditor({
-  item, onClose, onChanged,
+  item, onClose, onChanged, onDeleted,
 }: {
   item: AdminHomework;
   onClose: () => void;
   onChanged: () => Promise<void>;
+  onDeleted?: () => void;
 }) {
   const [title, setTitle] = useState(item.title);
   const [instructions, setInstructions] = useState(item.instructions ?? '');
@@ -31,6 +32,7 @@ export function HomeworkEditor({
   const [correct, setCorrect] = useState('A');
   const [points, setPoints] = useState(1);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmQuestionId, setConfirmQuestionId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -55,7 +57,7 @@ export function HomeworkEditor({
     };
   }, [item.id]);
 
-  async function execute(action: () => Promise<void>, success: string) {
+  async function execute(action: () => Promise<void>, success: string, close = false) {
     setBusy(true);
     setError('');
     setMessage('');
@@ -63,6 +65,7 @@ export function HomeworkEditor({
       await action();
       await onChanged();
       setMessage(success);
+      if (close) { onDeleted?.(); onClose(); }
     } catch (reason: unknown) {
       setError(reason instanceof Error ? reason.message : 'تعذر تنفيذ العملية.');
     } finally {
@@ -98,10 +101,17 @@ export function HomeworkEditor({
           <li key={question.id}>
             <strong>{question.position + 1}. {question.prompt}</strong>
             <small>{question.type} · {question.points ?? 0} درجة</small>
-            <button className="ui-button ui-button-secondary" type="button" disabled={busy} onClick={() => void execute(async () => {
-              await adminApi.deleteHomeworkQuestion(question.id);
-              await reloadQuestions();
-            }, 'حُذف السؤال.')}>حذف السؤال</button>
+            {confirmQuestionId === question.id ? <div className="admin-delete-confirm" role="alertdialog" aria-label={`حذف السؤال «${question.prompt}»؟`}>
+              <p>هل تريد حذف السؤال «{question.prompt}»؟</p>
+              <div className="admin-live-actions">
+                <button className="ui-button ui-button-secondary" type="button" disabled={busy} onClick={() => setConfirmQuestionId(null)}>إلغاء</button>
+                <button className="ui-button" type="button" disabled={busy} onClick={() => void execute(async () => {
+                  await adminApi.deleteHomeworkQuestion(question.id);
+                  await reloadQuestions();
+                  setConfirmQuestionId(null);
+                }, 'حُذف السؤال.')}>تأكيد الحذف</button>
+              </div>
+            </div> : <button className="ui-button ui-button-secondary" type="button" disabled={busy} onClick={() => setConfirmQuestionId(question.id)}>حذف السؤال</button>}
           </li>
         ))}</ul> : <p>لا توجد أسئلة بعد.</p>}
         <label>نص السؤال<textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} rows={2} /></label>
@@ -144,10 +154,9 @@ export function HomeworkEditor({
         <p>هل تريد حذف الواجب «{item.title}»؟ التسليمات تمنع الحذف.</p>
         <div className="admin-live-actions">
           <button className="ui-button ui-button-secondary" type="button" onClick={() => setConfirmDelete(false)} disabled={busy}>إلغاء</button>
-          <button className="ui-button" type="button" disabled={busy} onClick={() => void execute(async () => {
-            await adminApi.deleteHomework(item.id);
-            onClose();
-          }, 'تم حذف الواجب.')}>تأكيد الحذف</button>
+          <button className="ui-button" type="button" disabled={busy} onClick={() => void execute(
+            () => adminApi.deleteHomework(item.id), 'تم حذف الواجب.', true,
+          )}>تأكيد الحذف</button>
         </div>
       </div> : <button className="ui-button ui-button-secondary" type="button" disabled={busy} onClick={() => setConfirmDelete(true)}>حذف الواجب</button>}
     </section>

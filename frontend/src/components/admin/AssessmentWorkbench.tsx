@@ -16,7 +16,7 @@ const data = <T,>(path: string, init?: RequestInit) => apiRequest<{ data: T }>(p
 const json = (method: string, body: unknown): RequestInit => ({ method, body: JSON.stringify(body) });
 const types = [['SINGLE_CHOICE', 'اختيار واحد'], ['MULTIPLE_CHOICE', 'اختيارات متعددة'], ['TRUE_FALSE', 'صح / خطأ'], ['SHORT_TEXT', 'إجابة قصيرة'], ['LONG_TEXT', 'إجابة مقالية']];
 
-export function AssessmentWorkbench({ kind, id, onChanged, onClose }: { kind: Kind; id: string; onChanged: () => Promise<unknown>; onClose: () => void }) {
+export function AssessmentWorkbench({ kind, id, onChanged, onClose, onDeleted }: { kind: Kind; id: string; onChanged: () => Promise<unknown>; onClose: () => void; onDeleted?: () => void }) {
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -38,10 +38,24 @@ export function AssessmentWorkbench({ kind, id, onChanged, onClose }: { kind: Ki
     return () => { active = false; };
   }, [path]);
   async function run(action: () => Promise<unknown>, success = 'تم حفظ التغييرات.') {
+    if (busy) return;
     setBusy(true); setError(null); setMessage(null);
     try { await action(); await reload(); await onChanged(); setMessage(success); }
     catch (reason) { setError(reason instanceof Error ? reason.message : 'تعذر تنفيذ العملية.'); }
     finally { setBusy(false); }
+  }
+  async function deleteAssessment(title: string) {
+    if (busy || !window.confirm(`حذف «${title}»؟ لا يمكن حذف تقييم له محاولات أو متطلبات تقدم.`)) return;
+    setBusy(true); setError(null); setMessage(null);
+    try {
+      await apiRequest(`/admin/${kind === 'exam' ? 'exams' : 'homework'}/${id}`, { method: 'DELETE' });
+      await onChanged();
+      onDeleted?.();
+      onClose();
+    } catch (reason: unknown) {
+      setError(reason instanceof Error ? reason.message : 'تعذر الحذف.');
+      setBusy(false);
+    }
   }
   if (!view) return <section className="admin-card" aria-busy={!error}>{error ? <p role="alert">{error}</p> : <p>جارٍ تحميل التقييم…</p>}</section>;
   const assessment = view.assessment;
@@ -59,7 +73,7 @@ export function AssessmentWorkbench({ kind, id, onChanged, onClose }: { kind: Ki
         <label>الحالة<select name="status" defaultValue={assessment.status}><option value="DRAFT">مسودة</option><option value="PUBLISHED">نشر بعد المراجعة</option><option value="ARCHIVED">أرشيف</option></select></label>
         <button className="ui-button" disabled={busy}>حفظ الإعدادات</button>
       </form>
-      <button type="button" className="ui-button ui-button-secondary" disabled={busy} onClick={() => { if (window.confirm(`حذف «${assessment.title}»؟ لا يمكن حذف تقييم له محاولات.`)) { setBusy(true); void apiRequest(`/admin/${kind === 'exam' ? 'exams' : 'homework'}/${id}`, { method: 'DELETE' }).then(async () => { await onChanged(); onClose(); }, (reason: unknown) => { setError(reason instanceof Error ? reason.message : 'تعذر الحذف.'); setBusy(false); }); } }}>حذف التقييم</button>
+      <button type="button" className="ui-button ui-button-secondary" disabled={busy} onClick={() => void deleteAssessment(assessment.title)}>حذف التقييم</button>
     </details>
     <details><summary>PDF المصدر وحالة الاستيراد</summary>
       <p>استخراج الأسئلة غير متصل بمزوّد حاليًا. ارفع المصدر ثم أنشئ الأسئلة وراجعها يدويًا. لا يتم النشر تلقائيًا.</p>

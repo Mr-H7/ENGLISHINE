@@ -220,6 +220,7 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }),
+  deleteCourse: (id: string) => apiRequest<void>(`/admin/courses/${id}`, { method: 'DELETE' }),
   createUnit: (courseId: string, input: { title: string; position: number; status?: string; accessLevel?: string }) =>
     data(`/admin/courses/${courseId}/units`, {
       method: 'POST',
