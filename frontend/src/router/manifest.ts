@@ -184,8 +184,6 @@ export const routes: LegacyRoute[] = [
 ];
 export const platformNavigation = [
   { href: '/', label: 'الرئيسية' },
-  { href: '/about', label: 'عن مستر أحمد' },
-  { href: '/contact', label: 'تواصل معنا' },
   { href: '/login/', label: 'تسجيل الدخول' },
   { href: '/signup/', label: 'إنشاء حساب' },
 ];

@@ -14,11 +14,13 @@ const MigrationBoundaryPage = lazy(() =>
 
 const migrated = [
   { path: '/', lazy: () => import('@/pages/public/HomePage') },
-  { path: '/about.html', lazy: () => import('@/pages/public/AboutPage') },
-  { path: '/about', lazy: () => import('@/pages/public/AboutPage') },
-  { path: '/contact', lazy: () => import('@/pages/public/ContactPage') },
+  { path: '/about.html', element: <Navigate to="/" replace /> },
+  { path: '/about', element: <Navigate to="/" replace /> },
+  { path: '/about/', element: <Navigate to="/" replace /> },
+  { path: '/contact', element: <Navigate to="/" replace /> },
+  { path: '/contact/', element: <Navigate to="/" replace /> },
   { path: '/courses.html', element: <Navigate to="/student/explore/" replace /> },
-  { path: '/contact.html', lazy: () => import('@/pages/public/ContactPage') },
+  { path: '/contact.html', element: <Navigate to="/" replace /> },
   {
     path: '/certifications.html',
     lazy: () => import('@/pages/public/CertificationsPage'),
@@ -39,7 +41,7 @@ const migrated = [
   },
   { path: '/payment/', element: <Navigate to="/student/account/" replace /> },
   { path: '/checkout/', element: <Navigate to="/student/account/" replace /> },
-  { path: '/level-test/', element: <Navigate to="/contact" replace /> },
+  { path: '/level-test/', element: <Navigate to="/" replace /> },
   { path: '/live/', element: <Navigate to="/student/" replace /> },
 ] as const;
 

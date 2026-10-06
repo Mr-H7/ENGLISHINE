@@ -10,10 +10,10 @@ interface ParsedDocument {
   metadata: DocumentMetadata;
 }
 
+const whatsAppHref = 'https://wa.me/201024429691';
+
 const focusedPublicLinks = [
   { href: '/', label: 'الرئيسية' },
-  { href: '/about', label: 'عن مستر أحمد' },
-  { href: '/contact', label: 'تواصل معنا' },
   { href: '/login/', label: 'تسجيل الدخول' },
   { href: '/signup/', label: 'إنشاء حساب' },
 ];
@@ -55,6 +55,22 @@ function applyFocusedPublicNavigation(documentSource: Document) {
         .join(''),
     );
   }
+  documentSource
+    .querySelectorAll<HTMLAnchorElement>('a[href]')
+    .forEach((action) => {
+      const path = action.getAttribute('href')?.split('#')[0] ?? '';
+      if (path === '/contact' || path === '/contact.html' || path === 'contact.html') {
+        action.href = whatsAppHref;
+        action.target = '_blank';
+        action.rel = 'noopener noreferrer';
+        return;
+      }
+      if (path === '/about' || path === '/about.html' || path === 'about.html') {
+        const item = action.closest('li');
+        action.remove();
+        if (item && !item.querySelector('a')) item.remove();
+      }
+    });
 }
 
 function parseDocument(source: string): ParsedDocument {
@@ -73,7 +89,9 @@ function parseDocument(source: string): ParsedDocument {
     documentSource
       .querySelectorAll<HTMLAnchorElement>('.home-hero .home-btn-ghost')
       .forEach((action) => {
-        action.href = '/contact';
+        action.href = whatsAppHref;
+        action.target = '_blank';
+        action.rel = 'noopener noreferrer';
         action.textContent = 'تواصل معنا';
       });
     documentSource.querySelector('#programmes .unit-artwork-grid')?.remove();

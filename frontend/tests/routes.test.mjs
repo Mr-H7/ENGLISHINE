@@ -52,6 +52,17 @@ test('activation aliases and combined lesson source remain registered', () => {
   assert.ok(routes.some((r) => r.path === '/account/activation/'));
   assert.ok(routes.some((r) => r.path === '/lesson/'));
 });
+test('removed About and Contact pages redirect to home', () => {
+  for (const path of ['/about', '/contact', '/about.html', '/contact.html']) {
+    assert.ok(reactPaths.includes(path), path);
+  }
+  assert.match(routerSource, /path: '\/about',\s*element: <Navigate to="\/" replace \/>/);
+  assert.match(routerSource, /path: '\/contact',\s*element: <Navigate to="\/" replace \/>/);
+  assert.equal(
+    platformNavigation.some((item) => item.href === '/about' || item.href === '/contact'),
+    false,
+  );
+});
 test('public routes are not shadowed by trailing-slash self redirects', () => {
   const canonical = ['/', '/about', '/contact', '/login/', '/signup/'];
   for (const path of canonical) assert.ok(reactPaths.includes(path), path);
