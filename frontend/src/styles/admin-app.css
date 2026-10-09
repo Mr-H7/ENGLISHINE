@@ -745,6 +745,7 @@
 }
 .admin-live-status[role='alert'] {
   color: #ffc4c4;
+  white-space: pre-line;
 }
 @media (max-width: 900px) {
   .admin-live-split,

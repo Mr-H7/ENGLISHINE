@@ -9,6 +9,65 @@ import { AppError } from '../utils/app-error.js';
 
 type InputPatch<T> = { [Key in keyof T]?: T[Key] | undefined };
 
+function countedLabel(count: number, singular: string, plural: string): string | null {
+  if (count <= 0) return null;
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+export function describeCourseDeletionConflict(counts: {
+  units: number;
+  lessons: number;
+  videos: number;
+  resources: number;
+  homework: number;
+  exams: number;
+  enrollments: number;
+  codes: number;
+  redemptions: number;
+  productLinks: number;
+  lessonProgress: number;
+  videoProgress: number;
+  examAttempts: number;
+  homeworkSubmissions: number;
+  requirements: number;
+  certificates: number;
+}) {
+  const blockers = [
+    countedLabel(counts.units, 'وحدة مرتبطة', 'وحدات مرتبطة'),
+    countedLabel(counts.lessons, 'درس مرتبط', 'دروس مرتبطة'),
+    countedLabel(counts.videos, 'فيديو مرتبط', 'فيديوهات مرتبطة'),
+    countedLabel(counts.resources, 'ملف مرتبط', 'ملفات مرتبطة'),
+    countedLabel(counts.homework, 'واجب مرتبط', 'واجبات مرتبطة'),
+    countedLabel(counts.exams, 'اختبار مرتبط', 'اختبارات مرتبطة'),
+    counts.enrollments ? 'يوجد تسجيلات طلاب' : null,
+    counts.lessonProgress || counts.videoProgress ? 'يوجد تقدم دراسي محفوظ' : null,
+    counts.examAttempts ? 'يوجد محاولات اختبارات محفوظة' : null,
+    counts.homeworkSubmissions ? 'يوجد محاولات واجبات محفوظة' : null,
+    counts.certificates ? 'توجد شهادات محفوظة' : null,
+    counts.codes || counts.redemptions || counts.productLinks ? 'يوجد وصول/تفعيل مرتبط' : null,
+    counts.requirements ? 'توجد متطلبات تقدم مرتبطة' : null,
+  ].filter((item): item is string => Boolean(item));
+  if (!blockers.length) return null;
+  const protectedHistory = Boolean(
+    counts.enrollments ||
+      counts.lessonProgress ||
+      counts.videoProgress ||
+      counts.examAttempts ||
+      counts.homeworkSubmissions ||
+      counts.certificates ||
+      counts.redemptions,
+  );
+  const lines = ['لا يمكن حذف هذه الدورة.', ...blockers.map((item) => `- ${item}`)];
+  if (protectedHistory) {
+    lines.push('لا يمكن حذف الدورة بأمان لوجود سجل طلاب أو تقدم دراسي أو محاولات محفوظة.');
+  } else {
+    lines.push(
+      'احذف المحتوى غير المستخدم أولًا بهذا الترتيب: الاختبارات، ثم الواجبات، ثم الفيديوهات أو الملفات، ثم الدروس، ثم الوحدات.',
+    );
+  }
+  return { message: lines.join('\n'), protectedHistory, blockers };
+}
+
 export interface CourseInput {
   title: string;
   slug: string;
@@ -166,28 +225,51 @@ export class ContentService {
   async deleteCourse(id: string) {
     const course = await this.prisma.course.findFirst({ where: { id, deletedAt: null } });
     if (!course) throw new AppError(404, 'Course not found', 'COURSE_NOT_FOUND');
-    const [units, enrollments, exams, codes, lessonProgress, videoProgress, examAttempts, homeworkSubmissions, requirements, certificates, productLinks] = await Promise.all([
+    const inCourse = { unit: { courseId: id } };
+    const [
+      units, lessons, videos, resources, homework, exams, enrollments, codes, redemptions,
+      productLinks, lessonProgress, legacyLessonProgress, videoProgress, legacyVideoProgress,
+      examAttempts, homeworkSubmissions, requirements, certificates,
+    ] = await Promise.all([
       this.prisma.courseUnit.count({ where: { courseId: id, deletedAt: null } }),
-      this.prisma.courseEnrollment.count({ where: { courseId: id } }),
+      this.prisma.lesson.count({ where: { unit: { courseId: id }, deletedAt: null } }),
+      this.prisma.video.count({ where: { lesson: inCourse, deletedAt: null } }),
+      this.prisma.lessonResource.count({ where: { lesson: inCourse } }),
+      this.prisma.homework.count({ where: { lesson: inCourse, deletedAt: null } }),
       this.prisma.exam.count({ where: { courseId: id, deletedAt: null } }),
-      this.prisma.activationCode.count({ where: { courseId: id } }),
-      this.prisma.studentLessonProgress.count({ where: { lesson: { unit: { courseId: id } } } }),
-      this.prisma.studentVideoProgress.count({ where: { video: { lesson: { unit: { courseId: id } } } } }),
+      this.prisma.courseEnrollment.count({ where: { courseId: id } }),
+      this.prisma.activationCode.count({
+        where: { OR: [{ courseId: id }, { unit: { courseId: id } }, { lesson: inCourse }] },
+      }),
+      this.prisma.activationCodeRedemption.count({
+        where: {
+          activationCode: { OR: [{ courseId: id }, { unit: { courseId: id } }, { lesson: inCourse }] },
+        },
+      }),
+      this.prisma.productCourse.count({ where: { courseId: id } }),
+      this.prisma.studentLessonProgress.count({ where: { lesson: inCourse } }),
+      this.prisma.lessonProgress.count({ where: { lesson: inCourse } }),
+      this.prisma.studentVideoProgress.count({ where: { video: { lesson: inCourse } } }),
+      this.prisma.videoWatchProgress.count({ where: { video: { lesson: inCourse } } }),
       this.prisma.examAttempt.count({ where: { exam: { courseId: id } } }),
-      this.prisma.homeworkSubmission.count({ where: { homework: { lesson: { unit: { courseId: id } } } } }),
+      this.prisma.homeworkSubmission.count({ where: { homework: { lesson: inCourse } } }),
       this.prisma.progressionRequirement.count({ where: { OR: [
-        { unit: { courseId: id } }, { lesson: { unit: { courseId: id } } },
-        { targetId: id },
+        { unit: { courseId: id } }, { lesson: inCourse }, { targetId: id },
       ] } }),
       this.prisma.certificate.count({ where: { courseId: id } }),
-      this.prisma.productCourse.count({ where: { courseId: id } }),
     ]);
-    if (units || enrollments || exams || codes || lessonProgress || videoProgress || examAttempts || homeworkSubmissions || requirements || certificates || productLinks) {
-      throw new AppError(
-        409,
-        'Course has content, access, progression or student history; remove unused dependencies first',
-        'COURSE_HAS_DEPENDENCIES',
-      );
+    const conflict = describeCourseDeletionConflict({
+      units, lessons, videos, resources, homework, exams, enrollments, codes, redemptions,
+      productLinks,
+      lessonProgress: lessonProgress + legacyLessonProgress,
+      videoProgress: videoProgress + legacyVideoProgress,
+      examAttempts, homeworkSubmissions, requirements, certificates,
+    });
+    if (conflict) {
+      throw new AppError(409, conflict.message, 'COURSE_HAS_DEPENDENCIES', {
+        blockers: conflict.blockers,
+        protectedHistory: conflict.protectedHistory,
+      });
     }
     await this.prisma.course.update({
       where: { id },

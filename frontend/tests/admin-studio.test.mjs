@@ -40,3 +40,10 @@ test('Admin delete controls confirm named content and refresh the course list', 
   assert.match(homework, /confirmQuestionId === question\.id/);
   assert.match(api, /deleteCourse: \(id: string\) => apiRequest<void>\(`/);
 });
+test('Admin shows the API course-deletion blockers instead of a generic override', () => {
+  const client = readFileSync(new URL('../src/services/api.ts', import.meta.url), 'utf8');
+  const styles = readFileSync(new URL('../src/styles/admin-app.css', import.meta.url), 'utf8');
+  assert.match(client, /code === 'COURSE_HAS_DEPENDENCIES'/);
+  assert.match(client, /useServerMessage \? serverMessage/);
+  assert.match(styles, /\.admin-live-status\[role='alert'\][\s\S]*white-space:\s*pre-line/);
+});

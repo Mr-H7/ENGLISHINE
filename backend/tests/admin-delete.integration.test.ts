@@ -5,6 +5,29 @@ import { buildApp } from '../src/create-app.js';
 import { env } from '../src/config/env.js';
 import { StorageService } from '../src/services/storage.service.js';
 import { registerStudent } from './register-student.js';
+import { describeCourseDeletionConflict } from '../src/services/content.service.js';
+
+const emptyDeletionCounts = {
+  units: 0, lessons: 0, videos: 0, resources: 0, homework: 0, exams: 0, enrollments: 0,
+  codes: 0, redemptions: 0, productLinks: 0, lessonProgress: 0, videoProgress: 0,
+  examAttempts: 0, homeworkSubmissions: 0, requirements: 0, certificates: 0,
+};
+
+void test('course deletion conflict copy names only the present blockers', () => {
+  assert.equal(describeCourseDeletionConflict(emptyDeletionCounts), null);
+  const unused = describeCourseDeletionConflict({ ...emptyDeletionCounts, units: 2, lessons: 5, videos: 3 });
+  assert.deepEqual(unused?.blockers, ['2 وحدات مرتبطة', '5 دروس مرتبطة', '3 فيديوهات مرتبطة']);
+  assert.equal(unused?.protectedHistory, false);
+  assert.match(unused?.message ?? '', /احذف المحتوى غير المستخدم أولًا/);
+  const history = describeCourseDeletionConflict({
+    ...emptyDeletionCounts, enrollments: 1, lessonProgress: 2, examAttempts: 4,
+  });
+  assert.equal(history?.protectedHistory, true);
+  assert.ok(history?.blockers.includes('يوجد تسجيلات طلاب'));
+  assert.ok(history?.blockers.includes('يوجد تقدم دراسي محفوظ'));
+  assert.ok(history?.blockers.includes('يوجد محاولات اختبارات محفوظة'));
+  assert.match(history?.message ?? '', /لا يمكن حذف الدورة بأمان/);
+});
 
 const database = new URL(env.DATABASE_URL);
 const localHarness = ['localhost', '127.0.0.1'].includes(database.hostname) &&
@@ -60,7 +83,14 @@ void test('Admin deletes only unused content; missing, unauthorized and repeated
     const lesson = await app.prisma.lesson.create({ data: { unitId: unit.id, title: 'Lesson', position: 0 } });
     const blocked = await app.inject({ method: 'DELETE', url: `${base}/courses/${course.id}`, headers: adminHeaders });
     assert.equal(blocked.statusCode, 409);
-    assert.equal(blocked.json<{ error: { code: string } }>().error.code, 'COURSE_HAS_DEPENDENCIES');
+    const unusedConflict = blocked.json<{
+      error: { code: string; message: string; details?: { protectedHistory?: boolean; blockers?: string[] } };
+    }>().error;
+    assert.equal(unusedConflict.code, 'COURSE_HAS_DEPENDENCIES');
+    assert.match(unusedConflict.message, /1 وحدة مرتبطة/);
+    assert.match(unusedConflict.message, /1 درس مرتبط/);
+    assert.match(unusedConflict.message, /احذف المحتوى غير المستخدم أولًا/);
+    assert.equal(unusedConflict.details?.protectedHistory, false);
     assert.doesNotMatch(blocked.body, /Prisma|CourseUnit_courseId_position_key|SELECT /);
     assert.equal((await app.inject({ method: 'DELETE', url: `${base}/units/${unit.id}`, headers: adminHeaders })).statusCode, 409);
     assert.equal((await app.inject({ method: 'DELETE', url: `${base}/lessons/${lesson.id}`, headers: adminHeaders })).statusCode, 204);
@@ -104,7 +134,19 @@ void test('Admin deletes only unused content; missing, unauthorized and repeated
     assert.equal((await app.inject({ method: 'DELETE', url: `${base}/exams/${exam.id}`, headers: adminHeaders })).statusCode, 409);
     assert.equal((await app.inject({ method: 'DELETE', url: `${base}/lessons/${historyLesson.id}`, headers: adminHeaders })).statusCode, 409);
     assert.equal((await app.inject({ method: 'DELETE', url: `${base}/units/${historyUnit.id}`, headers: adminHeaders })).statusCode, 409);
-    assert.equal((await app.inject({ method: 'DELETE', url: `${base}/courses/${historyCourse.id}`, headers: adminHeaders })).statusCode, 409);
+    const historyBlocked = await app.inject({ method: 'DELETE', url: `${base}/courses/${historyCourse.id}`, headers: adminHeaders });
+    assert.equal(historyBlocked.statusCode, 409);
+    const historyConflict = historyBlocked.json<{
+      error: { code: string; message: string; details?: { protectedHistory?: boolean } };
+    }>().error;
+    assert.equal(historyConflict.code, 'COURSE_HAS_DEPENDENCIES');
+    assert.match(historyConflict.message, /فيديو مرتبط/);
+    assert.match(historyConflict.message, /يوجد تقدم دراسي محفوظ/);
+    assert.match(historyConflict.message, /يوجد محاولات اختبارات محفوظة/);
+    assert.match(historyConflict.message, /يوجد محاولات واجبات محفوظة/);
+    assert.match(historyConflict.message, /لا يمكن حذف الدورة بأمان/);
+    assert.equal(historyConflict.details?.protectedHistory, true);
+    assert.doesNotMatch(historyBlocked.body, /Prisma|StudentVideoProgress|SELECT /);
   } finally {
     if (courses.length) {
       await app.prisma.studentVideoProgress.deleteMany({ where: { video: { lesson: { unit: { courseId: { in: courses } } } } } });

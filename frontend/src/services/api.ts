@@ -100,7 +100,7 @@ const authErrorMessages: Record<string, string> = {
   UPLOAD_SIZE_MISMATCH: 'حجم الملف المرفوع لا يطابق التصريح.',
   UPLOAD_TYPE_MISMATCH: 'نوع الملف المرفوع لا يطابق التصريح.',
   UPLOAD_AUTHORIZATION_REUSED: 'تم استخدام تصريح الرفع بالفعل.',
-  COURSE_HAS_DEPENDENCIES: 'لا يمكن حذف الدورة؛ بها محتوى أو وصول أو سجل تعلّم مرتبط. احذف المحتوى غير المستخدم أولًا.',
+  COURSE_HAS_DEPENDENCIES: 'لا يمكن حذف الدورة؛ بها محتوى أو وصول أو سجل تعلّم مرتبط.',
   UNIT_HAS_DEPENDENCIES: 'لا يمكن حذف الوحدة؛ بها دروس أو اختبارات أو أكواد أو سجل تعلّم أو متطلبات تقدم مرتبطة.',
   LESSON_HAS_DEPENDENCIES: 'لا يمكن حذف الدرس؛ به محتوى أو أكواد أو سجل تعلّم أو متطلبات تقدم مرتبطة.',
   VIDEO_HAS_DEPENDENCIES: 'لا يمكن حذف الفيديو؛ له مشاهدات أو تعليقات أو ارتباط بحل واجب أو متطلبات تقدم.',
@@ -138,8 +138,12 @@ async function readErrorPayload(response: Response): Promise<{
 
 function toClientError(error: { code?: string; message?: string } | null): ApiClientError {
   const code = error?.code;
+  const serverMessage = error?.message?.trim();
+  const useServerMessage =
+    code === 'COURSE_HAS_DEPENDENCIES' && Boolean(serverMessage && /[\u0600-\u06FF]/.test(serverMessage));
+  const mapped = code ? authErrorMessages[code] : undefined;
   return new ApiClientError(
-    (code && authErrorMessages[code]) ?? error?.message ?? 'تعذر إكمال الطلب. حاول مرة أخرى.',
+    (useServerMessage ? serverMessage : mapped ?? serverMessage) ?? 'تعذر إكمال الطلب. حاول مرة أخرى.',
     code,
   );
 }
